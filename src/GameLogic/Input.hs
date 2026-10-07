@@ -258,7 +258,7 @@ chooseAction pv = do
     else do
       mapM_ (\(i, (lbl, _)) -> putStrLn (show i ++ ") " ++ lbl)) numbered
       putStrLn "---------------------------------------------"
-      let prompt = "Enter " ++ intercalate ", " (map (show . fst) numbered) ++ ":"
+      let prompt = "Enter the number of the action you choose (" ++ intercalate " or " (map (show . fst) numbered) ++ "):"
       input <- readIntB prompt
       case lookup input [(i, h) | (i, (_, h)) <- numbered] of
         Just h  -> h pv
@@ -280,7 +280,7 @@ chooseActionOrEquipment pv = do
       when hasEq $ putStrLn "e) Choose equipment"
       putStrLn "---------------------------------------------"
       let tokens = map (show . fst) numbered ++ ["e" | hasEq]
-      putStrLn $ "Enter " ++ intercalate ", " tokens ++ ":"
+      putStrLn $ "Enter the number or letter of the action you choose (" ++ intercalate " or " tokens ++ "):"
       putStr "> "
       line <- getLine
       case line of

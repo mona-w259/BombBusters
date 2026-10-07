@@ -1,13 +1,25 @@
 cabal-version:      3.0
 name:               bombbusters
-version:            0.1.0.0
+
+-- The package version.
+-- See the Haskell package versioning policy (PVP) for standards
+-- guiding when and how versions should be incremented.
+-- https://pvp.haskell.org
+-- PVP summary:     +-+------- breaking API changes
+--                  | | +----- non-breaking API additions
+--                  | | | +--- code changes with no API change
+version:            0.2.0.0
+
 license:            BSD-3-Clause
 license-file:       LICENSE
-author:             Joshua Rebay
-maintainer:         joshuarebay@icloud.com
-category:           Game
+
+-- base version (0.1.0.0) is from Joshua Rebay
+author:             Joshua Rebay, Mona Winklmann  
+maintainer:         mona.win.25.9@gmail.com
+copyright:          Copyright (c) 2025, Joshua Rebay
+category:           Game, Web
 build-type:         Simple
-extra-doc-files:    CHANGELOG.md
+extra-doc-files:    CHANGELOG.md, README.md
 
 common warnings
     ghc-options: -Wall
