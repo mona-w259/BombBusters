@@ -73,6 +73,9 @@ executable bombbusters
         random-shuffle,
         containers,
         pretty-simple,
-        mtl
+        mtl,
+        scotty,
+        text
+    ghc-options:      -threaded
     default-language: Haskell2010
 
