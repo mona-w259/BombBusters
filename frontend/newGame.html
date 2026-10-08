@@ -1,0 +1,59 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Your Game</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <main class="card">
+        <header class="header">
+            <h1>Create Your Game</h1>
+            <p class="subtitle">
+                Choose the amount of players, logic bots and machine learning (ML) bots. 
+            </p>
+        </header>
+
+        
+        <div class="settings">
+            <div class="field">
+                <label for="players">Players</label>
+                <input type="number" id="players"
+                       name="players" min="0" max="4" value="0" required>
+            </div>
+
+            <div class="field">
+                <label for="logic-bots">Logic Bots</label>
+                <input type="number" id="logic-bots"
+                       name="logic_bots" min="0" max="4" value="0" required>
+            </div>
+
+            <div class="field">
+                <label for="ml-bots">ML Bots</label>
+                <input type="number" id="ml-bots"
+                       name="ml_bots" min="0" max="4" value="0" required>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <form method="post" action="/waiting">
+                <button type="submit" name="action" value="create"
+                        class="create-btn">
+                    Create Game
+                </button>
+            </form>
+
+            <form method="post" action="/">
+                <button type="submit" name="action" value="exit"
+                        class="exit-btn">
+                    Exit
+                </button>
+            </form>
+        </div>
+    </main>
+</body> 
+    
+</html>

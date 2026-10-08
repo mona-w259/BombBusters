@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomb Busters</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <main class="card">
+        <header class="header">
+            <h1>Hello Bomb Buster!</h1>
+            <p class="subtitle" fontSize: 32px;>
+                Ready to defuse a bomb? Choose your way to get ready!
+            </p>
+        </header>
+
+        
+        <div class="buttons">
+            <form method="post" action="/newGame">
+                <button type="submit" name="action" value="submit"
+                        class="create-btn">
+                    New Game
+                </button>
+            </form>
+
+            <form method="post" action="/joinGame">
+                <button type="submit" name="action" value="exit"
+                        class="create-btn">
+                    Join Game
+                </button>
+            </form>
+        </div>
+    </main>
+</body> 
+
+</html>
+

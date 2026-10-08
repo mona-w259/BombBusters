@@ -75,7 +75,11 @@ executable bombbusters
         pretty-simple,
         mtl,
         scotty,
-        text
+        text,
+        wai,
+        http-types,
+        wai-middleware-static,
+        warp
     ghc-options:      -threaded
     default-language: Haskell2010
 

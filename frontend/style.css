@@ -1,0 +1,159 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #ffffff;
+    background: rgba(227, 192, 144, 0.85);
+    padding: 20px;
+}
+
+.card {
+    width: 100%;
+    max-width: 650px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 15px;
+    background: rgba(224, 163, 78, 0.85);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+.subtitle {
+    color: #ffffffd5;
+    font-size: 15px;
+}
+
+.settings {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.field {
+    padding: 20px 14px;
+    border-radius: 25px;
+    background: rgb(228, 178, 109);
+    border: 1px solid #ffffffd5;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.field:focus-within {
+    border-color: #fa9f01;
+    transform: translateY(-3px);
+}
+
+.field label {
+    display: block;
+    min-height: 42px;
+    margin-bottom: 8px;
+    color: #ffffffd5;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.field input {
+    width: 100%;
+    padding: 12px 8px;
+    border: 1px solid #ffffffd5;
+    border-radius: 10px;
+    background: rgba(224, 163, 78, 0.5);
+    color: #ffffffd5;
+    font-size: 20px;
+    text-align: center;
+    outline: none;
+}
+
+.field input:focus {
+    border-color: #fa9f01;
+}
+
+.code-field {
+    margin-bottom: 24px;
+}
+
+.code-field input {
+    width: 100%;
+    padding: 16px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    text-align: center;
+    border: 1px solid #696047;
+    border-radius: 12px;
+    background: #3b311e;
+    color: #f8d681;
+}
+
+.code-field input::placeholder {
+    color: #8b8164;
+    opacity: 1;
+    letter-spacing: 12px;
+}
+
+.code-field input:focus {
+    border-color: #fa9f01;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(248, 214, 129, 0.2);
+}
+
+.buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.buttons form {
+    flex: 1;
+}
+
+.buttons button {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, 
+}
+
+.create-btn {
+    background: rgba(226, 146, 35, 0.85);
+    color: white;
+}
+
+.create-btn:hover {
+    background: #fa9f01;
+    transform: translateY(-2px);
+}
+
+.exit-btn {
+    background: #3b311e;
+    color: #fa9f01;
+}
+
+.exit-btn:hover {
+    background: #231f15;
+    transform: translateY(-2px);
+}
