@@ -126,8 +126,8 @@ initEquipment =
           }
    in [superDetector, stabilizer, tripleDetector, doubleRadiator]
 
-initGameState :: Int -> Int -> IO GameState
-initGameState l ml = do
+initGameState :: Int -> Int -> String -> IO GameState
+initGameState l ml code = do
   -- CRN support: when BB_SEED is set, seed the global StdGen so every
   -- subsequent newStdGen call (inside initWires / initColorMarkers /
   -- initTurnOrder) is derived deterministically. Unset -> stock randomness.
@@ -144,8 +144,11 @@ initGameState l ml = do
     GameState
       { wires = allWires,
         players = ps,
+        h_players = 4 - l - ml,
+        reg_players = l + ml,
         l_players = l,
         ml_players = ml,
+        code = code,
         colorMarkers = cMs,
         detonator = 4,
         status = InProgress,

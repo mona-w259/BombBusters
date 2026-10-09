@@ -7,6 +7,9 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Map.Strict as MS
 import qualified Data.Text.Lazy as TL
 import Network.Wai.Middleware.Static (staticPolicy, addBase)
+import System.Random (randomRIO)
+import Text.Printf (printf)
+
 
 import GameLoop
 import InitGame
@@ -23,6 +26,11 @@ validatePL h l ml
   | total > 4   = Just "The amount of players is more then 4!"
   | otherwise   = Nothing
   where total = h + l + ml
+
+codeGenerator :: IO String
+codeGenerator = do
+  n <- randomRIO (0, 9999 :: Int)
+  return (printf "%04d" n)
 
 
 main :: IO ()
@@ -46,16 +54,15 @@ main = do
         players   <- formParam "players"    :: ActionM Int
         logic     <- formParam "logic_bots" :: ActionM Int
         ml        <- formParam "ml_bots"    :: ActionM Int
-        -- Spiel in `games` ablegen
         case (validatePL players logic ml) of 
           Just err -> 
             redirect ("/newGame?error=" <> TL.pack err)
           Nothing -> do
-            gameState <- liftIO (initGameState logic ml)
-            liftIO (runGame gameState)
+            -- Spiel in `games` ablegen
+            code <- liftIO codeGenerator
             redirect "/waiting"
-
-        
+            gameState <- liftIO (initGameState logic ml code)
+            liftIO (runGame gameState)
       
       post "/joinGame" $ do
         code      <- formParam "game_code"  :: ActionM String

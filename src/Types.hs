@@ -109,8 +109,11 @@ data GameStatus
 data GameState = GameState
   { wires :: [Wire],
     players :: [Player],
+    h_players :: Int,
+    reg_players :: Int,
     l_players :: Int,
     ml_players :: Int,
+    code :: String,
     colorMarkers :: [Wire],
     detonator :: Int,
     status :: GameStatus,
