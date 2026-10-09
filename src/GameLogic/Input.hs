@@ -714,18 +714,10 @@ checkInputRR pv a
     n = length playerWiresSelf
     colA = color (playerWiresSelf !! a)
 
-handleChooseBots :: [PlayerId] -> IO [PlayerId]
-handleChooseBots pids = do
-  amount <- readInt "Choose amount of bots for the round (0,1,2,3,4)."
-  let (valid, msg) = checkInputCB amount
-  putStrLn msg
-  if valid
-    then return $ shortenList amount pids
-    else threadDelay 1000000 >> handleChooseBots pids
 
-checkInputCB :: Int -> (Bool, String)
-checkInputCB input
-  | input < 0 || input > 4 =
-      (False, "Out of range.")
-  | otherwise =
-      (True, "Valid input.")
+handleChooseBots :: GameState -> [PlayerId] -> IO [PlayerId]
+handleChooseBots gs pids = do
+  let l = l_players gs
+  let ml = ml_players gs
+  let total_amount = l + ml
+  return $ shortenList total_amount pids

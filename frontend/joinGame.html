@@ -6,45 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join A Game</title>
     <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="/favicon.ico" type="image/png">
 </head>
 
 <body>
     <main class="card">
-        <header class="header">
-            <h1>Enter your Gaming Code</h1>
-        </header>
+        <form method="post" action="/joinGame">
+            <header class="header">
+                <h1>Enter your Gaming Code</h1>
+            </header>
 
-        <div class="field code-field">
-            <input
-                type="text"
-                id="game-code"
-                name="game_code"
-                placeholder="0000"
-                maxlength="4"
-                minlength="4"
-                pattern="[0-9]{4}"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                required
-            >
-        </div>
+            <div class="field code-field">
+                <input
+                    name="game_code"
+                    id="game_code"
+                    type="text"
+                    placeholder="0000"
+                    maxlength="4"
+                    minlength="4"
+                    pattern="[0-9]{4}"                        
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    required
+                >
+            </div>
 
         
-        <div class="buttons">
-            <form method="post" action="/waiting">
-                <button type="submit" name="action" value="submit"
-                        class="create-btn">
+            <div class="buttons">
+                <button type="submit" class="create-btn">
                     Submit Code
                 </button>
-            </form>
-
-            <form method="post" action="/">
-                <button type="submit" name="action" value="exit"
-                        class="exit-btn">
+            
+                <button type="submit" class="exit-btn"
+                        formaction="/" formmethod="get" formnovalidate>
                     Exit
                 </button>
-            </form>
-        </div>
+            </div>
+        </form>
     </main>
 </body> 
 

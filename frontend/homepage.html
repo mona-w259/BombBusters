@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bomb Busters</title>
     <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="/favicon.ico" type="image/png">
 </head>
 
 <body>
@@ -19,16 +20,14 @@
 
         
         <div class="buttons">
-            <form method="post" action="/newGame">
-                <button type="submit" name="action" value="submit"
-                        class="create-btn">
+            <form method="get" action="/newGame">
+                <button type="submit" class="create-btn">
                     New Game
                 </button>
             </form>
 
-            <form method="post" action="/joinGame">
-                <button type="submit" name="action" value="exit"
-                        class="create-btn">
+            <form method="get" action="/joinGame">
+                <button type="submit" class="create-btn">
                     Join Game
                 </button>
             </form>

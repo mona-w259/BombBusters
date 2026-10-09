@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game</title>
     <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="/favicon.ico" type="image/png">
 </head>
 
 <body>
@@ -15,9 +16,9 @@
         </header>
 
         <div class="buttons">
-            <form method="post" action="/">
-                <button type="submit" name="action" value="exit"
-                        class="exit-btn">
+            <form method="get" action="/">
+                <button type="submit" class="exit-btn"
+                        formaction="/" formmethod="get" formnovalidate>
                     Exit
                 </button>
             </form>
