@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waiting For The Game</title>
+    <title>Waiting Room</title>
     <link rel="stylesheet" href="./style.css">
     <link rel="icon" href="/favicon.ico" type="image/png">
 </head>
@@ -14,8 +14,10 @@
         <header class="header">
             <h1>Waiting until all players have entered the game...</h1>
             <p class="subtitle">
-                Game Code: xxxx 
+                Game Code: <strong id="code"></strong> 
             </p>
+            <p id="count"></p>
+            <p id="timer"></p>
         </header>
 
         <div class="buttons">
@@ -27,6 +29,59 @@
             </form>
         </div>
     </main>
+    
+    
+    <script>
+    const params = new URLSearchParams(location.search);
+    const code = params.get("code") || "";
+    const slot = params.get("slot") || "";
+    const $ = (id) => document.getElementById(id);
+
+    // textContent statt innerHTML: der Code kommt aus der URL und ist nicht vertrauenswürdig
+    $("code").textContent = code;
+
+    function fmt(sec) {
+      const m = Math.floor(sec / 60);
+      const s = String(sec % 60).padStart(2, "0");
+      return m + ":" + s;
+    }
+
+    function stop(msg) {
+      $("message").textContent = msg;
+      $("count").textContent = "";
+      $("timer").textContent = "";
+      $("back").hidden = false;
+    }
+
+    async function poll() {
+      try {
+        const res = await fetch("/api/lobby/" + encodeURIComponent(code));
+        const s = await res.json();
+
+        if (s.status === "started") {
+          // alle Spieler da -> gemeinsam auf die Spielseite
+          location.href = "/game?code=" + encodeURIComponent(code) + "&slot=" + encodeURIComponent(slot);
+          return;
+        }
+        if (s.status === "expired") {
+          stop("Die Wartezeit von 10 Minuten ist abgelaufen. Das Spiel wurde abgebrochen.");
+          return;
+        }
+        if (s.status === "missing") {
+          stop("Dieses Spiel existiert nicht (mehr).");
+          return;
+        }
+
+        $("count").textContent = "Spieler: " + s.joined + " / " + s.expected;
+        $("timer").textContent = "Verbleibende Wartezeit: " + fmt(s.secondsLeft);
+      } catch (e) {
+        // Server kurz nicht erreichbar: einfach weiter versuchen
+      }
+      setTimeout(poll, 1000);
+    }
+
+    poll();
+  </script>
 </body> 
 
 </html>

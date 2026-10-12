@@ -45,6 +45,7 @@ library
         BotLogic.ConstraintSolver
         BotLogic.Inference
         BenchmarkLog
+        WaitingRoom
     build-depends:
         base ^>=4.20.0.0,
         mtl,
@@ -58,7 +59,8 @@ library
         bytestring,
         time,
         directory,
-        filepath
+        filepath,
+        stm
     default-language: Haskell2010
 
 executable bombbusters
@@ -80,7 +82,9 @@ executable bombbusters
         http-types,
         wai-middleware-static,
         warp,
-        stm
+        stm,
+        aeson,
+        time
     ghc-options:      -threaded
     default-language: Haskell2010
 

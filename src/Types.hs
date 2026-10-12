@@ -106,6 +106,8 @@ data GameStatus
   | Detonated
   | Defused
 
+type Code = String
+
 data GameState = GameState
   { wires :: [Wire],
     players :: [Player],
@@ -113,7 +115,7 @@ data GameState = GameState
     reg_players :: Int,
     l_players :: Int,
     ml_players :: Int,
-    code :: String,
+    code :: Code,
     colorMarkers :: [Wire],
     detonator :: Int,
     status :: GameStatus,
