@@ -10,6 +10,7 @@ import GameLogic.Input (handlePlaceInfoMarker, handleChooseBots)
 import GameLogic.Util
 import BotLogic.Interface
 import Types
+import Output
 
 runGame :: GameState -> IO ()
 runGame gs = do
@@ -31,8 +32,8 @@ gameLoop = do
   gs <- get
   let currStatus = status gs
   case currStatus of
-    Detonated -> liftIO $ putStrLn "Bomb detonated, game lost."
-    Defused -> liftIO $ putStrLn "Bomb defused, game won."
+    Detonated -> infoMessage "Bomb detonated, game lost."
+    Defused -> infoMessage "Bomb defused, game won."
     WaitingForChoice pc -> handlePendingChoice pc >> gameLoop
     InProgress -> do
       modify checkActivePlayers

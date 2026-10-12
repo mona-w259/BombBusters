@@ -4,6 +4,7 @@ import Data.List
 import Data.Maybe
 import Text.Read
 import Types
+import Output
 
 getPlayerView :: PlayerId -> GameState -> PlayerView
 getPlayerView pid gs =
@@ -28,7 +29,7 @@ getPlayerView pid gs =
               pvTurnHistory = turnHistory gs,
               pvUnlockingValues = unlockingValues gs
             }
-        Nothing -> error $ "player not found pid: " ++ show pid
+        Nothing -> errorMessage $ "player not found pid: " ++ show pid
 
 updateGameStateFromView :: PlayerView -> GameState -> GameState
 updateGameStateFromView pv gs =
@@ -60,28 +61,28 @@ findPlayer pidTarget pList =
   let maybePlayer = find ((== pidTarget) . playerId) pList
    in case maybePlayer of
         Just p -> p
-        Nothing -> error $ "Player with id " ++ show pidTarget ++ " not found."
+        Nothing -> errorMessage $ "Player with id " ++ show pidTarget ++ " not found."
 
 readInt :: String -> IO Int
 readInt prompt = do
-  putStrLn prompt
-  putStr "> "
+  instructionMessage prompt
+  inlineMessage "> "
   input <- getLine
   case readMaybe input :: Maybe Int of
     Just n -> return n
     Nothing -> do
-      putStrLn "Invalid number. Please enter a valid integer."
+      instructionMessage "Invalid number. Please enter a valid integer."
       readInt prompt
 
 readLabel :: String -> IO Int
 readLabel prompt = do
-  putStrLn prompt
-  putStr "> "
+  instructionMessage prompt
+  inlineMessage "> "
   line <- getLine
   case line of
     [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
     _ -> do
-      putStrLn "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
+      instructionMessage "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
       readLabel prompt
 
 cutAtPosition :: Int -> [Wire] -> [Wire]

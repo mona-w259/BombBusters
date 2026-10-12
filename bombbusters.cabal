@@ -46,6 +46,7 @@ library
         BotLogic.Inference
         BenchmarkLog
         WaitingRoom
+        Output
     build-depends:
         base ^>=4.20.0.0,
         mtl,

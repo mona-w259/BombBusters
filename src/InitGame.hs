@@ -6,6 +6,7 @@ import System.Random
 import System.Random.Shuffle (shuffle')
 import qualified Config
 import Types
+import Output
 
 initWires :: IO ([Wire], Wire, [Wire])
 initWires = do
@@ -17,7 +18,7 @@ initWires = do
 
       (redVal, yellowVals) = case shuffledVals of
         (r : y1 : y2 : _) -> (r, [y1, y2])
-        _ -> error "initWires: shuffle' returned fewer than 3 values"
+        _ -> errorMessage "initWires: shuffle' returned fewer than 3 values"
 
       blueWires = [Wire val Blue 0 | val <- concatMap (replicate 4) blueVals]
       yellowWires = [Wire val Yellow 0 | val <- yellowVals]
@@ -64,12 +65,12 @@ initColorMarkers redWire yellowWires = do
       shuffled1 = shuffle' nonBlueVals (length nonBlueVals) gen1
       randomRedVal = case filter (/= redVal) shuffled1 of
         (v : _) -> v
-        [] -> error "initColorMarkers: no candidate red value"
+        [] -> errorMessage "initColorMarkers: no candidate red value"
 
       shuffled2 = shuffle' nonBlueVals (length nonBlueVals) gen2
       randomYellowVal = case filter (`notElem` yellowVals) shuffled2 of
         (v : _) -> v
-        [] -> error "initColorMarkers: no candidate yellow value"
+        [] -> errorMessage "initColorMarkers: no candidate yellow value"
 
       randomRedWire = Wire randomRedVal Red 0
       randomYellowWire = Wire randomYellowVal Yellow 0
@@ -84,7 +85,7 @@ initTurnOrder = do
       tO = shuffle' allPlayers 4 gen
       startingPlayer = case tO of
         (p : _) -> p
-        [] -> error "initTurnOrder: turn order unexpectedly empty"
+        [] -> errorMessage "initTurnOrder: turn order unexpectedly empty"
   return (tO, startingPlayer)
 
 initEquipment :: [Equipment]
@@ -127,7 +128,7 @@ initEquipment =
    in [superDetector, stabilizer, tripleDetector, doubleRadiator]
 
 initGameState :: Int -> Int -> String -> IO GameState
-initGameState l ml code = do
+initGameState l ml codeI = do
   -- CRN support: when BB_SEED is set, seed the global StdGen so every
   -- subsequent newStdGen call (inside initWires / initColorMarkers /
   -- initTurnOrder) is derived deterministically. Unset -> stock randomness.
@@ -148,7 +149,7 @@ initGameState l ml code = do
         reg_players = l + ml,
         l_players = l,
         ml_players = ml,
-        code = code,
+        code = codeI,
         colorMarkers = cMs,
         detonator = 4,
         status = InProgress,

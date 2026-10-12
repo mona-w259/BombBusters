@@ -23,6 +23,7 @@ import Control.Concurrent (threadDelay)
 import Control.Exception (Exception, throwIO, try)
 import Control.Monad (when)
 import Text.Read (readMaybe)
+import Output
 
 -- input handlers, this is where invalid input should be filtered out before envoking the pure handlers 
 
@@ -34,28 +35,28 @@ isBack s = s == "\ESC" || s == "back"
 
 readIntB :: String -> IO Int
 readIntB prompt = do
-  putStrLn $ prompt ++ "  (ESC + Enter to go back)"
-  putStr "> "
+  instructionMessage $ prompt ++ "  (ESC + Enter to go back)"
+  inlineMessage "> "
   input <- getLine
   if isBack input
     then throwIO GoBack
     else case readMaybe input :: Maybe Int of
       Just n -> return n
       Nothing -> do
-        putStrLn "Invalid number. Please enter a valid integer."
+        instructionMessage "Invalid number. Please enter a valid integer."
         readIntB prompt
 
 readLabelB :: String -> IO Int
 readLabelB prompt = do
-  putStrLn $ prompt ++ "  (ESC + Enter to go back)"
-  putStr "> "
+  instructionMessage $ prompt ++ "  (ESC + Enter to go back)"
+  inlineMessage "> "
   line <- getLine
   if isBack line
     then throwIO GoBack
     else case line of
       [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
       _ -> do
-        putStrLn "Invalid input. Please enter a single lowercase letter."
+        instructionMessage "Invalid input. Please enter a single lowercase letter."
         readLabelB prompt
 
 promptFor :: ChoiceKind -> String
@@ -65,12 +66,12 @@ promptFor PickInfoMarkerSlot = "Place an Info Marker on a wire."
 askPlayerToChooseWire :: PlayerView -> [Int] -> ChoiceKind -> IO Int
 askPlayerToChooseWire pv opts kind = do
   displayWirePickView pv Nothing
-  putStrLn $ "Player " ++ show (playerId $ pvSelf pv) ++ " - " ++ promptFor kind
-  putStrLn $ "Options: " ++ unwords (map indexToLabel opts)
+  instructionMessage $ "Player " ++ show (playerId $ pvSelf pv) ++ " - " ++ promptFor kind
+  instructionMessage $ "Options: " ++ unwords (map indexToLabel opts)
   readChoice
   where
     readChoice = do
-      putStr "> "
+      inlineMessage "> "
       line <- getLine
       case line of
         [c] | c >= 'a' && c <= 'z' ->
@@ -78,10 +79,10 @@ askPlayerToChooseWire pv opts kind = do
            in if n `elem` opts
                 then pure n
                 else do
-                  putStrLn "Invalid choice. Please pick from the listed options."
+                  instructionMessage "Invalid choice. Please pick from the listed options."
                   threadDelay 1000000 >> readChoice
         _ -> do
-          putStrLn "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
+          instructionMessage "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
           readChoice
 
 humanAction :: PlayerView -> IO (Maybe Action, [EquipmentUse])
@@ -152,11 +153,11 @@ chooseEquipment pv = do
   let available = availableEquipment pv
   if null available
     then do
-      putStrLn "No equipment available."
+      instructionMessage "No equipment available."
       pure []
     else do
-      putStrLn $ "Player " ++ show (playerId (pvSelf pv)) ++ " - choose equipment:"
-      putStrLn "---------------------------------------------"
+      instructionMessage $ "Player " ++ show (playerId (pvSelf pv)) ++ " - choose equipment:"
+      instructionMessage "---------------------------------------------"
       selectLoop available []
 
 selectLoop :: [Selectable] -> [Selectable] -> IO [Selectable]
@@ -168,9 +169,9 @@ selectLoop remaining selected = do
       let indexed = zip [1 .. length allowed] allowed
           canFinish = not (null selected)
       mapM_
-        (\(i, s) -> putStrLn (show i ++ " | " ++ showSelectable s))
+        (\(i, s) -> instructionMessage (show i ++ " | " ++ showSelectable s))
         indexed
-      when canFinish $ putStrLn "0 | Done (proceed with selected equipment)"
+      when canFinish $ instructionMessage "0 | Done (proceed with selected equipment)"
       input <- readIntB "Enter number:"
       case input of
         0 | canFinish -> pure selected
@@ -180,7 +181,7 @@ selectLoop remaining selected = do
                   remaining' = filter (/= eq) remaining
               selectLoop remaining' (eq : selected)
         _ -> do
-          putStrLn "Invalid input, try again."
+          instructionMessage "Invalid input, try again."
           threadDelay 1000000 >> selectLoop remaining selected
 
 showSelectable :: Selectable -> String
@@ -248,40 +249,40 @@ actionOptions pv =
 chooseAction :: PlayerView -> IO Action
 chooseAction pv = do
   displayPlayerView pv
-  putStrLn $ "Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:"
+  instructionMessage $ "Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:"
   let opts = actionOptions pv
       numbered = zip [1 :: Int ..] opts
   if null opts
     then do
-      putStrLn "No actions available."
+      instructionMessage "No actions available."
       threadDelay 1000000 >> chooseAction pv
     else do
-      mapM_ (\(i, (lbl, _)) -> putStrLn (show i ++ ") " ++ lbl)) numbered
-      putStrLn "---------------------------------------------"
+      mapM_ (\(i, (lbl, _)) -> instructionMessage (show i ++ ") " ++ lbl)) numbered
+      instructionMessage "---------------------------------------------"
       let prompt = "Enter the number of the action you choose (" ++ intercalate " or " (map (show . fst) numbered) ++ "):"
       input <- readIntB prompt
       case lookup input [(i, h) | (i, (_, h)) <- numbered] of
         Just h  -> h pv
-        Nothing -> putStrLn "Invalid Input, try again." >> chooseAction pv
+        Nothing -> instructionMessage "Invalid Input, try again." >> chooseAction pv
 
 chooseActionOrEquipment :: PlayerView -> IO (Either Action [Selectable])
 chooseActionOrEquipment pv = do
   displayPlayerView pv
-  putStrLn $ "Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:"
+  instructionMessage $ "Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:"
   let opts = actionOptions pv
       numbered = zip [1 :: Int ..] opts
       hasEq = not (null (availableEquipment pv))
   if null opts && not hasEq
     then do
-      putStrLn "No actions available."
+      instructionMessage "No actions available."
       threadDelay 1000000 >> chooseActionOrEquipment pv
     else do
-      mapM_ (\(i, (lbl, _)) -> putStrLn (show i ++ ") " ++ lbl)) numbered
-      when hasEq $ putStrLn "e) Choose equipment"
-      putStrLn "---------------------------------------------"
+      mapM_ (\(i, (lbl, _)) -> instructionMessage (show i ++ ") " ++ lbl)) numbered
+      when hasEq $ instructionMessage "e) Choose equipment"
+      instructionMessage "---------------------------------------------"
       let tokens = map (show . fst) numbered ++ ["e" | hasEq]
-      putStrLn $ "Enter the number or letter of the action you choose (" ++ intercalate " or " tokens ++ "):"
-      putStr "> "
+      instructionMessage $ "Enter the number or letter of the action you choose (" ++ intercalate " or " tokens ++ "):"
+      inlineMessage "> "
       line <- getLine
       case line of
         "e" | hasEq -> Right <$> chooseEquipment pv
@@ -289,7 +290,7 @@ chooseActionOrEquipment pv = do
           Just i | Just h <- lookup i [(k, h) | (k, (_, h)) <- numbered] ->
             Left <$> h pv
           _ -> do
-            putStrLn "Invalid input, try again."
+            instructionMessage "Invalid input, try again."
             threadDelay 1000000 >> chooseActionOrEquipment pv
 
 handleSuperDetectorInput :: PlayerView -> IO EquipmentUse
@@ -297,7 +298,7 @@ handleSuperDetectorInput pv = do
   otherId <- readIntB "SuperDetector - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
-      putStrLn "Invalid player id."
+      instructionMessage "Invalid player id."
       handleSuperDetectorInput pv
     Just target -> askWire otherId target
   where
@@ -305,7 +306,7 @@ handleSuperDetectorInput pv = do
       displayWirePickView pv (Just target)
       pos <- readLabelB "Your wire:"
       let (valid, msg) = checkInputSD pv otherId pos
-      putStrLn msg
+      instructionMessage msg
       if valid
         then pure $ UseSuperDetector otherId pos (playerWires (pvSelf pv) !! pos)
         else threadDelay 1000000 >> askWire otherId target
@@ -339,11 +340,11 @@ handleTripleDetectorInput pv = do
   otherId <- readIntB "Triple Detector - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
-      putStrLn "Invalid player id."
+      instructionMessage "Invalid player id."
       handleTripleDetectorInput pv
     Just target
       | uncutOn target < 3 -> do
-          putStrLn "Target must have at least 3 uncut wires."
+          instructionMessage "Target must have at least 3 uncut wires."
           threadDelay 1000000 >> handleTripleDetectorInput pv
       | otherwise -> askWires otherId target
   where
@@ -354,7 +355,7 @@ handleTripleDetectorInput pv = do
       b <- readLabelB "Second target wire:"
       c <- readLabelB "Third target wire:"
       let (valid, msg) = checkInputTD pv otherId selfPos (a, b, c)
-      putStrLn msg
+      instructionMessage msg
       if valid
         then pure $ UseTripleDetector otherId selfPos (a, b, c) (playerWires (pvSelf pv) !! selfPos)
         else threadDelay 1000000 >> askWires otherId target
@@ -404,7 +405,7 @@ handleDoubleRadiatorInput pv = do
   otherId <- readIntB "Double Radiator - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
-      putStrLn "Invalid player id."
+      instructionMessage "Invalid player id."
       handleDoubleRadiatorInput pv
     Just target -> askWires otherId target
   where
@@ -414,7 +415,7 @@ handleDoubleRadiatorInput pv = do
       pos2 <- readLabelB "Your second wire:"
       otherPos <- readLabelB "Target wire:"
       let (valid, msg) = checkInputDR pv otherId (pos1, pos2) otherPos
-      putStrLn msg
+      instructionMessage msg
       let ws = playerWires (pvSelf pv)
       if valid
         then pure $ UseDoubleRadiator otherId (pos1, pos2) otherPos (ws !! pos1, ws !! pos2)
@@ -463,11 +464,11 @@ handleDoubleDetectorInput pv = do
   otherId <- readIntB "Double Detector - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
-      putStrLn "Invalid player id."
+      instructionMessage "Invalid player id."
       handleDoubleDetectorInput pv
     Just target
       | uncutOn target < 2 -> do
-          putStrLn "Target must have at least 2 uncut wires."
+          instructionMessage "Target must have at least 2 uncut wires."
           threadDelay 1000000 >> handleDoubleDetectorInput pv
       | otherwise -> askWires otherId target
   where
@@ -477,7 +478,7 @@ handleDoubleDetectorInput pv = do
       a <- readLabelB "First target wire:"
       b <- readLabelB "Second target wire:"
       let (valid, msg) = checkInputDD pv otherId selfPos (a, b)
-      putStrLn msg
+      instructionMessage msg
       if valid
         then pure $ UseDoubleDetector otherId selfPos (a, b) (playerWires (pvSelf pv) !! selfPos)
         else threadDelay 1000000 >> askWires otherId target
@@ -528,15 +529,15 @@ handleSoloCutInput pv = do
   let c2 = canSoloCut2 pv
       c4 = canSoloCut4 pv
   count <- case (c2, c4) of
-    (True, False) -> putStrLn "Solo Cut - cutting two (2) wires." >> pure 2
-    (False, True) -> putStrLn "Solo Cut - cutting four (4) wires." >> pure 4
+    (True, False) -> instructionMessage "Solo Cut - cutting two (2) wires." >> pure 2
+    (False, True) -> instructionMessage "Solo Cut - cutting four (4) wires." >> pure 4
     _             -> readIntB "Solo Cut - cut two (2) or four (4) wires? Enter 2 or 4:"
   case count of
     2 -> do
       a <- readLabelB "First wire:"
       b <- readLabelB "Second wire:"
       let (valid, msg) = checkInputSC2 pv (a, b)
-      putStrLn msg
+      instructionMessage msg
       if valid
         then return $ SoloCut2 (a, b)
         else chooseAction pv
@@ -546,12 +547,12 @@ handleSoloCutInput pv = do
       c <- readLabelB "Third wire:"
       d <- readLabelB "Fourth wire:"
       let (valid, msg) = checkInputSC4 pv (a, b, c, d)
-      putStrLn msg
+      instructionMessage msg
       if valid
         then return $ SoloCut4 (a, b, c, d)
         else threadDelay 1000000 >> chooseAction pv
     _ -> do
-      putStrLn "Invalid choice. Please enter 2 or 4."
+      instructionMessage "Invalid choice. Please enter 2 or 4."
       chooseAction pv
 
 handlePlaceInfoMarker :: PlayerView -> IO Action
@@ -560,7 +561,7 @@ handlePlaceInfoMarker pv = do
   let pid = playerId (pvSelf pv)
   pos <- readLabel $ "Player " ++ show pid ++ " - pick a wire for your info marker:"
   let (valid, msg) = checkInputInitInfo pv pos
-  putStrLn msg
+  instructionMessage msg
   if valid
     then return $ PlaceInfoMarker pos
     else threadDelay 1000000 >> handlePlaceInfoMarker pv
@@ -570,7 +571,7 @@ handleDualCutInput pv = do
   otherId <- readIntB "Duo Cut - target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
-      putStrLn "Invalid player id, try again."
+      instructionMessage "Invalid player id, try again."
       handleDualCutInput pv
     Just target -> askWires otherId target
   where
@@ -579,7 +580,7 @@ handleDualCutInput pv = do
       a <- readLabelB "Your wire:"
       b <- readLabelB "Target wire:"
       let (valid, msg) = checkInputDC pv otherId (a, b)
-      putStrLn msg
+      instructionMessage msg
       if valid
         then return $ DualCut otherId (a, b) (playerWires (pvSelf pv) !! a)
         else threadDelay 1000000 >> askWires otherId target
@@ -589,7 +590,7 @@ handleRemoveRedInput pv = do
   displayWirePickView pv Nothing
   pos <- readLabelB "Remove Red - enter the red wire:"
   let (valid, msg) = checkInputRR pv pos
-  putStrLn msg
+  instructionMessage msg
   if valid
     then return $ RemoveRed pos
     else threadDelay 1000000 >> chooseAction pv
