@@ -76,9 +76,9 @@ setStatus wrs code newStatus =
 
 createWaitingRoom :: WaitingRooms -> Int -> Int -> Int -> IO Code
 -- no humans are playing -> no waitingRoom necessary
-createWaitingRoom _ 0 _ _ = codeGenerator
+-- createWaitingRoom _ 0 _ _ = codeGenerator
 -- only 1 human is playing -> no waitingRoom necessary
-createWaitingRoom _ 1 _ _ = codeGenerator
+-- createWaitingRoom _ 1 _ _ = codeGenerator
 -- more than 1 human is playing -> waitingRoom is necessary
 createWaitingRoom wrs h l ml = do
   timeNow <- getCurrentTime

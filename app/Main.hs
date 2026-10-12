@@ -4,13 +4,9 @@ module Main where
 import Web.Scotty
 import Control.Concurrent.STM
 import Control.Concurrent (forkIO)
-import Control.Monad (void)
-import Control.Monad.IO.Class (liftIO)
-import qualified Data.Map.Strict as MS
+import Control.Monad 
 import qualified Data.Text.Lazy as TL
 import Network.Wai.Middleware.Static (staticPolicy, addBase)
-import System.Random (randomRIO)
-import Text.Printf (printf)
 import Data.Aeson (object, (.=))
 import Data.Time.Clock (diffUTCTime, getCurrentTime)
 
@@ -21,12 +17,12 @@ import Types
 
 ----------------- small functions -----------------
 page :: FilePath -> ActionM ()
-page name = do
+page pName = do
     setHeader "Content-Type" "text/html; charset=utf-8"
-    file ("./frontend/" <> name)
+    file ("./frontend/" <> pName)
 
 waitingURL :: Code -> Int -> TL.Text
-waitingURL code slot = TL.pack("/waiting?code=" ++ code ++ "&slot=" ++ show slot)
+waitingURL cd slot = TL.pack("/waiting?code=" ++ cd ++ "&slot=" ++ show slot)
 
 validatePL :: Int -> Int -> Int -> Maybe String
 validatePL h l ml
@@ -67,12 +63,12 @@ main = do
       get "/waiting"  $ page "waiting.html"
       
       get "/game"     $ do
-        code <- queryParam "code" :: ActionM String
+        cd <- queryParam "code" :: ActionM String
         slot <- queryParam "slot" :: ActionM Int
-        started <- liftIO (atomically (isStarted wrs code))
+        started <- liftIO (atomically (isStarted wrs cd))
         if started 
           then page "game.html"
-          else redirect (waitingURL code slot)
+          else redirect (waitingURL cd slot)
 
 
 
@@ -87,24 +83,24 @@ main = do
         case (validatePL humans logic ml) of 
           Just err -> redirect ("/newGame?error=" <> TL.pack err)
           Nothing -> do
-            code <- liftIO (createWaitingRoom wrs humans logic ml)
-            _ <- liftIO . forkIO . void $ watchWR wrs code (prepareGame wrs)
-            redirect (waitingURL code 1)
+            cd <- liftIO (createWaitingRoom wrs humans logic ml)
+            _ <- liftIO . forkIO . void $ watchWR wrs cd (prepareGame wrs)
+            redirect (waitingURL cd 1)
       
       post "/joinGame" $ do
-        code      <- formParam "game_code"  :: ActionM String
-        result <- liftIO (atomically (joinWaitingRoom wrs code))
+        cd     <- formParam "game_code"  :: ActionM String
+        result <- liftIO (atomically (joinWaitingRoom wrs cd))
         case result of
           Left err            -> redirect ("/joinGame?error=" <> errorText err)
-          Right (code, slot)  -> redirect (waitingURL code slot)
+          Right (cdR, slot)  -> redirect (waitingURL cdR slot)
 
 
 
       ---------------- API PAGE ----------------
       get "/api/waitingRoom/:code" $ do
-        code  <- pathParam "code"    :: ActionM String
+        cd    <- pathParam "code"    :: ActionM String
         now   <- liftIO getCurrentTime
-        room  <- liftIO (atomically (lookupWaitingRoom wrs code))
+        room  <- liftIO (atomically (lookupWaitingRoom wrs cd))
         case room of
           Nothing   -> json (object ["status" .= ("missing" :: String)])
           Just wr   -> json $ object
