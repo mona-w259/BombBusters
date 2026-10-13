@@ -631,7 +631,6 @@ handlePlaceInfoMarker pv = do
         pid   = playerId self
         vis   = ToPlayer pid
   displayInfoMarkerView pv
-  let pid = playerId (pvSelf pv)
   pos <- readLabel pv $ "Player " ++ show pid ++ " - pick a wire for your info marker:"
   let (valid, msg) = checkInputInitInfo pv pos
   instructionMessage ob vis msg

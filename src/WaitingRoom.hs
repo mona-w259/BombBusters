@@ -8,7 +8,8 @@ import qualified Data.Map.Strict as Map
 import Data.Time.Clock (UTCTime, addUTCTime, getCurrentTime)
 import System.Random (randomRIO)
 import Text.Printf (printf)
-import Types (Code, GameState)
+import Types (Code)
+import OutBox
 
 
 ---------- Data Types ----------
@@ -27,7 +28,7 @@ data WaitingRoom = WaitingRoom {
 
 data WaitingRooms = WaitingRooms {
   waitingRooms :: TVar (Map.Map Code WaitingRoom),
-  games :: TVar (Map.Map Code (TVar GameState))
+  games :: TVar (Map.Map Code OutBox)
 }
 
 data JoinGameError = NoSuchGame | GameFull | GameClosed
@@ -63,10 +64,9 @@ lookupWaitingRoom wrs code = Map.lookup code <$> readTVar (waitingRooms wrs)
 isStarted :: WaitingRooms -> Code -> STM Bool
 isStarted wrs code = maybe False ((== Started) . status) <$> lookupWaitingRoom wrs code
 
-registerGame :: WaitingRooms -> Code -> GameState -> IO ()
-registerGame wrs code gs = do
-  newGame <- newTVarIO gs
-  atomically $ modifyTVar' (games wrs) (Map.insert code newGame)
+registerGame :: WaitingRooms -> Code -> OutBox -> IO ()
+registerGame wrs code ob = do
+  atomically $ modifyTVar' (games wrs) (Map.insert code ob)
 
 setStatus :: WaitingRooms -> Code -> WaitingRoomStatus -> STM ()
 setStatus wrs code newStatus = 

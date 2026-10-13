@@ -6,6 +6,7 @@ import Control.Concurrent.STM
 import Control.Concurrent (forkIO)
 import Control.Monad 
 import qualified Data.Text.Lazy as TL
+import qualified Data.Map as Map
 import Network.Wai.Middleware.Static (staticPolicy, addBase)
 import Data.Aeson (object, (.=))
 import Data.Time.Clock (diffUTCTime, getCurrentTime)
@@ -14,6 +15,7 @@ import GameLoop
 import InitGame
 import WaitingRoom
 import Types
+import OutBox
 
 ----------------- small functions -----------------
 page :: FilePath -> ActionM ()
@@ -36,7 +38,7 @@ prepareGame wrs wr = do
   let l   = l_playersWR wr
       ml  = ml_playersWR wr
   gs <- initGameState l ml (codeWR wr)
-  registerGame wrs (codeWR wr) gs
+  registerGame wrs (codeWR wr) (outBox gs)
   void . forkIO $ runGame gs
 
 errorText :: JoinGameError -> TL.Text

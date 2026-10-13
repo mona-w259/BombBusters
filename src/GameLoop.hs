@@ -49,7 +49,7 @@ gameLoop = do
             then do
               liftIO $ displayPlayerView pv
               let a = botPlaceMarker pv
-              liftIO $ displayBotDecision (Just (toPublicAction a)) []
+              liftIO $ displayBotDecision gs' (Just (toPublicAction a)) []
               pure a
             else liftIO $ announceHumanTurn pv >> handlePlaceInfoMarker pv
           _ <- handleAction pv act id
@@ -59,7 +59,7 @@ gameLoop = do
           gs'' <- get
           case status gs'' of
             Detonated -> pure ()
-            _ -> liftIO $ displayTurnResult outcome
+            _ -> liftIO $ displayTurnResult gs' outcome
 
       modify advanceTurn
       gameLoop

@@ -14,15 +14,16 @@ import OutBox
 
 playerTurn :: PlayerView -> GameM Outcome
 playerTurn pv = do
+  gs <- get
   let pubOf act eq = (fmap toPublicAction act, map toPublicEquipmentUse eq)
   (act, equip) <- liftIO $ if isBot (pvSelf pv)
     then do
       displayPlayerView pv
       bbDelay 2000000
-      instructionMessage (pvOut pv) ToAll ($ "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking...")
+      instructionMessage (pvOutBox pv) ToAll $ "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..."
       result@(a, eq) <- botAction pv
       let (pubA, pubEq) = pubOf a eq
-      displayBotDecision pubA pubEq
+      displayBotDecision gs pubA pubEq
       return result
     else announceHumanTurn pv >> humanAction pv
   let f = handleStabilizer equip
@@ -32,10 +33,10 @@ playerTurn pv = do
     Nothing -> pure ActionDone
   let outcome = mergeOutcome eqOutcome actOutcome
   modify $ markDoubleDetectorUsed (playerId (pvSelf pv)) equip . markEquipmentUsed equip
-  gs <- get
+  gs' <- get
   let (pubAct, pubEquip) = pubOf act equip
       tlog = TurnLog
-        { logRound = roundCount gs,
+        { logRound = roundCount gs',
           logPlayer = playerId (pvSelf pv),
           logAction = pubAct,
           logEquipment = pubEquip,
