@@ -10,6 +10,7 @@ import GameLogic.Util
 import BotLogic.Interface
 import Types
 import Output
+import OutBox
 
 playerTurn :: PlayerView -> GameM Outcome
 playerTurn pv = do
@@ -18,7 +19,7 @@ playerTurn pv = do
     then do
       displayPlayerView pv
       bbDelay 2000000
-      instructionMessage $ "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..."
+      instructionMessage (pvOut pv) ToAll ($ "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking...")
       result@(a, eq) <- botAction pv
       let (pubA, pubEq) = pubOf a eq
       displayBotDecision pubA pubEq

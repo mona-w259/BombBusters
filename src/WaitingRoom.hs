@@ -83,8 +83,8 @@ createWaitingRoom :: WaitingRooms -> Int -> Int -> Int -> IO Code
 createWaitingRoom wrs h l ml = do
   timeNow <- getCurrentTime
   code    <- codeGenerator
-  let deadline  = addUTCTime (fromIntegral maxWait) timeNow
-      wr        = WaitingRoom code h 1 l ml Waiting deadline
+  let deadl = addUTCTime (fromIntegral maxWait) timeNow
+      wr    = WaitingRoom code h 1 l ml Waiting deadl
   isValid <- validateCode wrs wr code
   if isValid 
     then return code 

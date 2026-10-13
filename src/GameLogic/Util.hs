@@ -5,6 +5,7 @@ import Data.Maybe
 import Text.Read
 import Types
 import Output
+import OutBox
 
 getPlayerView :: PlayerId -> GameState -> PlayerView
 getPlayerView pid gs =
@@ -27,7 +28,8 @@ getPlayerView pid gs =
               pvRoundCount = roundCount gs,
               pvTurnOrder = turnOrder gs,
               pvTurnHistory = turnHistory gs,
-              pvUnlockingValues = unlockingValues gs
+              pvUnlockingValues = unlockingValues gs,
+              pvOutBox = outBox gs
             }
         Nothing -> errorMessage $ "player not found pid: " ++ show pid
 
@@ -63,27 +65,35 @@ findPlayer pidTarget pList =
         Just p -> p
         Nothing -> errorMessage $ "Player with id " ++ show pidTarget ++ " not found."
 
-readInt :: String -> IO Int
-readInt prompt = do
-  instructionMessage prompt
-  inlineMessage "> "
+readInt :: PlayerView -> String -> IO Int
+readInt pv prompt = do
+  let ob    = pvOutBox pv
+      self  = pvSelf pv
+      pid   = playerId self
+      vis   = ToPlayer pid
+  instructionMessage ob vis prompt
+  inlineMessage ob vis "> "
   input <- getLine
   case readMaybe input :: Maybe Int of
     Just n -> return n
     Nothing -> do
-      instructionMessage "Invalid number. Please enter a valid integer."
-      readInt prompt
+      instructionMessage ob vis "Invalid number. Please enter a valid integer."
+      readInt pv prompt
 
-readLabel :: String -> IO Int
-readLabel prompt = do
-  instructionMessage prompt
-  inlineMessage "> "
+readLabel :: PlayerView -> String -> IO Int
+readLabel pv prompt = do
+  let ob    = pvOutBox pv
+      self  = pvSelf pv
+      pid   = playerId self
+      vis   = ToPlayer pid
+  instructionMessage ob vis prompt
+  inlineMessage ob vis "> "
   line <- getLine
   case line of
     [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
     _ -> do
-      instructionMessage "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
-      readLabel prompt
+      instructionMessage ob vis "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
+      readLabel pv prompt
 
 cutAtPosition :: Int -> [Wire] -> [Wire]
 cutAtPosition pos = map (\w -> if wireIndex w == pos then w {color = Grey} else w)

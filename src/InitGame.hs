@@ -7,6 +7,7 @@ import System.Random.Shuffle (shuffle')
 import qualified Config
 import Types
 import Output
+import OutBox
 
 initWires :: IO ([Wire], Wire, [Wire])
 initWires = do
@@ -141,6 +142,7 @@ initGameState l ml codeI = do
       eq = initEquipment
   cMs <- initColorMarkers redWire yellowWires
   (tO, startingPlayer) <- initTurnOrder
+  ob <- newOutBox
   return
     GameState
       { wires = allWires,
@@ -160,5 +162,6 @@ initGameState l ml codeI = do
         infoMarkers = [],
         roundCount = 0,
         turnHistory = [],
-        unlockingValues = [(unlockingVal e, name e) | e <- eq]
+        unlockingValues = [(unlockingVal e, name e) | e <- eq],
+        outBox = ob
       }

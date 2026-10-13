@@ -124,8 +124,8 @@ applyCardinality bk symSlots = do
               (1 :: SInteger) 0
         | (sv, sc) <- symSlots
         ]
-    colorSum code = sum
-        [ ite (sc .== literal (code :: Integer)) (1 :: SInteger) 0
+    colorSum cd = sum
+        [ ite (sc .== literal (cd :: Integer)) (1 :: SInteger) 0
         | (_, sc) <- symSlots
         ]
     yellowValueSum v = sum

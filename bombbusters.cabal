@@ -47,6 +47,7 @@ library
         BenchmarkLog
         WaitingRoom
         Output
+        OutBox
     build-depends:
         base ^>=4.20.0.0,
         mtl,

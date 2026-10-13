@@ -1,6 +1,7 @@
 module Types where
 
 import Control.Monad.State
+import OutBox
 
 data WireColor = Blue | Yellow | Red | Grey | Hidden
   deriving (Show, Eq, Ord)
@@ -126,7 +127,8 @@ data GameState = GameState
     infoMarkers :: [InfoMarker],
     roundCount :: Int,
     turnHistory :: [TurnLog],
-    unlockingValues :: [(Int, EquipmentName)]
+    unlockingValues :: [(Int, EquipmentName)],
+    outBox :: OutBox
   }
 
 data PlayerView = PlayerView
@@ -140,7 +142,8 @@ data PlayerView = PlayerView
     pvRoundCount :: Int,
     pvTurnOrder :: [PlayerId],
     pvTurnHistory :: [TurnLog],
-    pvUnlockingValues :: [(Int, EquipmentName)]
+    pvUnlockingValues :: [(Int, EquipmentName)],
+    pvOutBox :: OutBox
   }
   deriving (Eq, Show)
 
