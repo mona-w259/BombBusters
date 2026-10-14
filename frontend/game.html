@@ -11,10 +11,180 @@
 </head>
 
 <body>
-    <main class="card">
+    <main class="game">
         <header class="header">
-            <h1>Show Game</h1>
+            <h1>
+                Show Game
+                
+                <div class="info-container">
+                    <input type="checkbox" id="hint-click" class="info-toggle">
+                    <label for="hint-click" class="info-btn" title="Explain Symbols">
+                        ⓘ
+                    </label>
+                    <div class="info-popup">
+                        ⬜ = Hidden<br>
+                        💡 = Info<br>
+                        ⚫ = Cut
+                    </div>
+                </div>
+            </h1>
         </header>
+
+        <div>
+            Player 1:
+        </div>
+        <div>
+            Player 2:
+        </div>
+        <div>
+            Player 3:
+        </div>
+        <div>
+            Player 4:
+        </div>
+        <div>
+            Lives left:
+            <img src="/images/Farbverlauf-grün.jpg" width="200" height="50">
+            Counter: 4 3 2 1 boom
+        </div>
+        <div>
+            Possible Yellow Wires:
+            <br>
+            Possible Red Wires:
+        </div>
+
+        <div class="equipment-container">
+            Equipment<br>
+
+            <input type="checkbox" id="eq-dd-click" class="equipment-toggle">
+            <label for="eq-dd-click" class="equipment-btn">
+                DoubleDetector
+            </label>
+            <div class="equipment-popup">
+                Personal detector (can combine with Stabilizer)
+                    
+                <div class="buttons">
+                    <form>
+                        <button type="choose" class="create-btn"
+                                formmethod="get" formnovalidate style="margin-top: 15px;">
+                            Choose                            
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <input type="checkbox" id="eq-td-click" class="equipment-toggle">
+            <label for="eq-td-click" class="equipment-btn">
+                TripleDetector (3)
+            </label>
+            <div class="equipment-popup">
+                Name one of your values against three chosen slots on another rack.
+                    
+                <div class="buttons">
+                    <form>
+                        <button type="choose" class="create-btn"
+                                formmethod="get" formnovalidate style="margin-top: 15px;">
+                            Choose                            
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <input type="checkbox" id="eq-sd-click" class="equipment-toggle">
+            <label for="eq-sd-click" class="equipment-btn">
+                SuperDetector (5)
+            </label>
+            <div class="equipment-popup">
+                Name one of your values, point at another player's rack; they reveal every matching wire.
+                    
+                <div class="buttons">
+                    <form>
+                        <button type="choose" class="create-btn"
+                                formmethod="get" formnovalidate style="margin-top: 15px;">
+                            Choose                            
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <input type="checkbox" id="eq-st-click" class="equipment-toggle">
+            <label for="eq-st-click" class="equipment-btn">
+                Stabilizer (9)
+            </label>
+            <div class="equipment-popup">
+                The next cut cannot detonate the bomb, no matter what.
+                    
+                <div class="buttons">
+                    <form>
+                        <button type="choose" class="create-btn"
+                                formmethod="get" formnovalidate style="margin-top: 15px;">
+                            Choose                            
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <input type="checkbox" id="eq-dr-click" class="equipment-toggle">
+            <label for="eq-dr-click" class="equipment-btn">
+                DoubleRadiator (10)
+            </label>
+            <div class="equipment-popup">
+                Name two of your values against one slot.
+                    
+                <div class="buttons">
+                    <form>
+                        <button type="choose" class="create-btn"
+                                formmethod="get" formnovalidate style="margin-top: 15px;">
+                            Choose                            
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="rack">
+            Your Rack:<br>
+            <button class="wire" id="1">
+                1. Kabel
+            </button>
+            <button class="wire" id="2">
+                2. Kabel
+            </button>
+            <button class="wire" id="3">
+                3. Kabel
+            </button>
+            <button class="wire" id="4">
+                4. Kabel
+            </button>
+            <button class="wire" id="5">
+                5. Kabel
+            </button>
+            <button class="wire" id="6">
+                6. Kabel
+            </button>
+            <button class="wire" id="7">
+                7. Kabel
+            </button>
+            <button class="wire" id="8">
+                8. Kabel
+            </button>
+            <button class="wire" id="9">
+                9. Kabel
+            </button>
+            <button class="wire" id="10">
+                10. Kabel
+            </button>
+            <button class="wire" id="11">
+                11. Kabel
+            </button>
+            <button class="wire" id="12">
+                12. Kabel
+            </button>
+            <button class="wire" id="13">
+                13. Kabel?
+            </button>
+        </div>
 
         <pre id="log"></pre>
 
