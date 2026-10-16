@@ -5,6 +5,14 @@ import Types
 import OutBox
 
 
+colorEmoji :: WireColor -> String
+colorEmoji Blue = "🔵"
+colorEmoji Yellow = "🟡"
+colorEmoji Red = "🔴"
+colorEmoji Grey = "⚫"
+colorEmoji Hidden = "⬜"
+
+
 errorMessage :: String -> a
 errorMessage err = error err
 
@@ -18,3 +26,11 @@ infoMessage info = do
 
 inlineMessage :: OutBox -> Visibility -> String -> IO ()
 inlineMessage ob visible msg = emit ob visible msg
+
+
+printYRWires :: GameState -> String
+printYRWires gs =
+    let colorMarks = colorMarkers gs
+    in if null colorMarks 
+        then "(none)" 
+        else unwords (map (\w -> colorEmoji (color w) ++ "(" ++ show (value w) ++ ")") colorMarks)

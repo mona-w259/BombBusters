@@ -16,6 +16,7 @@ import InitGame
 import WaitingRoom
 import Types
 import OutBox
+import Output
 
 ----------------- small functions -----------------
 page :: FilePath -> ActionM ()
@@ -39,6 +40,7 @@ prepareGame wrs wr = do
       ml  = ml_playersWR wr
   gs <- initGameState l ml (codeWR wr)
   registerGame wrs (codeWR wr) (outBox gs)
+  atomically $ modifyTVar' (gamesGS wrs) (Map.insert (codeWR wr) gs)
   void . forkIO $ runGame gs
 
 errorText :: JoinGameError -> TL.Text
@@ -114,16 +116,23 @@ main = do
             ]
       
       get "/api/game/:code/output" $ do
-        cd    <- pathParam "code"  :: ActionM String
+        cd    <- pathParam "code"   :: ActionM String
         slot  <- queryParam "slot"  :: ActionM Int
         since <- queryParam "since" :: ActionM Int
-        wr    <- liftIO (atomically (Map.lookup cd <$> readTVar (games wrs)))
+        wr    <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesOB wrs)))
         case wr of
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just ob -> do
             (next, msgs) <- liftIO (atomically (messagesSince ob since slot))
             json (object ["next" .= next, "messages" .= map msgText msgs])
 
+      get "/api/game/:code/yrwires" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do 
+            json (object ["text" .= printYRWires gs])
       
       where 
         statusName :: WaitingRoomStatus -> String
