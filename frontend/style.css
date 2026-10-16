@@ -281,3 +281,141 @@ h1 {
 .subeqi {
     color: #888;
 }
+
+
+.life-gauge {
+    width: 140px;
+    height: 70px;
+    position: relative;
+    overflow: visible;
+    clip-path: inset(-20px -20px 0 -20px);
+}
+
+.life-gauge::before {
+    width: 140px;
+    height: 140px;
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 50%;
+
+    background: conic-gradient(
+        from 270deg,
+        #20c94b 0deg,
+        #d9ed32 60deg,
+        #ffb323 120deg,
+        #ff2929 180deg
+    );
+}
+
+.life-center {
+    position: absolute;
+    border-radius: 50%;
+    width: 70%;
+    height: 140%;
+    left: 21px;         /* width of color: 140px, width of inner circle: 70% -> 30% left for both sides -> 15% of width of color = 21px */
+    top: 21px;          /* same as in width */
+    background: #dfaa62;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    z-index: 1;
+}
+
+#lifeValue {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.life-center small {
+    color: white;
+    letter-spacing: 1.5px;
+}
+
+.life-pointer1 {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px white, 0 0 18px #ffcf4a;
+
+    /* l:4,5% b:20%;   l:43.25% b:72%   l:72.25% b:50%   l:83% b:18%    l:85.25% b:3%                     l:7% b:30%;     l:10% b:40;*/
+    left: 2%;
+    bottom: 3%;
+
+    transform-origin: center;
+    transition: left 0.5s ease, top 0.5s ease;
+    z-index: 2;
+}
+
+.life-pointer2 {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px white, 0 0 18px #ffcf4a;
+
+    left: 15%;
+    bottom: 50%;
+
+    transform-origin: center;
+    transition: left 0.5s ease, top 0.5s ease;
+    z-index: 2;
+}
+
+.life-pointer3 {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px white, 0 0 18px #ffcf4a;
+
+    left: 43.25%;
+    bottom: 72%;
+
+    transform-origin: center;
+    transition: left 0.5s ease, top 0.5s ease;
+    z-index: 2;
+}
+
+.life-pointer4 {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px white, 0 0 18px #ffcf4a;
+
+    left: 72.25%;
+    bottom: 50%;
+
+    transform-origin: center;
+    transition: left 0.5s ease, top 0.5s ease;
+    z-index: 2;
+}
+
+.life-pointer5 {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px white, 0 0 18px #ffcf4a;
+
+    left: 85.25%;
+    bottom: 3%;
+
+    transform-origin: center;
+    transition: left 0.5s ease, top 0.5s ease;
+    z-index: 2;
+}
