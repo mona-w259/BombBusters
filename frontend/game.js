@@ -47,7 +47,37 @@ async function loadYRWires() {
     setTimeout(loadYRWires, 1000);
 }
 
-loadYRWires();
 
+/* showDetonator */
+const detonator = document.getElementById("lifeValue");
+const lifePointers = document.querySelectorAll("#lifeGauge [data-lpoint]");
+
+async function loadDetonator() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/detonator"
+        const data = await (await fetch(url)).json();
+
+        if (data.text !== undefined) {
+            detonator.textContent = data.text;
+
+            /* show only the point associated to the detonator value */
+            const detValue = Number(data.text);
+            if (Number.isNaN(detValue)) return;
+
+            lifePointers.forEach (point => {
+                point.style.display = (Number(point.dataset.lpoint) === data.text) ? "" : "none";
+            })
+            return;
+        }
+    } catch (e) {
+        detonator.textContent = "(error)";
+    }
+
+    setTimeout(loadDetonator, 1000);
+}
+
+
+loadYRWires();
+loadDetonator();
 
 poll();

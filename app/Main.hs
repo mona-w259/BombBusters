@@ -134,6 +134,14 @@ main = do
           Just gs -> do 
             json (object ["text" .= printYRWires gs])
       
+      get "/api/game/:code/detonator" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do 
+            json (object ["text" .= detonator gs])
+      
       where 
         statusName :: WaitingRoomStatus -> String
         statusName Waiting = "waiting"
