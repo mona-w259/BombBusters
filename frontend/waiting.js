@@ -16,7 +16,6 @@ function stop(msg) {
     $("message").textContent = msg;
     $("count").textContent = "";
     $("timer").textContent = "";
-    $("back").hidden = false;
 }
 
 async function poll() {
