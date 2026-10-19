@@ -1,7 +1,9 @@
 module GameLogic.Display (displayPlayerView, displayWirePickView, displayInfoMarkerView, displayTurnResult, displayBotDecision, announceHumanTurn, indexToLabel) where
 
 import Control.Monad (unless, when)
+import Control.Monad.State
 import Data.List (intercalate)
+import Data.Map (insert)
 import Types
 import Config (bbDelay, bbClearScreen)
 import Output
@@ -10,55 +12,42 @@ import OutBox
 indexToLabel :: Int -> String
 indexToLabel i = [toEnum (fromEnum 'a' + i)]
 
-displayPlayerView :: PlayerView -> IO ()
+displayPlayerView :: PlayerView -> GameM ()
 displayPlayerView pv = do
   let self = pvSelf pv
       pid = playerId self
-      det = pvDetonator pv
-      colorMarks = pvColorMarkers pv
       cutWs = pvCutWires pv
       allInfos = pvInfoMarkers pv
       others = pvOthers pv
       botStatus = isBot self
+      det = pvDetonator pv
+
+      header = "\n============================================="
+            ++ "\nPLAYER " ++ show pid ++ " isBot: " ++ show botStatus ++ " - Detonator: " ++ show det
+            ++ "\n============================================="
+
+      cutText = "\nCUT WIRES (All Players)\n"
+            ++ (if null cutWs then "   (No cuts yet.)" else concatMap printCut cutWs)
+
+      equipText = if botStatus 
+                    then "\n---------------------------------------------"
+                      ++ "\nEQUIPMENT AVAILABLE" ++ "\n   " ++ equipmentSummary pv
+                    else ""
+
       hasHumanOnlooker = any (not . isBot) others
       displaySelf
         | botStatus && hasHumanOnlooker = censorPlayerWires self
         | otherwise = self
 
-  bbClearScreen
-
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "\n============================================="
-  instructionMessage (pvOutBox pv) (ToPlayer pid) $ "PLAYER " ++ show pid ++ " isBot: " ++ show botStatus ++ " - Detonator: " ++ show det
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "============================================="
---  instructionMessage (pvOutBox pv) (ToPlayer pid) $
---    "Color Markers: "
---      ++ (if null colorMarks then "(none)" else unwords (map (\w -> colorEmoji (color w) ++ "(" ++ show (value w) ++ ")") colorMarks))
---  instructionMessage (pvOutBox pv) (ToPlayer pid) $ "Unlocking Values: " ++ unlockingSummary pv
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "YOUR RACK"
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-  printRack (pvOutBox pv) self allInfos
+  liftIO bbClearScreen
+  printRack self allInfos
 
   unless (null others) $ do
-    instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-    instructionMessage (pvOutBox pv) (ToPlayer pid) "OTHER PLAYERS"
-    instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-    mapM_ (\oth -> printRack (pvOutBox pv) oth allInfos) others
+    mapM_ (\oth -> printRack oth allInfos) others
+    
+  modify (\gs -> gs { actionMsg = header ++ cutText ++ equipText })
+  syncState
 
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "CUT WIRES (All Players)"
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-  if null cutWs
-    then instructionMessage (pvOutBox pv) (ToPlayer pid) "   (No cuts yet.)"
-    else mapM_ (printCut pv) cutWs >> instructionMessage (pvOutBox pv) (ToPlayer pid) ""
-
-  when botStatus $ do
-    instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-    instructionMessage (pvOutBox pv) (ToPlayer pid) "EQUIPMENT AVAILABLE"
-    instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------"
-    instructionMessage (pvOutBox pv) (ToPlayer pid) $ "   " ++ equipmentSummary pv
-
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "\n=============================================\n"
 
 equipmentSummary :: PlayerView -> String
 equipmentSummary pv =
@@ -67,77 +56,64 @@ equipmentSummary pv =
       items = availEq ++ dd
   in if null items then "(none)" else intercalate ", " items
 
-unlockingSummary :: PlayerView -> String
-unlockingSummary pv =
-  let toUnlock = [ (unlockingVal e, name e) | e <- pvEquipment pv, not (unlocked e) ]
-  in case toUnlock of
-        [] -> "(none)"
-        xs -> intercalate ", " [show v ++ " → " ++ show eq | (v, eq) <- xs]
+-- unlockingSummary :: PlayerView -> String
+-- unlockingSummary pv =
+--   let toUnlock = [ (unlockingVal e, name e) | e <- pvEquipment pv, not (unlocked e) ]
+--   in case toUnlock of
+--         [] -> "(none)"
+--         xs -> intercalate ", " [show v ++ " → " ++ show eq | (v, eq) <- xs]
 
-displayWirePickView :: PlayerView -> Maybe Player -> IO ()
+displayWirePickView :: PlayerView -> Maybe Player -> GameM ()
 displayWirePickView pv mTarget = do
-  let self = pvSelf pv
-      pid = playerId self
-      ob = pvOutBox pv
-      allInfos = pvInfoMarkers pv
-      cutWs = pvCutWires pv
-      det = pvDetonator pv
+  let allInfos = pvInfoMarkers pv
+      self = pvSelf pv
+  liftIO bbClearScreen
 
-  bbClearScreen
-
-  instructionMessage (pvOutBox pv) (ToPlayer pid) $ "Detonator: " ++ show det
+--  instructionMessage (pvOutBox pv) (ToPlayer pid) $ "Detonator: " ++ show det
 --  printYRWires gs
 --  instructionMessage (pvOutBox pv) (ToPlayer pid) $ "Unlocking Values: " ++ unlockingSummary pv
 
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "YOUR RACK"
-  printRackLabeled (pvOutBox pv) self allInfos
+--  instructionMessage (pvOutBox pv) (ToPlayer pid) "YOUR RACK"
+  printRackLabeled self allInfos
   case mTarget of
     Nothing -> pure ()
     Just target -> do
-      instructionMessage ob (ToPlayer pid) "TARGET RACK"
-      printRackLabeled ob target allInfos
+--      instructionMessage ob (ToPlayer pid) "TARGET RACK"
+      printRackLabeled target allInfos
 
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "CUT WIRES (All Players)"
-  if null cutWs
-    then instructionMessage (pvOutBox pv) (ToPlayer pid) "   (No cuts yet.)"
-    else mapM_ (printCut pv) cutWs >> instructionMessage (pvOutBox pv) (ToPlayer pid) ""
-  instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------\n"
+--  instructionMessage (pvOutBox pv) (ToPlayer pid) "CUT WIRES (All Players)"
+--  if null cutWs
+--    then instructionMessage (pvOutBox pv) (ToPlayer pid) "   (No cuts yet.)"
+--    else let cutText = concatMap printCut cutWs >> instructionMessage (pvOutBox pv) (ToPlayer pid) ""
+--  instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------\n"
 
-displayInfoMarkerView :: PlayerView -> IO ()
+displayInfoMarkerView :: PlayerView -> GameM ()
 displayInfoMarkerView pv = do
   let self = pvSelf pv
       others = pvOthers pv
       allInfos = pvInfoMarkers pv
-      colorMarks = pvColorMarkers pv
-      det = pvDetonator pv
+  liftIO bbClearScreen
 
-  bbClearScreen
-
-  instructionMessage (pvOutBox pv) ToAll "\n---------------------------------------------"
-  instructionMessage (pvOutBox pv) ToAll $ "Detonator: " ++ show det
---  instructionMessage (pvOutBox pv) ToAll $
---    "Color Markers: "
---      ++ (if null colorMarks then "(none)" else unwords (map (\w -> colorEmoji (color w) ++ "(" ++ show (value w) ++ ")") colorMarks))
---  instructionMessage (pvOutBox pv) ToAll $ "Unlocking Values: " ++ unlockingSummary pv
-  instructionMessage (pvOutBox pv) ToAll "---------------------------------------------"
-  instructionMessage (pvOutBox pv) ToAll "YOUR RACK"
-  printRackLabeled (pvOutBox pv) self allInfos
+--  instructionMessage (pvOutBox pv) ToAll $ "Detonator: " ++ show det
+--  instructionMessage (pvOutBox pv) ToAll "YOUR RACK"
+  printRackLabeled self allInfos
   unless (null others) $ do
-    instructionMessage (pvOutBox pv) ToAll "---------------------------------------------"
-    instructionMessage (pvOutBox pv) ToAll "OTHER PLAYERS"
-    instructionMessage (pvOutBox pv) ToAll "---------------------------------------------"
-    mapM_ (\oth -> printRackLabeled (pvOutBox pv) oth allInfos) others
+--    instructionMessage (pvOutBox pv) ToAll "---------------------------------------------"
+--    instructionMessage (pvOutBox pv) ToAll "OTHER PLAYERS"
+--    instructionMessage (pvOutBox pv) ToAll "---------------------------------------------"
+    mapM_ (\oth -> printRackLabeled oth allInfos) others
 
-announceHumanTurn :: PlayerView -> IO ()
+announceHumanTurn :: PlayerView -> GameM ()
 announceHumanTurn pv = do
   let self = pvSelf pv
       multiHuman = any (not . isBot) (pvOthers pv)
   when (not (isBot self) && multiHuman) $ do
-    bbClearScreen
-    instructionMessage (pvOutBox pv) ToAll "\n============================================="
-    instructionMessage (pvOutBox pv) ToAll $ "  Player " ++ show (playerId self) ++ " (" ++ playerName self ++ ") - it's your turn!"
-    instructionMessage (pvOutBox pv) ToAll "============================================="
-    bbDelay 3000000
+-- neccessary?    
+    liftIO bbClearScreen
+    let msg = "Player " ++ show (playerId self) ++ " (" ++ playerName self ++ ") - it's your turn!"
+    modify (\gs -> gs { announceTurn = (playerId self, msg) })
+    syncState
+    liftIO (bbDelay 3000000)
 
 censorPlayerWires :: Player -> Player
 censorPlayerWires p = p { playerWires = map hide (playerWires p) }
@@ -146,8 +122,8 @@ censorPlayerWires p = p { playerWires = map hide (playerWires p) }
       | color w == Grey = w
       | otherwise = w { color = Hidden, value = -1 }
 
-printRack :: OutBox -> Player -> [InfoMarker] -> IO ()
-printRack ob pl infos = do
+printRack :: Player -> [InfoMarker] -> GameM ()
+printRack pl infos = do
   let pid = playerId pl
       pName = playerName pl
       pwires = playerWires pl
@@ -156,11 +132,13 @@ printRack ob pl infos = do
         | InfoMarker {markerOwner = owner, markerIndex = idx, markerValue = val, markerColor = col} <- infos,
           owner == pid
         ]
-  instructionMessage ob (ToPlayer pid) $ "Player " ++ show pid ++ " (" ++ pName ++ "):"
-  instructionMessage ob (ToPlayer pid) $ "   " ++ concatMap (formatWireOverview infosForPlayer) pwires ++ "\n"
+--  instructionMessage ob (ToPlayer pid) $ "Player " ++ show pid ++ " (" ++ pName ++ "):"
+      msg = " " ++ concatMap (formatWireOverview infosForPlayer) pwires ++ "\n"
+  modify (\gs -> gs { rackOverview = insert pid msg (rackOverview gs) })
+  syncState
 
-printRackLabeled :: OutBox -> Player -> [InfoMarker] -> IO ()
-printRackLabeled ob pl infos = do
+printRackLabeled :: Player -> [InfoMarker] -> GameM ()
+printRackLabeled pl infos = do
   let pid = playerId pl
       pName = playerName pl
       pwires = playerWires pl
@@ -169,8 +147,9 @@ printRackLabeled ob pl infos = do
         | InfoMarker {markerOwner = owner, markerIndex = idx, markerValue = val, markerColor = col} <- infos,
           owner == pid
         ]
-  instructionMessage ob (ToPlayer pid) $ "Player " ++ show pid ++ " (" ++ pName ++ "):"
-  instructionMessage ob (ToPlayer pid) $ "   " ++ concatMap (formatWireLabeled infosForPlayer) pwires ++ "\n"
+      msg = " " ++ concatMap (formatWireLabeled infosForPlayer) pwires ++ "\n"
+  modify (\gs -> gs { rackLabled = insert pid msg (rackLabled gs) })
+  syncState
 
 formatWireOverview :: [(Int, (Int, WireColor))] -> Wire -> String
 formatWireOverview infos w =
@@ -199,26 +178,30 @@ formatWireLabeled infos w =
       wireBox = "[" ++ lbl ++ ":" ++ emoji ++ "(" ++ valStr ++ ")" ++ "]"
    in wireBox ++ " "
 
-printCut :: PlayerView -> MarkedWire -> IO ()
-printCut pv MarkedWire {player = _, originalIndex = _, wire = w} =
-  inlineMessage (pvOutBox pv) ToAll $ colorEmoji (color w) ++ " (" ++ show (value w) ++ ") "
+printCut :: MarkedWire -> String
+printCut MarkedWire {player = _, originalIndex = _, wire = w} = colorEmoji (color w) ++ " (" ++ show (value w) ++ ") "
 
 
-displayTurnResult :: GameState -> Outcome -> IO ()
-displayTurnResult _ ActionDone = pure ()
-displayTurnResult gs outcome = do
-  instructionMessage (outBox gs) ToAll $ case outcome of
-    CutSuccess -> "Successful cut!"
-    _ -> "Oops! Wrong wire..."
-  bbDelay 3000000
+displayTurnResult :: Outcome -> GameM ()
+displayTurnResult ActionDone = pure ()
+displayTurnResult outcome = do
+  let msg = case outcome of
+              CutSuccess -> "Successful cut!"
+              _ -> "Oops! Wrong wire..."
+  modify (\gs -> gs { resultMsg = msg })
+  syncState
+  liftIO (bbDelay 3000000)
 
-displayBotDecision :: GameState -> Maybe PublicAction -> [PublicEquipmentUse] -> IO ()
-displayBotDecision gs act equip = do
-  case equip of
-    [] -> pure ()
-    _  -> instructionMessage (outBox gs) ToAll $ "Equipment : " ++ intercalate ", " (map showEquipUse equip)
-  instructionMessage (outBox gs) ToAll $ "Action    : " ++ maybe "(equipment only)" showBotAction act
-  bbDelay 1500000
+displayBotDecision :: Maybe PublicAction -> [PublicEquipmentUse] -> GameM ()
+displayBotDecision act equip = do
+  -- update usable equipment
+--  case equip of
+--    [] -> pure ()
+--    _  -> instructionMessage (outBox gs) ToAll $ "Equipment : " ++ intercalate ", " (map showEquipUse equip)
+  let msg = "Action    : " ++ maybe "(equipment only)" showBotAction act
+  modify (\gs -> gs { actionMsg = msg })
+  syncState
+  liftIO (bbDelay 1500000)
 
 showBotAction :: PublicAction -> String
 showBotAction (PubSoloCut2 (a, b)) =

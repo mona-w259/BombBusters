@@ -1,6 +1,8 @@
 module Output where
 
 import Control.Monad.State
+import Control.Concurrent.STM
+import qualified Data.Map as Map
 import Types
 import OutBox
 
@@ -12,6 +14,10 @@ colorEmoji Red = "🔴"
 colorEmoji Grey = "⚫"
 colorEmoji Hidden = "⬜"
 
+syncState :: GameM ()
+syncState = do
+  gs <- get
+  liftIO $ atomically $ modifyTVar' (syncVar gs) (Map.insert (code gs) gs)
 
 errorMessage :: String -> a
 errorMessage err = error err

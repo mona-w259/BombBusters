@@ -38,7 +38,8 @@ prepareGame :: WaitingRooms -> WaitingRoom -> IO ()
 prepareGame wrs wr = do
   let l   = l_playersWR wr
       ml  = ml_playersWR wr
-  gs <- initGameState l ml (codeWR wr)
+  gs0 <- initGameState l ml (codeWR wr)
+  let gs = gs0 { syncVar = gamesGS wrs }
   registerGame wrs (codeWR wr) (outBox gs)
   atomically $ modifyTVar' (gamesGS wrs) (Map.insert (codeWR wr) gs)
   void . forkIO $ runGame gs
@@ -141,7 +142,50 @@ main = do
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do 
             json (object ["text" .= detonator gs])
-      
+
+      get "/api/game/:code/racklabled" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no rack yet" :: String)])
+          Just gs -> do
+            json (object ["text" .= Map.findWithDefault "" sl (rackLabled gs)])
+
+      get "/api/game/:code/rackoverview" $ do
+        cd <- pathParam "code"      :: ActionM String
+--        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no rack yet" :: String)])
+          Just gs -> do
+            json (object ["text" .= Map.toList (rackOverview gs)])
+
+      get "/api/game/:code/turn" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= announceTurn gs])
+
+      get "/api/game/:code/actionmessage" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= actionMsg gs])
+
+      get "/api/game/:code/resultmessage" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= resultMsg gs])
+
+
       where 
         statusName :: WaitingRoomStatus -> String
         statusName Waiting = "waiting"

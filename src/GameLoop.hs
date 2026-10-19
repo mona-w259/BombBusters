@@ -24,20 +24,23 @@ startGame = do
   gs <- get
   botIds <- liftIO $ (handleChooseBots gs (turnOrder gs))
   modify $ selectBots botIds
+  syncState
   gameLoop
 
 gameLoop :: GameM ()
 gameLoop = do
   modify evaluateGameEnd
+  syncState
   gs <- get
   let currStatus = status gs
   case currStatus of
-    Detonated -> infoMessage "Bomb detonated, game lost."
-    Defused -> infoMessage "Bomb defused, game won."
+    Detonated -> modify (\gs -> gs { resultMsg = "Bomb detonated, game lost." }) >> syncState
+    Defused   -> modify (\gs -> gs { resultMsg = "Bomb defused, game won." }) >> syncState
     WaitingForChoice pc -> handlePendingChoice pc >> gameLoop
     InProgress -> do
       modify checkActivePlayers
       modify unlockEquipment
+      syncState
       gs' <- get
       let pid = currentPlayer gs'
           pv = getPlayerView pid gs'
@@ -47,11 +50,11 @@ gameLoop = do
         then do
           act <- if isBot (pvSelf pv)
             then do
-              liftIO $ displayPlayerView pv
+              displayPlayerView pv
               let a = botPlaceMarker pv
-              liftIO $ displayBotDecision gs' (Just (toPublicAction a)) []
+              displayBotDecision (Just (toPublicAction a)) []
               pure a
-            else liftIO $ announceHumanTurn pv >> handlePlaceInfoMarker pv
+            else announceHumanTurn pv >> handlePlaceInfoMarker pv
           _ <- handleAction pv act id
           pure ()
         else do
@@ -59,7 +62,8 @@ gameLoop = do
           gs'' <- get
           case status gs'' of
             Detonated -> pure ()
-            _ -> liftIO $ displayTurnResult gs' outcome
+            _ -> displayTurnResult outcome
 
       modify advanceTurn
+      syncState
       gameLoop

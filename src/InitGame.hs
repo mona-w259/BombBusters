@@ -2,6 +2,7 @@ module InitGame (initGameState) where
 
 import Data.List (sortBy)
 import Data.Ord (comparing)
+import Data.Map (empty)
 import System.Random
 import System.Random.Shuffle (shuffle')
 import qualified Config
@@ -163,5 +164,10 @@ initGameState l ml codeI = do
         roundCount = 0,
         turnHistory = [],
         unlockingValues = [(unlockingVal e, name e) | e <- eq],
-        outBox = ob
+        outBox = ob,
+        rackLabled = empty,
+        rackOverview = empty,
+        announceTurn = (0, ""),
+        actionMsg = "",
+        resultMsg = ""
       }

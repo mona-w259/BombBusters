@@ -1,6 +1,8 @@
 module Types where
 
 import Control.Monad.State
+import Control.Concurrent.STM (TVar)
+import Data.Map as Map
 import OutBox
 
 data WireColor = Blue | Yellow | Red | Grey | Hidden
@@ -128,7 +130,14 @@ data GameState = GameState
     roundCount :: Int,
     turnHistory :: [TurnLog],
     unlockingValues :: [(Int, EquipmentName)],
-    outBox :: OutBox
+    outBox :: OutBox,
+    -- neccessary for displaying
+    rackLabled :: Map.Map PlayerId String,
+    rackOverview :: Map.Map PlayerId String,
+    announceTurn :: (PlayerId, String),
+    actionMsg :: String,
+    resultMsg :: String,
+    syncVar :: TVar (Map.Map Code GameState)
   }
 
 data PlayerView = PlayerView

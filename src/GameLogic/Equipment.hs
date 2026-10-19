@@ -5,6 +5,7 @@ import Data.List
 import GameLogic.Actions
 import GameLogic.Util
 import Types
+import Output
 
 handleEquipment :: Modifier -> PlayerView -> [EquipmentUse] -> GameM Outcome
 handleEquipment _ _ [] = pure ActionDone
@@ -19,21 +20,25 @@ handleOneEquipment f pv (UseSuperDetector pid selfIdx _) = do
   gs <- get
   let outcome = if null (superMatch pv pid selfIdx gs) then CutMismatch else CutSuccess
   modify (f (superDetectorUpdate pv pid selfIdx))
+  syncState
   pure outcome
 handleOneEquipment f pv (UseTripleDetector pid selfIdx (pos1, pos2, pos3) _) = do
   gs <- get
   let outcome = if null (multiMatch [pos1, pos2, pos3] pv pid selfIdx gs) then CutMismatch else CutSuccess
   modify (f (multiDetectorUpdate pv pid selfIdx [pos1, pos2, pos3]))
+  syncState
   pure outcome
 handleOneEquipment f pv (UseDoubleDetector pid selfIdx (pos1, pos2) _) = do
   gs <- get
   let outcome = if null (multiMatch [pos1, pos2] pv pid selfIdx gs) then CutMismatch else CutSuccess
   modify (f (multiDetectorUpdate pv pid selfIdx [pos1, pos2]))
+  syncState
   pure outcome
 handleOneEquipment f pv (UseDoubleRadiator pid (i1, i2) pos _) = do
   gs <- get
   let outcome = doubleRadiatorOutcome pv pid (i1, i2) pos gs
   modify (f (doubleRadiatorUpdate pv pid (i1, i2) pos))
+  syncState
   pure outcome
 
 doubleRadiatorOutcome :: PlayerView -> PlayerId -> (Int, Int) -> Int -> GameState -> Outcome

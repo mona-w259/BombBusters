@@ -14,16 +14,15 @@ import OutBox
 
 playerTurn :: PlayerView -> GameM Outcome
 playerTurn pv = do
-  gs <- get
   let pubOf act eq = (fmap toPublicAction act, map toPublicEquipmentUse eq)
-  (act, equip) <- liftIO $ if isBot (pvSelf pv)
+  (act, equip) <- if isBot (pvSelf pv)
     then do
       displayPlayerView pv
-      bbDelay 2000000
-      instructionMessage (pvOutBox pv) ToAll $ "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..."
-      result@(a, eq) <- botAction pv
+      liftIO (bbDelay 2000000)
+      let gs = gs { actionMsg = "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..." }
+      result@(a, eq) <- liftIO (botAction pv)
       let (pubA, pubEq) = pubOf a eq
-      displayBotDecision gs pubA pubEq
+      displayBotDecision pubA pubEq
       return result
     else announceHumanTurn pv >> humanAction pv
   let f = handleStabilizer equip
@@ -43,6 +42,7 @@ playerTurn pv = do
           logOutcome = outcome
         }
   modify (appendTurnLog tlog)
+  syncState
   pure outcome
 
 -- pending choice is envoked whenever a player whose turn it is not has to choose a wire;
@@ -53,5 +53,6 @@ handlePendingChoice (ChooseWire choosingPlayer opts resolve kind) = do
   let pv = getPlayerView choosingPlayer gs
   choice <- if isBot (pvSelf pv)
     then pure $ botPendingChoice pv kind opts
-    else liftIO $ askPlayerToChooseWire pv opts kind
+    else askPlayerToChooseWire pv opts kind
   modify $ \s -> resolve choice s
+  syncState

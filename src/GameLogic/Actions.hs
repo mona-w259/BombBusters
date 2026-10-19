@@ -3,6 +3,7 @@ module GameLogic.Actions (handleAction, placeInfoMarkerUpdate) where
 import Control.Monad.State
 import GameLogic.Util
 import Types
+import Output
 
 -- pure action handlers, rely on valid input 
 
@@ -14,9 +15,16 @@ handleAction pv action f = case action of
     gs <- get
     let outcome = dualCutOutcome pv pid2 pos gs
     modify (f (dualCutUpdate pv pid2 pos))
+    syncState
     pure outcome
-  RemoveRed pos -> modify (f (removeRedUpdate pv pos)) >> pure ActionDone
-  PlaceInfoMarker pos -> modify (placeInfoMarkerUpdate pv pos) >> pure ActionDone
+  RemoveRed pos -> do
+    modify (f (removeRedUpdate pv pos)) 
+    syncState
+    pure ActionDone
+  PlaceInfoMarker pos -> do 
+    modify (placeInfoMarkerUpdate pv pos) 
+    syncState 
+    pure ActionDone
 
 dualCutOutcome :: PlayerView -> PlayerId -> CutPosition -> GameState -> Outcome
 dualCutOutcome pv pid2 (pos1, pos2) gs =

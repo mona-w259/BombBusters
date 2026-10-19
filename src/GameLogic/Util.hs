@@ -1,5 +1,6 @@
 module GameLogic.Util where
 
+import Control.Monad.State
 import Data.List
 import Data.Maybe
 import Text.Read
@@ -65,34 +66,28 @@ findPlayer pidTarget pList =
         Just p -> p
         Nothing -> errorMessage $ "Player with id " ++ show pidTarget ++ " not found."
 
-readInt :: PlayerView -> String -> IO Int
+readInt :: PlayerView -> String -> GameM Int
 readInt pv prompt = do
-  let ob    = pvOutBox pv
-      self  = pvSelf pv
-      pid   = playerId self
-      vis   = ToPlayer pid
-  instructionMessage ob vis prompt
-  inlineMessage ob vis "> "
-  input <- getLine
+  modify (\gs -> gs { actionMsg = prompt } )
+  syncState
+  input <- liftIO getLine
   case readMaybe input :: Maybe Int of
     Just n -> return n
     Nothing -> do
-      instructionMessage ob vis "Invalid number. Please enter a valid integer."
+      modify (\gs -> gs { resultMsg = "Invalid number. Please enter a valid integer." })
+      syncState
       readInt pv prompt
 
-readLabel :: PlayerView -> String -> IO Int
+readLabel :: PlayerView -> String -> GameM Int
 readLabel pv prompt = do
-  let ob    = pvOutBox pv
-      self  = pvSelf pv
-      pid   = playerId self
-      vis   = ToPlayer pid
-  instructionMessage ob vis prompt
-  inlineMessage ob vis "> "
-  line <- getLine
-  case line of
+  modify (\gs -> gs { actionMsg = prompt } )
+  syncState
+  input <- liftIO getLine
+  case input of
     [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
     _ -> do
-      instructionMessage ob vis "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
+      modify (\gs -> gs { resultMsg = "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)." })
+      syncState
       readLabel pv prompt
 
 cutAtPosition :: Int -> [Wire] -> [Wire]

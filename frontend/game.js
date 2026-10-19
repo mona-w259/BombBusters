@@ -77,7 +77,124 @@ async function loadDetonator() {
 }
 
 
+/* print racks */
+const rack1 = document.getElementById("rack1");
+const rack2 = document.getElementById("rack2");
+const rack3 = document.getElementById("rack3");
+const rack4 = document.getElementById("rack4");
+
+async function loadRacks() {
+    try {
+        const url1 = "/api/game" + encodeURIComponent(code) + "/racklabled?slot=" + encodeURIComponent(slot)
+        const dataLab = await (await fetch(url1)).json();
+
+        const url2 = "/api/game" + encodeURIComponent(code) + encodeURIComponent(slot) + "/rackoverview"
+        const dataOvv = await (await fetch(url2)).json();
+
+        if (dataLab.text != undefined && dataOvv.text != undefined) {
+            switch (slot) {
+                // data.racks.forEach(([pid, text]) => ...)
+                case 1:
+                    rack1.textContent = dataLab.text;
+                    rack2.textContent = dataOvv.text;
+                    rack3.textContent = dataOvv.text;
+                    rack4.textContent = dataOvv.text;
+                case 2:
+                    rack1.textContent = dataOvv.text;
+                    rack2.textContent = dataLab.text;
+                    rack3.textContent = dataOvv.text;
+                    rack4.textContent = dataOvv.text;
+                case 3:
+                    rack1.textContent = dataOvv.text;
+                    rack2.textContent = dataOvv.text;
+                    rack3.textContent = dataLab.text;
+                    rack4.textContent = dataOvv.text;
+                case 4:
+                    rack1.textContent = dataOvv.text;
+                    rack2.textContent = dataOvv.text;
+                    rack3.textContent = dataOvv.text;
+                    rack4.textContent = dataLab.text;
+                default:
+                    rack1.textContent = "Unknown slot";
+                    rack2.textContent = "Unknown slot";
+                    rack3.textContent = "Unknown slot";
+                    rack4.textContent = "Unknown slot";
+            } 
+            return;
+        }
+    } catch (e) {
+        rack1.textContent = "(error)";
+        rack2.textContent = "(error)";
+        rack3.textContent = "(error)";
+        rack4.textContent = "(error)";
+    }
+
+    setTimeout(loadRacks, 1000);
+}
+
+
+/* announce turn */
+const annTurn = document.getElementById("currturn");
+
+async function loadCurrTurn() {
+    try {
+        const url = "/api/game" + encodeURIComponent(code) + "/turn"
+        const data = await (await fetch(url)).json();
+
+        if (data.text != undefined) {
+            annTurn.textContent = "Current turn: " + data.text;
+            return;
+        }
+    } catch (e) {
+        annTurn.textContent = "(error)";
+    }
+
+    setTimeout(loadCurrTurn, 1000);
+}
+
+/* print current action */
+const actionMsg = document.getElementById("action");
+
+async function loadActionMsg() {
+    try {
+        const url = "/api/game" + encodeURIComponent(code) + "/actionmessage"
+        const data = await (await fetch(url)).json();
+
+        if (data.text != undefined) {
+            actionMsg.textContent = "Action: " + data.text;
+            return;
+        }
+    } catch (e) {
+        actionMsg.textContent = "Currently no actions.";
+    }
+
+    setTimeout(loadActionMsg, 1000);
+}
+
+
+/* print result of last action */
+const resultMsg = document.getElementById("result");
+
+async function loadResultMsg() {
+    try {
+        const url = "/api/game" + encodeURIComponent(code) + "/resultmessage"
+        const data = await (await fetch(url)).json();
+
+        if (data.text != undefined) {
+            resultMsg.textContent = "Result: " + data.text;
+            return;
+        }
+    } catch (e) {
+        resultMsg.textContent = "";
+    }
+
+    setTimeout(loadResultMsg, 1000);
+}
+
+
 loadYRWires();
 loadDetonator();
+loadActionMsg();
+loadResultMsg();
 
 poll();
