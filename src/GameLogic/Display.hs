@@ -7,7 +7,6 @@ import Data.Map (insert)
 import Types
 import Config (bbDelay, bbClearScreen)
 import Output
-import OutBox
 
 indexToLabel :: Int -> String
 indexToLabel i = [toEnum (fromEnum 'a' + i)]

@@ -9,7 +9,6 @@ import Data.Time.Clock (UTCTime, addUTCTime, getCurrentTime)
 import System.Random (randomRIO)
 import Text.Printf (printf)
 import Types (Code, GameState)
-import OutBox
 
 
 ---------- Data Types ----------
@@ -28,7 +27,6 @@ data WaitingRoom = WaitingRoom {
 
 data WaitingRooms = WaitingRooms {
   waitingRooms :: TVar (Map.Map Code WaitingRoom),
-  gamesOB :: TVar (Map.Map Code OutBox),
   gamesGS :: TVar (Map.Map Code GameState)
 }
 
@@ -45,7 +43,7 @@ maxWait :: Int
 maxWait = 10 * 60
 
 newWaitingRooms :: IO WaitingRooms
-newWaitingRooms = WaitingRooms <$> newTVarIO Map.empty <*> newTVarIO Map.empty <*> newTVarIO Map.empty
+newWaitingRooms = WaitingRooms <$> newTVarIO Map.empty <*> newTVarIO Map.empty
 
 codeGenerator :: IO Code
 codeGenerator = do

@@ -130,7 +130,6 @@ data GameState = GameState
     roundCount :: Int,
     turnHistory :: [TurnLog],
     unlockingValues :: [(Int, EquipmentName)],
-    outBox :: OutBox,
     -- neccessary for displaying
     rackLabled :: Map.Map PlayerId String,
     rackOverview :: Map.Map PlayerId String,
@@ -151,8 +150,7 @@ data PlayerView = PlayerView
     pvRoundCount :: Int,
     pvTurnOrder :: [PlayerId],
     pvTurnHistory :: [TurnLog],
-    pvUnlockingValues :: [(Int, EquipmentName)],
-    pvOutBox :: OutBox
+    pvUnlockingValues :: [(Int, EquipmentName)]
   }
   deriving (Eq, Show)
 

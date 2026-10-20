@@ -15,7 +15,6 @@ import GameLoop
 import InitGame
 import WaitingRoom
 import Types
-import OutBox
 import Output
 
 ----------------- small functions -----------------
@@ -115,17 +114,6 @@ main = do
               "secondsLeft"   .= max 0 (floor (diffUTCTime (deadline wr) now) :: Int)
             ]
       
-      get "/api/game/:code/output" $ do
-        cd    <- pathParam "code"   :: ActionM String
-        slot  <- queryParam "slot"  :: ActionM Int
-        since <- queryParam "since" :: ActionM Int
-        wr    <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesOB wrs)))
-        case wr of
-          Nothing -> json (object ["error" .= ("no such game" :: String)])
-          Just ob -> do
-            (next, msgs) <- liftIO (atomically (messagesSince ob since slot))
-            json (object ["next" .= next, "messages" .= map msgText msgs])
-
       get "/api/game/:code/yrwires" $ do
         cd <- pathParam "code"      :: ActionM String
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))

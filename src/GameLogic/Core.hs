@@ -10,7 +10,6 @@ import GameLogic.Util
 import BotLogic.Interface
 import Types
 import Output
-import OutBox
 
 playerTurn :: PlayerView -> GameM Outcome
 playerTurn pv = do

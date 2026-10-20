@@ -6,7 +6,6 @@ import Data.Maybe
 import Text.Read
 import Types
 import Output
-import OutBox
 
 getPlayerView :: PlayerId -> GameState -> PlayerView
 getPlayerView pid gs =
@@ -29,8 +28,7 @@ getPlayerView pid gs =
               pvRoundCount = roundCount gs,
               pvTurnOrder = turnOrder gs,
               pvTurnHistory = turnHistory gs,
-              pvUnlockingValues = unlockingValues gs,
-              pvOutBox = outBox gs
+              pvUnlockingValues = unlockingValues gs
             }
         Nothing -> errorMessage $ "player not found pid: " ++ show pid
 
