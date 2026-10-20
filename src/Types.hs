@@ -133,7 +133,7 @@ data GameState = GameState
     -- neccessary for displaying
     rackLabled :: Map.Map PlayerId String,
     rackOverview :: Map.Map PlayerId String,
-    announceTurn :: (PlayerId, String),
+    announceTurn :: PlayerId,
     actionMsg :: String,
     resultMsg :: String,
     syncVar :: TVar (Map.Map Code GameState)
