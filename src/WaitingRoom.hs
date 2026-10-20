@@ -65,9 +65,9 @@ lookupWaitingRoom wrs code = Map.lookup code <$> readTVar (waitingRooms wrs)
 isStarted :: WaitingRooms -> Code -> STM Bool
 isStarted wrs code = maybe False ((== Started) . status) <$> lookupWaitingRoom wrs code
 
-registerGame :: WaitingRooms -> Code -> OutBox -> IO ()
-registerGame wrs code ob = do
-  atomically $ modifyTVar' (gamesOB wrs) (Map.insert code ob)
+registerGame :: WaitingRooms -> Code -> GameState -> IO ()
+registerGame wrs code gs = do
+  atomically $ modifyTVar' (gamesGS wrs) (Map.insert code gs)
 
 setStatus :: WaitingRooms -> Code -> WaitingRoomStatus -> STM ()
 setStatus wrs code newStatus = 

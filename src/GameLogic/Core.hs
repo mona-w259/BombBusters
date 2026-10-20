@@ -19,7 +19,8 @@ playerTurn pv = do
     then do
       displayPlayerView pv
       liftIO (bbDelay 2000000)
-      let gs = gs { actionMsg = "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..." }
+      modify (\gs -> gs { actionMsg = "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..." })
+      syncState
       result@(a, eq) <- liftIO (botAction pv)
       let (pubA, pubEq) = pubOf a eq
       displayBotDecision pubA pubEq

@@ -16,23 +16,13 @@ displayPlayerView :: PlayerView -> GameM ()
 displayPlayerView pv = do
   let self = pvSelf pv
       pid = playerId self
-      cutWs = pvCutWires pv
       allInfos = pvInfoMarkers pv
       others = pvOthers pv
       botStatus = isBot self
-      det = pvDetonator pv
 
-      header = "\n============================================="
-            ++ "\nPLAYER " ++ show pid ++ " isBot: " ++ show botStatus ++ " - Detonator: " ++ show det
-            ++ "\n============================================="
+      header = "\nPlayer " ++ show pid ++ " isBot: " ++ show botStatus
 
-      cutText = "\nCUT WIRES (All Players)\n"
-            ++ (if null cutWs then "   (No cuts yet.)" else concatMap printCut cutWs)
-
-      equipText = if botStatus 
-                    then "\n---------------------------------------------"
-                      ++ "\nEQUIPMENT AVAILABLE" ++ "\n   " ++ equipmentSummary pv
-                    else ""
+      equipText = "<br>Available Equipment: " ++ equipmentSummary pv
 
       hasHumanOnlooker = any (not . isBot) others
       displaySelf
@@ -45,7 +35,7 @@ displayPlayerView pv = do
   unless (null others) $ do
     mapM_ (\oth -> printRack oth allInfos) others
     
-  modify (\gs -> gs { actionMsg = header ++ cutText ++ equipText })
+  modify (\gs -> gs { actionMsg = header ++ equipText })
   syncState
 
 
@@ -110,8 +100,7 @@ announceHumanTurn pv = do
   when (not (isBot self) && multiHuman) $ do
 -- neccessary?    
     liftIO bbClearScreen
-    let msg = "Player " ++ show (playerId self) ++ " (" ++ playerName self ++ ") - it's your turn!"
-    modify (\gs -> gs { announceTurn = (playerId self, msg) })
+    modify (\gs -> gs { announceTurn = playerId self })
     syncState
     liftIO (bbDelay 3000000)
 
@@ -125,14 +114,12 @@ censorPlayerWires p = p { playerWires = map hide (playerWires p) }
 printRack :: Player -> [InfoMarker] -> GameM ()
 printRack pl infos = do
   let pid = playerId pl
-      pName = playerName pl
       pwires = playerWires pl
       infosForPlayer =
         [ (idx, (val, col))
         | InfoMarker {markerOwner = owner, markerIndex = idx, markerValue = val, markerColor = col} <- infos,
           owner == pid
         ]
---  instructionMessage ob (ToPlayer pid) $ "Player " ++ show pid ++ " (" ++ pName ++ "):"
       msg = " " ++ concatMap (formatWireOverview infosForPlayer) pwires ++ "\n"
   modify (\gs -> gs { rackOverview = insert pid msg (rackOverview gs) })
   syncState
@@ -140,7 +127,6 @@ printRack pl infos = do
 printRackLabeled :: Player -> [InfoMarker] -> GameM ()
 printRackLabeled pl infos = do
   let pid = playerId pl
-      pName = playerName pl
       pwires = playerWires pl
       infosForPlayer =
         [ (idx, (val, col))
@@ -178,8 +164,8 @@ formatWireLabeled infos w =
       wireBox = "[" ++ lbl ++ ":" ++ emoji ++ "(" ++ valStr ++ ")" ++ "]"
    in wireBox ++ " "
 
-printCut :: MarkedWire -> String
-printCut MarkedWire {player = _, originalIndex = _, wire = w} = colorEmoji (color w) ++ " (" ++ show (value w) ++ ") "
+-- printCut :: MarkedWire -> String
+-- printCut MarkedWire {player = _, originalIndex = _, wire = w} = colorEmoji (color w) ++ " (" ++ show (value w) ++ ") "
 
 
 displayTurnResult :: Outcome -> GameM ()
@@ -195,11 +181,10 @@ displayTurnResult outcome = do
 displayBotDecision :: Maybe PublicAction -> [PublicEquipmentUse] -> GameM ()
 displayBotDecision act equip = do
   -- update usable equipment
---  case equip of
---    [] -> pure ()
---    _  -> instructionMessage (outBox gs) ToAll $ "Equipment : " ++ intercalate ", " (map showEquipUse equip)
-  let msg = "Action    : " ++ maybe "(equipment only)" showBotAction act
-  modify (\gs -> gs { actionMsg = msg })
+  let eqMsg = case equip of
+              [] -> ""
+              _  -> "Equipment: " ++ intercalate ", " (map showEquipUse equip) ++ "\n"
+  modify (\gs -> gs { actionMsg = eqMsg ++ maybe "(equipment only)" showBotAction act })
   syncState
   liftIO (bbDelay 1500000)
 

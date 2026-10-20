@@ -34,8 +34,8 @@ gameLoop = do
   gs <- get
   let currStatus = status gs
   case currStatus of
-    Detonated -> modify (\gs -> gs { resultMsg = "Bomb detonated, game lost." }) >> syncState
-    Defused   -> modify (\gs -> gs { resultMsg = "Bomb defused, game won." }) >> syncState
+    Detonated -> modify (\gsEnd -> gsEnd { endState = 0 }) >> syncState
+    Defused   -> modify (\gsEnd -> gsEnd { endState = 1 }) >> syncState
     WaitingForChoice pc -> handlePendingChoice pc >> gameLoop
     InProgress -> do
       modify checkActivePlayers

@@ -257,8 +257,8 @@ actionOptions pv =
 chooseAction :: PlayerView -> GameM Action
 chooseAction pv = do
   displayPlayerView pv
-  let gs        = gs { actionMsg = ("Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:") }
-      opts      = actionOptions pv
+  modify (\gs -> gs { actionMsg = ("Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:") })
+  let opts      = actionOptions pv
       numbered  = zip [1 :: Int ..] opts
   if null opts
     then do
@@ -280,8 +280,8 @@ chooseAction pv = do
 chooseActionOrEquipment :: PlayerView -> GameM (Either Action [Selectable])
 chooseActionOrEquipment pv = do
   displayPlayerView pv
-  let gs        = gs { actionMsg = ("Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:") }
-      opts      = actionOptions pv
+  modify (\gs -> gs { actionMsg = ("Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:") })
+  let opts      = actionOptions pv
       numbered  = zip [1 :: Int ..] opts
       hasEq     = not (null (availableEquipment pv))
   if null opts && not hasEq
@@ -294,7 +294,8 @@ chooseActionOrEquipment pv = do
       when hasEq $ modify (\gs -> gs { actionMsg = "e) Choose equipment" })
       syncState
       let tokens  = map (show . fst) numbered ++ ["e" | hasEq]
-          gs      = gs { actionMsg = "Enter the number or letter of the action you choose (" ++ intercalate " or " tokens ++ "):" }
+      modify (\gs -> gs { actionMsg = "Enter the number or letter of the action you choose (" ++ intercalate " or " tokens ++ "):" })
+      syncState
       input <- liftIO getLine
       case input of
         "e" | hasEq -> Right <$> chooseEquipment pv

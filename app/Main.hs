@@ -38,10 +38,9 @@ prepareGame :: WaitingRooms -> WaitingRoom -> IO ()
 prepareGame wrs wr = do
   let l   = l_playersWR wr
       ml  = ml_playersWR wr
-  gs0 <- initGameState l ml (codeWR wr)
-  let gs = gs0 { syncVar = gamesGS wrs }
-  registerGame wrs (codeWR wr) (outBox gs)
-  atomically $ modifyTVar' (gamesGS wrs) (Map.insert (codeWR wr) gs)
+      cd  = codeWR wr
+  gs <- initGameState l ml cd (gamesGS wrs)
+  registerGame wrs cd gs
   void . forkIO $ runGame gs
 
 errorText :: JoinGameError -> TL.Text
