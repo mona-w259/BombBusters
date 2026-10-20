@@ -165,7 +165,6 @@ initGameState l ml codeI syncTv = do
         unlockingValues = [(unlockingVal e, name e) | e <- eq],
         rackLabled = empty,
         rackOverview = empty,
-        announceTurn = 0,
         actionMsg = "",
         resultMsg = "",
         endState = 2,

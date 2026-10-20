@@ -132,7 +132,6 @@ data GameState = GameState
     -- neccessary for displaying
     rackLabled :: Map.Map PlayerId String,
     rackOverview :: Map.Map PlayerId String,
-    announceTurn :: PlayerId,
     actionMsg :: String,
     resultMsg :: String,
     endState :: Int,      -- 0 - game lost; 1 - game won, 2 - game ongoing

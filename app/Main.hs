@@ -154,7 +154,7 @@ main = do
         case wr of
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do
-            json (object ["text" .= announceTurn gs])
+            json (object ["text" .= currentPlayer gs])
 
       get "/api/game/:code/actionmessage" $ do
         cd <- pathParam "code"      :: ActionM String

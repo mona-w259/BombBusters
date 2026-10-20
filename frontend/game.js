@@ -126,7 +126,7 @@ async function loadRacks() {
 }
 
 
-/* announce turn */
+/* announce current turn */
 const annTurn = document.getElementById("currturn");
 
 async function loadCurrTurn() {

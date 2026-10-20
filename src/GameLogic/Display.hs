@@ -99,7 +99,7 @@ announceHumanTurn pv = do
   when (not (isBot self) && multiHuman) $ do
 -- neccessary?    
     liftIO bbClearScreen
-    modify (\gs -> gs { announceTurn = playerId self })
+    modify (\gs -> gs { currentPlayer = playerId self })
     syncState
     liftIO (bbDelay 3000000)
 
