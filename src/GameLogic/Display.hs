@@ -45,23 +45,12 @@ equipmentSummary pv =
       items = availEq ++ dd
   in if null items then "(none)" else intercalate ", " items
 
--- unlockingSummary :: PlayerView -> String
--- unlockingSummary pv =
---   let toUnlock = [ (unlockingVal e, name e) | e <- pvEquipment pv, not (unlocked e) ]
---   in case toUnlock of
---         [] -> "(none)"
---         xs -> intercalate ", " [show v ++ " → " ++ show eq | (v, eq) <- xs]
 
 displayWirePickView :: PlayerView -> Maybe Player -> GameM ()
 displayWirePickView pv mTarget = do
   let allInfos = pvInfoMarkers pv
       self = pvSelf pv
   liftIO bbClearScreen
-
---  instructionMessage (pvOutBox pv) (ToPlayer pid) $ "Detonator: " ++ show det
---  printYRWires gs
---  instructionMessage (pvOutBox pv) (ToPlayer pid) $ "Unlocking Values: " ++ unlockingSummary pv
-
 --  instructionMessage (pvOutBox pv) (ToPlayer pid) "YOUR RACK"
   printRackLabeled self allInfos
   case mTarget of
@@ -70,26 +59,16 @@ displayWirePickView pv mTarget = do
 --      instructionMessage ob (ToPlayer pid) "TARGET RACK"
       printRackLabeled target allInfos
 
---  instructionMessage (pvOutBox pv) (ToPlayer pid) "CUT WIRES (All Players)"
---  if null cutWs
---    then instructionMessage (pvOutBox pv) (ToPlayer pid) "   (No cuts yet.)"
---    else let cutText = concatMap printCut cutWs >> instructionMessage (pvOutBox pv) (ToPlayer pid) ""
---  instructionMessage (pvOutBox pv) (ToPlayer pid) "---------------------------------------------\n"
-
 displayInfoMarkerView :: PlayerView -> GameM ()
 displayInfoMarkerView pv = do
   let self = pvSelf pv
       others = pvOthers pv
       allInfos = pvInfoMarkers pv
   liftIO bbClearScreen
-
---  instructionMessage (pvOutBox pv) ToAll $ "Detonator: " ++ show det
 --  instructionMessage (pvOutBox pv) ToAll "YOUR RACK"
   printRackLabeled self allInfos
   unless (null others) $ do
---    instructionMessage (pvOutBox pv) ToAll "---------------------------------------------"
 --    instructionMessage (pvOutBox pv) ToAll "OTHER PLAYERS"
---    instructionMessage (pvOutBox pv) ToAll "---------------------------------------------"
     mapM_ (\oth -> printRackLabeled oth allInfos) others
 
 announceHumanTurn :: PlayerView -> GameM ()
@@ -162,9 +141,6 @@ formatWireLabeled infos w =
       lbl = indexToLabel (wireIndex w)
       wireBox = "[" ++ lbl ++ ":" ++ emoji ++ "(" ++ valStr ++ ")" ++ "]"
    in wireBox ++ " "
-
--- printCut :: MarkedWire -> String
--- printCut MarkedWire {player = _, originalIndex = _, wire = w} = colorEmoji (color w) ++ " (" ++ show (value w) ++ ") "
 
 
 displayTurnResult :: Outcome -> GameM ()
