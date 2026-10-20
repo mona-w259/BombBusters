@@ -171,6 +171,14 @@ main = do
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do
             json (object ["text" .= resultMsg gs])
+      
+      get "/api/game/:code/endstate" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= endState gs])
 
 
       where 

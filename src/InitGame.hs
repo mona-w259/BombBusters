@@ -2,11 +2,12 @@ module InitGame (initGameState) where
 
 import Data.List (sortBy)
 import Data.Ord (comparing)
-import Data.Map (empty)
+import Data.Map as Map (Map, empty)
 import System.Random
 import System.Random.Shuffle (shuffle')
 import qualified Config
 import Types
+import Control.Concurrent.STM (TVar)
 import Output
 
 initWires :: IO ([Wire], Wire, [Wire])
@@ -128,8 +129,8 @@ initEquipment =
           }
    in [superDetector, stabilizer, tripleDetector, doubleRadiator]
 
-initGameState :: Int -> Int -> String -> IO GameState
-initGameState l ml codeI = do
+initGameState :: Int -> Int -> String -> TVar (Map.Map Code GameState) -> IO GameState
+initGameState l ml codeI syncTv = do
   -- CRN support: when BB_SEED is set, seed the global StdGen so every
   -- subsequent newStdGen call (inside initWires / initColorMarkers /
   -- initTurnOrder) is derived deterministically. Unset -> stock randomness.
@@ -166,5 +167,7 @@ initGameState l ml codeI = do
         rackOverview = empty,
         announceTurn = 0,
         actionMsg = "",
-        resultMsg = ""
+        resultMsg = "",
+        endState = 2,
+        syncVar = syncTv
       }

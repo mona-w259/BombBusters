@@ -3,7 +3,6 @@ module Types where
 import Control.Monad.State
 import Control.Concurrent.STM (TVar)
 import Data.Map as Map
-import OutBox
 
 data WireColor = Blue | Yellow | Red | Grey | Hidden
   deriving (Show, Eq, Ord)
@@ -136,6 +135,7 @@ data GameState = GameState
     announceTurn :: PlayerId,
     actionMsg :: String,
     resultMsg :: String,
+    endState :: Int,      -- 0 - game lost; 1 - game won, 2 - game ongoing
     syncVar :: TVar (Map.Map Code GameState)
   }
 

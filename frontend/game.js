@@ -173,14 +173,42 @@ async function loadResultMsg() {
 
         if (data.text != undefined) {
             resultMsg.textContent = "Result: " + data.text;
+        }
+    } catch (e) {
+        resultMsg.textContent = "(error): " + e;
+    }
+
+    setTimeout(loadResultMsg, 100);
+}
+
+/* print end state */
+const endState = document.getElementById("end");
+const overlay = document.getElementById("overlay");
+
+async function loadEndState() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/endstate"
+        const data = await (await fetch(url)).json();
+
+        if (data.text != undefined) {
+            if (data.text == 0) {
+                endState.textContent = "<h1>Congratulation!<\h1>Bomb detonated, game lost.";
+                overlay.style.display = "flex";
+            } else if (data.text == 1) {
+                endState.textContent = "Bomb defused, game won.";
+                overlay.style.display = "flex";
+            } else {
+                endState.textContent = "Ongoing game.";
+            }
             return;
         }
     } catch (e) {
-        resultMsg.textContent = "";
+        actionMsg.textContent = "(error): " + e;
     }
 
-    setTimeout(loadResultMsg, 1000);
+    setTimeout(loadEndState, 100);
 }
+
 
 
 loadYRWires();
