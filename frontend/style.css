@@ -289,6 +289,8 @@ h1 {
     position: relative;
     overflow: visible;
     clip-path: inset(-20px -20px 0 -20px);
+    margin-top: 20px;
+    margin-bottom: 10px;
 }
 
 .life-gauge::before {

@@ -41,10 +41,8 @@ async function loadYRWires() {
             return;
         }
     } catch (e)  {
-        yrWires.textContent = "(error)";
+        yrWires.textContent = "(error): " + e;
     }
-    
-    setTimeout(loadYRWires, 1000);
 }
 
 
@@ -67,52 +65,46 @@ async function loadDetonator() {
             lifePointers.forEach (point => {
                 point.style.display = (Number(point.dataset.lpoint) === data.text) ? "" : "none";
             })
-            return;
         }
     } catch (e) {
-        detonator.textContent = "(error)";
+        detonator.textContent = "(error): " + e;
     }
 
-    setTimeout(loadDetonator, 1000);
+    setTimeout(loadDetonator, 100);
 }
 
 
 /* print racks */
-const rack1 = document.getElementById("rack1");
-const rack2 = document.getElementById("rack2");
-const rack3 = document.getElementById("rack3");
-const rack4 = document.getElementById("rack4");
+const rack1 = document.getElementById("rack-1");
+const rack2 = document.getElementById("rack-2");
+const rack3 = document.getElementById("rack-3");
+const rack4 = document.getElementById("rack-4");
 
 async function loadRacks() {
     try {
-        const url1 = "/api/game" + encodeURIComponent(code) + "/racklabled?slot=" + encodeURIComponent(slot)
+        const url1 = "/api/game/" + encodeURIComponent(code) + "/racklabled?slot=" + encodeURIComponent(slot)
         const dataLab = await (await fetch(url1)).json();
 
-        const url2 = "/api/game" + encodeURIComponent(code) + encodeURIComponent(slot) + "/rackoverview"
-        const dataOvv = await (await fetch(url2)).json();
+        const url2 = "/api/game/" + encodeURIComponent(code) + "/rackoverview?slot="
+        const dataOvv1 = await (await fetch(url2 + "1")).json();
+        const dataOvv2 = await (await fetch(url2 + "2")).json();
+        const dataOvv3 = await (await fetch(url2 + "3")).json();
+        const dataOvv4 = await (await fetch(url2 + "4")).json();
 
-        if (dataLab.text != undefined && dataOvv.text != undefined) {
+        rack1.textContent = dataOvv1.text;
+        rack2.textContent = dataOvv2.text;
+        rack3.textContent = dataOvv3.text;
+        rack4.textContent = dataOvv4.text;
+/*
+        if (dataLab.text != undefined) {
             switch (slot) {
-                // data.racks.forEach(([pid, text]) => ...)
                 case 1:
                     rack1.textContent = dataLab.text;
-                    rack2.textContent = dataOvv.text;
-                    rack3.textContent = dataOvv.text;
-                    rack4.textContent = dataOvv.text;
                 case 2:
-                    rack1.textContent = dataOvv.text;
                     rack2.textContent = dataLab.text;
-                    rack3.textContent = dataOvv.text;
-                    rack4.textContent = dataOvv.text;
                 case 3:
-                    rack1.textContent = dataOvv.text;
-                    rack2.textContent = dataOvv.text;
                     rack3.textContent = dataLab.text;
-                    rack4.textContent = dataOvv.text;
                 case 4:
-                    rack1.textContent = dataOvv.text;
-                    rack2.textContent = dataOvv.text;
-                    rack3.textContent = dataOvv.text;
                     rack4.textContent = dataLab.text;
                 default:
                     rack1.textContent = "Unknown slot";
@@ -122,14 +114,15 @@ async function loadRacks() {
             } 
             return;
         }
+            */
     } catch (e) {
-        rack1.textContent = "(error)";
-        rack2.textContent = "(error)";
-        rack3.textContent = "(error)";
-        rack4.textContent = "(error)";
+        rack1.textContent = "(error): " + e;
+        rack2.textContent = "(error): " + e;
+        rack3.textContent = "(error): " + e;
+        rack4.textContent = "(error): " + e;
     }
 
-    setTimeout(loadRacks, 1000);
+    setTimeout(loadRacks, 100);
 }
 
 
@@ -138,18 +131,17 @@ const annTurn = document.getElementById("currturn");
 
 async function loadCurrTurn() {
     try {
-        const url = "/api/game" + encodeURIComponent(code) + "/turn"
+        const url = "/api/game/" + encodeURIComponent(code) + "/turn"
         const data = await (await fetch(url)).json();
 
         if (data.text != undefined) {
-            annTurn.textContent = "Current turn: " + data.text;
-            return;
+            annTurn.textContent = "Current turn: Player " + data.text + " - it's your turn!";
         }
     } catch (e) {
-        annTurn.textContent = "(error)";
+        annTurn.textContent = "(error): " + e;
     }
 
-    setTimeout(loadCurrTurn, 1000);
+    setTimeout(loadCurrTurn, 100);
 }
 
 /* print current action */
@@ -157,18 +149,17 @@ const actionMsg = document.getElementById("action");
 
 async function loadActionMsg() {
     try {
-        const url = "/api/game" + encodeURIComponent(code) + "/actionmessage"
+        const url = "/api/game/" + encodeURIComponent(code) + "/actionmessage"
         const data = await (await fetch(url)).json();
 
         if (data.text != undefined) {
             actionMsg.textContent = "Action: " + data.text;
-            return;
         }
     } catch (e) {
-        actionMsg.textContent = "Currently no actions.";
+        actionMsg.textContent = "(error): " + e;
     }
 
-    setTimeout(loadActionMsg, 1000);
+    setTimeout(loadActionMsg, 100);
 }
 
 
@@ -177,7 +168,7 @@ const resultMsg = document.getElementById("result");
 
 async function loadResultMsg() {
     try {
-        const url = "/api/game" + encodeURIComponent(code) + "/resultmessage"
+        const url = "/api/game/" + encodeURIComponent(code) + "/resultmessage"
         const data = await (await fetch(url)).json();
 
         if (data.text != undefined) {
@@ -194,7 +185,10 @@ async function loadResultMsg() {
 
 loadYRWires();
 loadDetonator();
+loadRacks();
+loadCurrTurn();
 loadActionMsg();
 loadResultMsg();
+loadEndState();
 
 poll();

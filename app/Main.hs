@@ -154,12 +154,12 @@ main = do
 
       get "/api/game/:code/rackoverview" $ do
         cd <- pathParam "code"      :: ActionM String
---        sl <- queryParam "slot"     :: ActionM Int
+        sl <- queryParam "slot"     :: ActionM Int
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
         case wr of
           Nothing -> json (object ["error" .= ("no rack yet" :: String)])
           Just gs -> do
-            json (object ["text" .= Map.toList (rackOverview gs)])
+            json (object ["text" .= Map.findWithDefault "" sl (rackOverview gs)])
 
       get "/api/game/:code/turn" $ do
         cd <- pathParam "code"      :: ActionM String
