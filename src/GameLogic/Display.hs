@@ -86,7 +86,7 @@ censorPlayerWires :: Player -> Player
 censorPlayerWires p = p { playerWires = map hide (playerWires p) }
   where
     hide w
-      | color w == Grey = w
+      | isCut w == True = w
       | otherwise = w { color = Hidden, value = -1 }
 
 printRack :: Player -> [InfoMarker] -> GameM ()
@@ -156,10 +156,11 @@ displayTurnResult outcome = do
 displayBotDecision :: Maybe PublicAction -> [PublicEquipmentUse] -> GameM ()
 displayBotDecision act equip = do
   -- update usable equipment
-  let eqMsg = case equip of
-              [] -> ""
-              _  -> "Equipment: " ++ intercalate ", " (map showEquipUse equip) ++ "\n"
-  modify (\gs -> gs { actionMsg = eqMsg ++ maybe "(equipment only)" showBotAction act })
+--  case equip of
+--    [] -> pure ()
+--    _  -> "Equipment : " ++ intercalate ", " (map showEquipUse equip)
+  let msg = maybe "(equipment only)" showBotAction act
+  modify (\gs -> gs { actionMsg = msg })
   syncState
   liftIO (bbDelay 1500000)
 

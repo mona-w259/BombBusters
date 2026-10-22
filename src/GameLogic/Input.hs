@@ -123,7 +123,7 @@ chooseEquipmentUse pv s = case s of
 
 -- Number of uncut wires still on a player's rack.
 uncutOn :: Player -> Int
-uncutOn p = length [ w | w <- playerWires p, color w /= Grey ]
+uncutOn p = length [ w | w <- playerWires p, isCut w == False ]
 
 -- Number of uncut wires still on each other player's rack.
 otherUncutCounts :: PlayerView -> [Int]
@@ -218,7 +218,7 @@ canSoloCut pv = canSoloCut2 pv || canSoloCut4 pv
 
 canSoloCut2 :: PlayerView -> Bool
 canSoloCut2 pv =
-  let ws = filter (\w -> color w /= Grey) (playerWires (pvSelf pv))
+  let ws = filter (\w -> isCut w == False) (playerWires (pvSelf pv))
       countMatching c v = length (filter (\w -> color w == c && value w == v) ws)
       keys = nub [ (color w, value w) | w <- ws ]
       yellowPair = length (filter ((== Yellow) . color) ws) >= 2
@@ -231,7 +231,7 @@ canSoloCut2 pv =
 
 canSoloCut4 :: PlayerView -> Bool
 canSoloCut4 pv =
-  let ws = filter (\w -> color w /= Grey) (playerWires (pvSelf pv))
+  let ws = filter (\w -> isCut w == False) (playerWires (pvSelf pv))
       countMatching c v = length (filter (\w -> color w == c && value w == v) ws)
       keys = nub [ (color w, value w) | w <- ws ]
    in any (\(c, v) -> countMatching c v >= 4) keys
@@ -239,14 +239,14 @@ canSoloCut4 pv =
 canDualCut :: PlayerView -> Bool
 canDualCut pv =
   let selfHas = any (\w -> color w `elem` [Blue, Yellow]) (playerWires (pvSelf pv))
-      otherHas = any (\p -> any (\w -> color w /= Grey) (playerWires p)) (pvOthers pv)
+      otherHas = any (\p -> any (\w -> isCut w == False) (playerWires p)) (pvOthers pv)
    in selfHas && otherHas
 
 canRemoveRed :: PlayerView -> Bool
 canRemoveRed pv =
-  let ws = playerWires (pvSelf pv)
-   in any ((== Red) . color) ws
-      && all (\w -> color w `elem` [Red, Grey]) ws
+  let uncutWs = filter (not . isCut) (playerWires (pvSelf pv))
+   in not (null uncutWs) && all ((== Red) . color) uncutWs
+
 
 actionOptions :: PlayerView -> [(String, PlayerView -> GameM Action)]
 actionOptions pv =
@@ -636,14 +636,15 @@ handleRemoveRedInput pv = do
 checkInputInitInfo :: PlayerView -> Int -> (Bool, String)
 checkInputInitInfo pv pos
   | pos < 0 || pos >= n = (False, "Invalid position: out of range.")
-  | col == Grey = (False, "Wire already cut.")
-  | col == Yellow = (False, "Cannot place initial info marker for yellow wire.")
-  | col == Red = (False, "Cannot place initial info marker for red wire.")
-  | otherwise = (True, "Placing wire at position " ++ show pos ++ ".")
+  | cutted == True      = (False, "Wire already cut.")
+  | col == Yellow       = (False, "Cannot place initial info marker for yellow wire.")
+  | col == Red          = (False, "Cannot place initial info marker for red wire.")
+  | otherwise           = (True, "Placing wire at position " ++ show pos ++ ".")
   where
     playerWiresSelf = playerWires (pvSelf pv)
     n = length playerWiresSelf
     col = color $ playerWiresSelf !! pos
+    cutted = isCut $ playerWiresSelf !! pos
 
 checkInputSC2 :: PlayerView -> CutPosition -> (Bool, String)
 checkInputSC2 pv (a, b)
@@ -651,7 +652,7 @@ checkInputSC2 pv (a, b)
       (False, "Invalid position: out of range.")
   | a == b =
       (False, "Chosen wire positions must be distinct.")
-  | colA == Grey || colB == Grey =
+  | cuttedA == True || cuttedB == True =
       (False, "One or both wires already cut.")
   | colA == Red || colB == Red =
       (False, "Cannot cut red wires directly.")
@@ -672,6 +673,9 @@ checkInputSC2 pv (a, b)
     wireA = playerWiresSelf !! a
     wireB = playerWiresSelf !! b
 
+    (vA, cuttedA) = (value wireA, isCut wireA)
+    (vB, cuttedB) = (value wireB, isCut wireB)
+
     (valA, colA) = (value wireA, color wireA)
     (valB, colB) = (value wireB, color wireB)
 
@@ -687,7 +691,7 @@ checkInputSC4 pv (a, b, c, d)
       (False, "Invalid indices.")
   | length (nub indices) < 4 =
       (False, "Chosen wire positions must be distinct.")
-  | any ((== Grey) . color) chosenWires =
+  | any ((== True) . isCut) chosenWires =
       (False, "Cannot cut already cut wire.")
   | not (allSame wireColors) =
       (False, "Invalid color match.")
@@ -713,21 +717,22 @@ checkInputDC pv otherId (a, b) =
       validIds = filter (/= selfId) (pvTurnOrder pv)
       n = length playerWiresSelf
       colA = if a >= 0 && a < n then color (playerWiresSelf !! a) else Grey
+      isCutA = if a >= 0 && a < n then isCut (playerWiresSelf !! a) else True
       targetCut = any (\mw -> player mw == otherId && originalIndex mw == b) cutWiresView
    in case maybeFindPlayer otherId (pvOthers pv) of
         Nothing -> (False, "Invalid player id.")
         Just otherPlayer ->
           let nOther = length (playerWires otherPlayer)
-           in validate colA targetCut validIds n nOther
+           in validate colA isCutA targetCut validIds n nOther
   where
-    validate colA targetCut validIds n nOther
+    validate colA isCutA targetCut validIds n nOther
       | otherId `notElem` validIds =
           (False, "Invalid player id.")
       | a < 0 || a >= n =
           (False, "Invalid position: out of range.")
       | b < 0 || b >= nOther =
           (False, "Invalid position: out of range.")
-      | colA == Grey =
+      | colA == Grey || isCutA == True =
           (False, "You cannot cut an already cut wire.")
       | colA == Red =
           (False, "You cannot use a red wire for a dual cut.")
@@ -744,7 +749,7 @@ checkInputRR pv a
       (False, "Invalid position: out of range.")
   | colA /= Red =
       (False, "You can only remove a red wire.")
-  | not (all (\w -> color w `elem` [Red, Grey]) playerWiresSelf) =
+  | not (all ((== Red) . color) uncutWs) =
       (False, "Remove Red only works if *all* remaining wires are red.")
   | otherwise =
       (True, "Remove Red successful.")
@@ -752,6 +757,7 @@ checkInputRR pv a
     playerWiresSelf = playerWires (pvSelf pv)
     n = length playerWiresSelf
     colA = color (playerWiresSelf !! a)
+    uncutWs = filter ((== False) . isCut) playerWiresSelf
 
 
 handleChooseBots :: GameState -> [PlayerId] -> IO [PlayerId]

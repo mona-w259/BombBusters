@@ -125,12 +125,12 @@ bestPositions n bk myWire targetPid worlds =
     take n . map fst . sortBy (comparing (Down . snd)) $
     [ (wireIdx, successProb myWire targetPid wireIdx worlds)
     | (wireIdx, slot) <- Map.toList (Map.findWithDefault Map.empty targetPid (playerSlots bk))
-    , not (isCut slot)
+    , not (isCutted slot)
     ]
 
-isCut :: SlotKnowledge -> Bool
-isCut (KnownCut _) = True
-isCut _ = False
+isCutted :: SlotKnowledge -> Bool
+isCutted (KnownCut _) = True
+isCutted _ = False
 
 -- Move candidate generation, called after world enumeration.
 
@@ -162,7 +162,7 @@ allMoveCandidates bk selfPid worlds =
         , color myWire `notElem` [Grey, Red]
         , targetPid <- otherPids
         , (targetIdx, targetSlot) <- Map.toList (Map.findWithDefault Map.empty targetPid (playerSlots bk))
-        , not (isCut targetSlot)
+        , not (isCutted targetSlot)
         , let pSuc = successProb myWire targetPid targetIdx worlds
         , pSuc > 0
         ]
@@ -195,7 +195,7 @@ allMoveCandidates bk selfPid worlds =
             , i1 <= i2
             , targetPid <- otherPids
             , (targetIdx, targetSlot) <- Map.toList (Map.findWithDefault Map.empty targetPid (playerSlots bk))
-            , not (isCut targetSlot)
+            , not (isCutted targetSlot)
             , let pSuc = doubleRadiatorProb w1 w2 targetPid targetIdx worlds
             , pSuc > 0
             ]

@@ -10,7 +10,7 @@ import Output
 getPlayerView :: PlayerId -> GameState -> PlayerView
 getPlayerView pid gs =
     let self = maybeFindPlayer pid (players gs)
-        censoredWires = map (\w -> if (color w == Grey) then w else w {
+        censoredWires = map (\w -> if (isCut w == True && color w == Blue) then w {color = Grey} else if (isCut w == True) then w else w {
             color = Hidden, 
             value = -1
             })
@@ -89,7 +89,7 @@ readLabel pv prompt = do
       readLabel pv prompt
 
 cutAtPosition :: Int -> [Wire] -> [Wire]
-cutAtPosition pos = map (\w -> if wireIndex w == pos then w {color = Grey} else w)
+cutAtPosition pos = map (\w -> if wireIndex w == pos then (if color w == Blue then w {color = Grey, isCut = True} else w {isCut = True}) else w)
 
 extractCutWires :: PlayerId -> Int -> [Wire] -> [MarkedWire]
 extractCutWires pid pos ws = [MarkedWire pid (wireIndex w) w | w <- ws, wireIndex w == pos]

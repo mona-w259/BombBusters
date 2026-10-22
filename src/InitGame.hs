@@ -22,9 +22,9 @@ initWires = do
         (r : y1 : y2 : _) -> (r, [y1, y2])
         _ -> errorMessage "initWires: shuffle' returned fewer than 3 values"
 
-      blueWires = [Wire val Blue 0 | val <- concatMap (replicate 4) blueVals]
-      yellowWires = [Wire val Yellow 0 | val <- yellowVals]
-      redWire = Wire redVal Red 0
+      blueWires = [Wire val Blue 0 False | val <- concatMap (replicate 4) blueVals]
+      yellowWires = [Wire val Yellow 0 False | val <- yellowVals]
+      redWire = Wire redVal Red 0 False
       allWires = blueWires ++ yellowWires ++ [redWire]
 
       shuffledWires = shuffle' allWires (length allWires) genWires
@@ -74,8 +74,8 @@ initColorMarkers redWire yellowWires = do
         (v : _) -> v
         [] -> errorMessage "initColorMarkers: no candidate yellow value"
 
-      randomRedWire = Wire randomRedVal Red 0
-      randomYellowWire = Wire randomYellowVal Yellow 0
+      randomRedWire = Wire randomRedVal Red 0 False
+      randomYellowWire = Wire randomYellowVal Yellow 0 False
 
       markers = [redWire, randomRedWire] ++ yellowWires ++ [randomYellowWire]
   return $ sortBy (\m -> comparing value m <> comparing color m) markers

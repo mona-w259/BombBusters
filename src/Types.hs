@@ -10,7 +10,8 @@ data WireColor = Blue | Yellow | Red | Grey | Hidden
 data Wire = Wire
   { value :: Int,
     color :: WireColor,
-    wireIndex :: Int
+    wireIndex :: Int,
+    isCut :: Bool
   }
   deriving (Eq, Show)
 

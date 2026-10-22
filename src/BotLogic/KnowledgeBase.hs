@@ -18,7 +18,7 @@ distillKnowledge pv =
         cutWires' = map wire (pvCutWires pv)
         selfPid' = playerId (pvSelf pv)
         cutPositions = [(player mw, originalIndex mw) | mw <- pvCutWires pv]
-        infoWires  = [ Wire v c i | InfoMarker owner i v c <- pvInfoMarkers pv
+        infoWires  = [ Wire v c i False | InfoMarker owner i v c <- pvInfoMarkers pv
                      , owner /= selfPid'
                      , (owner, i) `notElem` cutPositions ]
 
@@ -80,7 +80,7 @@ distillKnowledge pv =
 
 selfSlot :: [MarkedWire] -> PlayerId -> Wire -> SlotKnowledge
 selfSlot cuts pid w
-    | color w == Grey = case cutAt cuts pid (wireIndex w) of
+    | isCut w == True = case cutAt cuts pid (wireIndex w) of
         Just mw -> KnownCut (wire mw)
         Nothing -> PossibleValue []
     | otherwise = KnownValue w
@@ -94,7 +94,7 @@ mapToSlots p markers cuts ctx =
         [ (wireIndex w, slotFor w) | w <- playerWires p ]
   where
     slotFor w
-        | color w == Grey = case cutAt cuts (playerId p) (wireIndex w) of
+        | isCut w == True = case cutAt cuts (playerId p) (wireIndex w) of
             Just mw -> KnownCut (wire mw)
             Nothing -> PossibleValue []
         | otherwise = baseSlot p markers ctx w
@@ -102,16 +102,16 @@ mapToSlots p markers cuts ctx =
 baseSlot :: Player -> [InfoMarker] -> SlotContext -> Wire -> SlotKnowledge
 baseSlot p markers ctx w =
     case find (\m -> markerOwner m == playerId p && markerIndex m == wireIndex w) markers of
-        Just m  -> KnownValue (Wire (markerValue m) (markerColor m) (wireIndex w))
+        Just m  -> KnownValue (Wire (markerValue m) (markerColor m) (wireIndex w) False)
         Nothing -> PossibleValue (allCandidates ctx)
 
 allCandidates :: SlotContext -> [Wire]
 allCandidates ctx =
-    [ Wire v Blue 0 | ((v, Blue), cnt) <- Map.toList (scRemainingBlue ctx), cnt > 0 ]
+    [ Wire v Blue 0 False | ((v, Blue), cnt) <- Map.toList (scRemainingBlue ctx), cnt > 0 ]
     ++
-    [ Wire v Yellow 0 | v <- scYellowPool ctx \\ scRevealedYellow ctx, scUnseenYellow ctx > 0 ]
+    [ Wire v Yellow 0 False | v <- scYellowPool ctx \\ scRevealedYellow ctx, scUnseenYellow ctx > 0 ]
     ++
-    [ Wire v Red 0 | v <- scRedPool ctx, not (scSeenRed ctx) ]
+    [ Wire v Red 0 False | v <- scRedPool ctx, not (scSeenRed ctx) ]
 
 -- Narrow each PossibleValue slot using the nearest KnownValue/KnownCut bounds in wireIndex order
 applyBounds :: Map Int SlotKnowledge -> Map Int SlotKnowledge

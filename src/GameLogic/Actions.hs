@@ -13,7 +13,7 @@ handleAction pv action f = case action of
   SoloCut4 (a, b, c, d) -> modify (f (soloCutUpdate4 pv (a, b, c, d))) >> pure CutSuccess
   DualCut pid2 pos _ -> do
     gs <- get
-    let outcome = dualCutOutcome pv pid2 pos gs
+    let outcome = dualCutOutcome pv pid2 pos gs   -- CutSuccess or CutMismatch
     modify (f (dualCutUpdate pv pid2 pos))
     syncState
     pure outcome
