@@ -1,30 +1,28 @@
 const params = new URLSearchParams(location.search);
 const code = params.get("code") || "";
 const slot = params.get("slot") || "";
-const log = document.getElementById("log");
-let since = 0;   // Index der nächsten noch nicht gesehenen Nachricht
-
 
 async function poll() {
     try {
-        const url = "/api/game/" + encodeURIComponent(code) + "/output"
-                  + "?slot=" + encodeURIComponent(slot) + "&since=" + since;
+        const url = "/api/game/" + encodeURIComponent(code) + "/statusgame"
         const data = await (await fetch(url)).json();
 
-        if (data.messages) {
-            if (data.messages.length > 0) {
-                // nur automatisch scrollen, wenn der Spieler schon unten war
-                const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
-                // textContent statt innerHTML: Spieltexte nie als HTML interpretieren
-                log.textContent += data.messages.join("");
-                if (atBottom) log.scrollTop = log.scrollHeight;
-            }
-            since = data.next;
+        if (data.text == "defused" || data.text == "detonated") {
+            loadGameStatus();
+        } else {
+            loadYRWires();
+            loadDetonator();
+            loadRacks();
+            loadCurrTurn();
+            loadActionMsg();
+            loadResultMsg();
         }
+        
     } catch (e) {
-    // Server kurz nicht erreichbar: einfach weiter versuchen
+
     }
-    setTimeout(poll, 500);
+
+    setTimeout(poll, 100);
 }
 
 
@@ -69,8 +67,6 @@ async function loadDetonator() {
     } catch (e) {
         detonator.textContent = "(error): " + e;
     }
-
-    setTimeout(loadDetonator, 100);
 }
 
 
@@ -121,8 +117,6 @@ async function loadRacks() {
         rack3.textContent = "(error): " + e;
         rack4.textContent = "(error): " + e;
     }
-
-    setTimeout(loadRacks, 100);
 }
 
 
@@ -140,8 +134,6 @@ async function loadCurrTurn() {
     } catch (e) {
         annTurn.textContent = "(error): " + e;
     }
-
-    setTimeout(loadCurrTurn, 100);
 }
 
 /* print current action */
@@ -158,8 +150,6 @@ async function loadActionMsg() {
     } catch (e) {
         actionMsg.textContent = "(error): " + e;
     }
-
-    setTimeout(loadActionMsg, 100);
 }
 
 
@@ -177,46 +167,33 @@ async function loadResultMsg() {
     } catch (e) {
         resultMsg.textContent = "(error): " + e;
     }
-
-    setTimeout(loadResultMsg, 100);
 }
 
 /* print end state */
-const endState = document.getElementById("end");
+const statusG = document.getElementById("gamestatusend");
 const overlay = document.getElementById("overlay");
 
-async function loadEndState() {
+async function loadGameStatus() {
     try {
-        const url = "/api/game/" + encodeURIComponent(code) + "/endstate"
+        const url = "/api/game/" + encodeURIComponent(code) + "/statusgame"
         const data = await (await fetch(url)).json();
 
         if (data.text != undefined) {
-            if (data.text == 0) {
-                endState.textContent = "<h1>Congratulation!<\h1>Bomb detonated, game lost.";
+            if (data.text == "detonated") {
                 overlay.style.display = "flex";
-            } else if (data.text == 1) {
-                endState.textContent = "Bomb defused, game won.";
+                statusG.textContent = "<h1>Congratulation!<\h1>Bomb detonated, game lost.";
+            } else if (data.text == "defused") {
                 overlay.style.display = "flex";
+                statusG.textContent = "Bomb defused, game won.";
             } else {
-                endState.textContent = "Ongoing game.";
+                statusG.textContent = "Ongoing game.";
             }
             return;
         }
     } catch (e) {
         actionMsg.textContent = "(error): " + e;
     }
-
-    setTimeout(loadEndState, 100);
 }
 
 
-
-loadYRWires();
-loadDetonator();
-loadRacks();
-loadCurrTurn();
-loadActionMsg();
-loadResultMsg();
-loadEndState();
-
-poll();
+poll()

@@ -169,7 +169,7 @@
         </div>
 
         <div class="rack">
-            Your Rack:<br>
+            Your Rack (Player <span id="player-id"></span>):<br>
             <button class="wire" id="1">
                 1. Kabel
             </button>
@@ -211,8 +211,6 @@
             </button>
         </div>
 
-        <pre id="log"></pre>
-
         <div class="buttons">
             <form method="get" action="/">
                 <button type="submit" class="exit-btn"
@@ -224,7 +222,7 @@
 
         <div id="overlay">
             <div class="endcard">
-                <div id="end" style="font-size: larger; margin-bottom: 20px;"></div>
+                <div id="gamestatusend" style="font-size: larger; margin-bottom: 20px;"></div>
                 <div class="buttons">
                     <form method="get" action="/">
                         <button type="submit" class="exit-btn"

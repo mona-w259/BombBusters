@@ -34,8 +34,8 @@ gameLoop = do
   gs <- get
   let currStatus = status gs
   case currStatus of
-    Detonated -> modify (\gsEnd -> gsEnd { endState = 0 }) >> syncState
-    Defused   -> modify (\gsEnd -> gsEnd { endState = 1 }) >> syncState
+    Detonated -> pure ()
+    Defused   -> pure ()
     WaitingForChoice pc -> handlePendingChoice pc >> gameLoop
     InProgress -> do
       modify checkActivePlayers

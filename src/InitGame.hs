@@ -167,6 +167,5 @@ initGameState l ml codeI syncTv = do
         rackOverview = empty,
         actionMsg = "",
         resultMsg = "",
-        endState = 2,
         syncVar = syncTv
       }

@@ -21,7 +21,7 @@ displayPlayerView pv = do
 
       header = "\nPlayer " ++ show pid ++ " isBot: " ++ show botStatus
 
-      equipText = "<br>Available Equipment: " ++ equipmentSummary pv
+      equipText = "\nAvailable Equipment: " ++ equipmentSummary pv
 
       hasHumanOnlooker = any (not . isBot) others
       displaySelf

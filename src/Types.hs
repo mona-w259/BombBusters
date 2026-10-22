@@ -121,7 +121,7 @@ data GameState = GameState
     code :: Code,
     colorMarkers :: [Wire],
     detonator :: Int,
-    status :: GameStatus,
+    status :: GameStatus,   -- InProgress, WaitingForChoice, Detonated, Defused
     turnOrder :: [PlayerId],
     currentPlayer :: PlayerId,
     equipment :: [Equipment],
@@ -135,7 +135,7 @@ data GameState = GameState
     rackOverview :: Map.Map PlayerId String,
     actionMsg :: String,
     resultMsg :: String,
-    endState :: Int,      -- 0 - game lost; 1 - game won, 2 - game ongoing
+--    endState :: Int,      -- 0 - game lost; 1 - game won, 2 - game ongoing
     syncVar :: TVar (Map.Map Code GameState)
   }
 

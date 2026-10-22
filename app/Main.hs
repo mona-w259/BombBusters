@@ -47,6 +47,17 @@ errorText NoSuchGame = "Kein Spiel mit diesem Code gefunden"
 errorText GameFull   = "Das Spiel ist bereits voll"
 errorText GameClosed = "Das Spiel wurde bereits gestartet oder ist abgelaufen"
 
+gsStatusText :: GameStatus -> String
+gsStatusText InProgress           = "in progress"
+gsStatusText (WaitingForChoice _) = "waiting for choice"
+gsStatusText Detonated            = "detonated"
+gsStatusText Defused              = "defused"
+
+wrStatusText :: WaitingRoomStatus -> String
+wrStatusText Waiting = "waiting"
+wrStatusText Started = "started"
+wrStatusText Expired = "expired"
+
 
 
 ------------------ main function ------------------
@@ -108,7 +119,7 @@ main = do
           Nothing   -> json (object ["status" .= ("missing" :: String)])
           Just wr   -> json $ object
             [
-              "status"        .= statusName (WaitingRoom.status wr),
+              "status"        .= wrStatusText (WaitingRoom.status wr),
               "registered"    .= reg_playersWR wr,
               "humans"        .= h_playersWR wr,
               "secondsLeft"   .= max 0 (floor (diffUTCTime (deadline wr) now) :: Int)
@@ -172,17 +183,10 @@ main = do
           Just gs -> do
             json (object ["text" .= resultMsg gs])
       
-      get "/api/game/:code/endstate" $ do
+      get "/api/game/:code/statusgame" $ do
         cd <- pathParam "code"      :: ActionM String
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
         case wr of
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do
-            json (object ["text" .= endState gs])
-
-
-      where 
-        statusName :: WaitingRoomStatus -> String
-        statusName Waiting = "waiting"
-        statusName Started = "started"
-        statusName Expired = "expired"
+            json (object ["text" .= gsStatusText (Types.status gs)])

@@ -170,8 +170,8 @@ advanceTurn gs =
 
 evaluateGameEnd :: GameState -> GameState
 evaluateGameEnd gs
-  | detonated = gs {status = Detonated}
-  | all ((== True) . isCut) (wires gs) = gs {status = Defused}
+  | detonated = gs {status = Detonated} 
+  | all ((== True) . isCut) (wires gs) = gs {status = Defused} 
   | otherwise = gs
   where
     detonated = detonator gs <= 0
