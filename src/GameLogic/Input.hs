@@ -467,7 +467,7 @@ checkInputDR pv otherId (p1, p2) otherPos =
                 if i >= 0 && i < nOther
                   then color (otherWires !! i)
                   else Grey
-              othCutted = 
+              othCutted i = 
                 if i >= 0 && i < nOther
                   then isCut (otherWires !! i)
                   else True
