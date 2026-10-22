@@ -171,7 +171,7 @@ advanceTurn gs =
 evaluateGameEnd :: GameState -> GameState
 evaluateGameEnd gs
   | detonated = gs {status = Detonated}
-  | all ((== Grey) . color) (wires gs) = gs {status = Defused}
+  | all ((== True) . isCut) (wires gs) = gs {status = Defused}
   | otherwise = gs
   where
     detonated = detonator gs <= 0
@@ -179,7 +179,7 @@ evaluateGameEnd gs
 checkActivePlayers :: GameState -> GameState
 checkActivePlayers gs =
   let activePlayers =
-        filter (any ((/= Grey) . color) . playerWires) (players gs)
+        filter (any ((== False) . isCut) . playerWires) (players gs)
       activeIds = map playerId activePlayers
       curr = currentPlayer gs
       newTurnOrder = filter (`elem` activeIds) (turnOrder gs)
