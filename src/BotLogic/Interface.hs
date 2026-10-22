@@ -181,7 +181,7 @@ botPendingChoice pv PickInfoMarkerSlot opts@(first:_) =
         listToMaybe [ i | i <- cleanOpts, color (ws !! i) == Yellow ]
     isBoundary pos =
         validIdx pos &&
-        (color (ws !! pos) == Grey || pos `elem` selfMarkers)
+        (isCut (ws !! pos) == True || pos `elem` selfMarkers)
     leftBoundOf i = case [ j | j <- [i-1, i-2 .. 0], isBoundary j ] of
         (j:_) -> j
         [] -> -1

@@ -16,7 +16,7 @@ certainAction :: BotKnowledge -> PlayerId -> Maybe Action
 certainAction bk selfPid = (checkInfoMarkerCut Yellow) <|> checkSoloCut4 <|> checkSoloCut2 <|> checkInfoMarkerCut (Blue) <|> checkRemoveRed 
   where
     selfSlots = Map.findWithDefault Map.empty selfPid (playerSlots bk)
-    knownWires = [(i, w) | (i, KnownValue w) <- Map.toAscList selfSlots, color w /= Grey]
+    knownWires = [(i, w) | (i, KnownValue w) <- Map.toAscList selfSlots, isCut w == False]
     otherPids = [pid | pid <- Map.keys (playerSlots bk), pid /= selfPid]
     cutsOfColor c =
                 [ DualCut targetPid (myIdx, targetIdx) myWire
@@ -159,7 +159,8 @@ allMoveCandidates bk selfPid worlds =
     dualCutMoves =
         [ (Just (DualCut targetPid (myIdx, targetIdx) myWire), [], pSuc)
         | (myIdx, KnownValue myWire) <- Map.toAscList selfSlots
-        , color myWire `notElem` [Grey, Red]
+        , color myWire /= Red
+        , isCut myWire == False
         , targetPid <- otherPids
         , (targetIdx, targetSlot) <- Map.toList (Map.findWithDefault Map.empty targetPid (playerSlots bk))
         , not (isCutted targetSlot)

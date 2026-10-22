@@ -73,7 +73,7 @@ stabilizerModifier update gs =
 superDetectorUpdate :: PlayerView -> PlayerId -> Int -> GameState -> GameState
 superDetectorUpdate = detectorUpdate superMatch allWireIndices
   where
-    allWireIndices p = [i | (i, w) <- zip [0 ..] (playerWires p), color w /= Red, color w /= Grey]
+    allWireIndices p = [i | (i, w) <- zip [0 ..] (playerWires p), color w /= Red, isCut w /= True]
 
 superMatch :: MatchStrategy
 superMatch pv pid selfIdx gs =
@@ -168,7 +168,7 @@ detectorUpdate matchFn noMatchOptions pv pid selfIdx gs =
     [] ->
       let gs' = updateGameStateFromView pv2Penalty gs
           markedIdxs = [markerIndex m | m <- infoMarkers gs, markerOwner m == pid]
-          validOpts = filter (\i -> i `notElem` markedIdxs && maybe True (\w -> color w `notElem` [Red, Grey]) (safeIndex (playerWires p2) i)) (noMatchOptions p2)
+          validOpts = filter (\i -> i `notElem` markedIdxs && maybe True (\w -> color w /= Red && isCut w /= True) (safeIndex (playerWires p2) i)) (noMatchOptions p2)
         in if null validOpts
             then gs' { status = InProgress }
             else gs' {

@@ -334,15 +334,16 @@ checkInputSD pv otherId pos =
       ws = playerWires p
       n = length ws
       col = if pos >= 0 && pos < n then color (ws !! pos) else Grey
+      cutted = if pos >= 0 && pos < n then isCut (ws !! pos) else True
       validIds = filter (/= pid) (pvTurnOrder pv)
-   in validate col otherId validIds pos n
+   in validate col cutted otherId validIds pos n
   where
-    validate col otherIdCandidate validIds posCandidate nLen
+    validate col cutted otherIdCandidate validIds posCandidate nLen
       | otherIdCandidate `notElem` validIds =
           (False, "Invalid Id.")
       | posCandidate < 0 || posCandidate >= nLen =
           (False, "Invalid position: Out of range.")
-      | col == Grey =
+      | cutted == True =
           (False, "Chosen wire already cut.")
       | col == Red =
           (False, "Chosen wire cannot be red.")
@@ -399,14 +400,18 @@ checkInputTD pv otherId selfPos (a, b, c) =
                 if i >= 0 && i < nOther
                   then color (otherWires !! i)
                   else Grey
-           in validate validIds selfPos selfCol (a, b, c) otherCols nSelf nOther
+              selfCutted = 
+                if selfPos >= 0 && selfPos < nSelf
+                  then isCut (selfWires !! selfPos)
+                  else True
+           in validate validIds selfPos selfCol (a, b, c) otherCols nSelf nOther selfCutted
   where
-    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate, cCandidate) otherCols nSelf nOther
+    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate, cCandidate) otherCols nSelf nOther selfCutted
       | otherId `notElem` validIds =
           (False, "Invalid Id.")
       | selfPosCandidate < 0 || selfPosCandidate >= nSelf =
           (False, "Invalid position: own wire out of range.")
-      | selfCol == Grey =
+      | selfCutted == True =
           (False, "Chosen own wire already cut.")
       | selfCol /= Blue =
           (False, "Chosen own wire must be blue.")
@@ -462,9 +467,13 @@ checkInputDR pv otherId (p1, p2) otherPos =
                 if i >= 0 && i < nOther
                   then color (otherWires !! i)
                   else Grey
-           in validate validIds (p1, p2) otherPos selfCol otherCol nSelf nOther
+              othCutted = 
+                if i >= 0 && i < nOther
+                  then isCut (otherWires !! i)
+                  else True
+           in validate validIds (p1, p2) otherPos selfCol otherCol nSelf nOther othCutted
   where
-    validate validIds (p1Candidate, p2Candidate) otherPosCandidate selfCol otherCol nSelf nOther
+    validate validIds (p1Candidate, p2Candidate) otherPosCandidate selfCol otherCol nSelf nOther othCutted
       | otherId `notElem` validIds =
           (False, "Invalid Id.")
       | any (< 0) [p1Candidate, p2Candidate] || any (>= nSelf) [p1Candidate, p2Candidate] =
@@ -475,7 +484,7 @@ checkInputDR pv otherId (p1, p2) otherPos =
           (False, "Both own wires must be blue or yellow and uncut.")
       | otherPosCandidate < 0 || otherPosCandidate >= nOther =
           (False, "Other wire position out of range.")
-      | otherCol otherPosCandidate == Grey =
+      | othCutted otherPosCandidate == True =
           (False, "Chosen other wire already cut.")
       | otherwise =
           (True, "Valid Double Radiator Input.")
@@ -527,14 +536,18 @@ checkInputDD pv otherId selfPos (a, b) =
                 if i >= 0 && i < nOther
                   then color (otherWires !! i)
                   else Grey
-           in validate validIds selfPos selfCol (a, b) otherCol nSelf nOther
+              selfCutted = 
+                if selfPos >= 0 && selfPos < nSelf
+                  then isCut (selfWires !! selfPos)
+                  else True
+           in validate validIds selfPos selfCol (a, b) otherCol nSelf nOther selfCutted
   where
-    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate) otherCol nSelf nOther
+    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate) otherCol nSelf nOther selfCutted
       | otherId `notElem` validIds =
           (False, "Invalid Id.")
       | selfPosCandidate < 0 || selfPosCandidate >= nSelf =
           (False, "Invalid position: own wire out of range.")
-      | selfCol == Grey =
+      | selfCutted == True =
           (False, "Chosen own wire already cut.")
       | selfCol /= Blue =
           (False, "Chosen own wire must be blue.")
@@ -732,7 +745,7 @@ checkInputDC pv otherId (a, b) =
           (False, "Invalid position: out of range.")
       | b < 0 || b >= nOther =
           (False, "Invalid position: out of range.")
-      | colA == Grey || isCutA == True =
+      | isCutA == True =
           (False, "You cannot cut an already cut wire.")
       | colA == Red =
           (False, "You cannot use a red wire for a dual cut.")

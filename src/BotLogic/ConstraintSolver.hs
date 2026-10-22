@@ -83,7 +83,7 @@ buildWorldQ bk slotVals = Map.fromList
     symLookup = Map.fromList [(slotId, (v, c)) | (slotId, v, c) <- slotVals]
 
     wireAt _ wireIdx (KnownValue w)
-        | color w == Grey = Nothing
+        | isCut w == True = Nothing
         | otherwise = Just (wireIdx, (value w, color w))
     wireAt _ _ (KnownCut _) = Nothing
     wireAt pid wireIdx (PossibleValue cs)
