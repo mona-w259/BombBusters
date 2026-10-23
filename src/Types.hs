@@ -179,3 +179,11 @@ data TurnLog = TurnLog
     logOutcome :: Outcome
   }
   deriving (Eq, Show)
+
+
+colorEmoji :: WireColor -> String
+colorEmoji Blue = "🔵"
+colorEmoji Yellow = "🟡"
+colorEmoji Red = "🔴"
+colorEmoji Grey = "⚫"
+colorEmoji Hidden = "⬜"

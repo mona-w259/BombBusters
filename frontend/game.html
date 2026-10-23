@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game</title>
+    <title>Bomb Busters - Let's play!</title>
     <link rel="stylesheet" href="./style.css">
     <link rel="icon" href="/favicon.ico" type="image/png">
     <style name="log"></style>
@@ -22,20 +22,32 @@
                         ⓘ
                     </label>
                     <div class="info-popup">
-                        ⬜ = Hidden<br>
                         💡 = Info<br>
-                        ⚫ = Cut
+                        <span class="color-legend" style="background-color: #231f15"></span> = Hidden<br>
+                        <span class="color-legend" style="background-color: #8b6c40"></span> = Cut
                     </div>
                 </div>
             </h1>
         </header>
 
-
-        <div>Player 1: <span id="rack-1">...</span></div>
-        <div>Player 2: <span id="rack-2">...</span></div>
-        <div>Player 3: <span id="rack-3">...</span></div>
-        <div>Player 4: <span id="rack-4">...</span></div>
+        <div class="rack">
+            Rack (Player <span id="player-id-oth-1"></span>):<br>
+            <div id="rack-other-1"></div>
+        </div>
+        <div class="rack">
+            Rack (Player <span id="player-id-oth-2"></span>):<br>
+            <div id="rack-other-2"></div>
+        </div>
+        <div class="rack">
+            Rack (Player <span id="player-id-oth-3"></span>):<br>
+            <div id="rack-other-3"></div>
+        </div>
         
+        
+        <div class="rack">
+            Your Rack (Player <span id="player-id-own"></span>):<br>
+            <div id="rack-own"></div>
+        </div>
         
         <div class="life-gauge" id="lifeGauge">
             <div class="life-pointer1" data-lpoint="4"></div>
@@ -168,47 +180,19 @@
 
         </div>
 
-        <div class="rack">
-            Your Rack (Player <span id="player-id"></span>):<br>
-            <button class="wire" id="1">
-                1. Kabel
-            </button>
-            <button class="wire" id="2">
-                2. Kabel
-            </button>
-            <button class="wire" id="3">
-                3. Kabel
-            </button>
-            <button class="wire" id="4">
-                4. Kabel
-            </button>
-            <button class="wire" id="5">
-                5. Kabel
-            </button>
-            <button class="wire" id="6">
-                6. Kabel
-            </button>
-            <button class="wire" id="7">
-                7. Kabel
-            </button>
-            <button class="wire" id="8">
-                8. Kabel
-            </button>
-            <button class="wire" id="9">
-                9. Kabel
-            </button>
-            <button class="wire" id="10">
-                10. Kabel
-            </button>
-            <button class="wire" id="11">
-                11. Kabel
-            </button>
-            <button class="wire" id="12">
-                12. Kabel
-            </button>
-            <button class="wire" id="13">
-                13. Kabel?
-            </button>
+        <div id="action-board">
+            Choose Action:
+            <div class="action">
+                <div id="duo-cut">Duo Cut</div></div>
+            <div class="action">
+                <div id="solo-cut">Solo Cut</div>
+            </div>
+            <div class="action">
+                <div id="remove-red">Remove Red</div>
+            </div>
+            <div class="action">
+                <div id="choose-equipment">Choose Equipment</div>
+            </div>
         </div>
 
         <div class="buttons">

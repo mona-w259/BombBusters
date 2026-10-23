@@ -1,6 +1,7 @@
 const params = new URLSearchParams(location.search);
 const code = params.get("code") || "";
 const slot = params.get("slot") || "";
+let lastRacks= "";
 
 async function poll() {
     try {
@@ -12,17 +13,17 @@ async function poll() {
         } else {
             loadYRWires();
             loadDetonator();
-            loadRacks();
             loadCurrTurn();
             loadActionMsg();
             loadResultMsg();
+            pollRacks();
         }
         
     } catch (e) {
-
+        console.error("pollState: ", e);
     }
 
-    setTimeout(poll, 100);
+    setTimeout(poll, 200);
 }
 
 
@@ -71,51 +72,64 @@ async function loadDetonator() {
 
 
 /* print racks */
-const rack1 = document.getElementById("rack-1");
-const rack2 = document.getElementById("rack-2");
-const rack3 = document.getElementById("rack-3");
-const rack4 = document.getElementById("rack-4");
 
-async function loadRacks() {
-    try {
-        const url1 = "/api/game/" + encodeURIComponent(code) + "/racklabled?slot=" + encodeURIComponent(slot)
-        const dataLab = await (await fetch(url1)).json();
+function renderOwnRack(container, wires) {
+    container.replaceChildren(...wires.map(w => {
+        const cable = document.createElement("button");
 
-        const url2 = "/api/game/" + encodeURIComponent(code) + "/rackoverview?slot="
-        const dataOvv1 = await (await fetch(url2 + "1")).json();
-        const dataOvv2 = await (await fetch(url2 + "2")).json();
-        const dataOvv3 = await (await fetch(url2 + "3")).json();
-        const dataOvv4 = await (await fetch(url2 + "4")).json();
-
-        rack1.textContent = dataOvv1.text;
-        rack2.textContent = dataOvv2.text;
-        rack3.textContent = dataOvv3.text;
-        rack4.textContent = dataOvv4.text;
-/*
-        if (dataLab.text != undefined) {
-            switch (slot) {
-                case 1:
-                    rack1.textContent = dataLab.text;
-                case 2:
-                    rack2.textContent = dataLab.text;
-                case 3:
-                    rack3.textContent = dataLab.text;
-                case 4:
-                    rack4.textContent = dataLab.text;
-                default:
-                    rack1.textContent = "Unknown slot";
-                    rack2.textContent = "Unknown slot";
-                    rack3.textContent = "Unknown slot";
-                    rack4.textContent = "Unknown slot";
-            } 
-            return;
+        if (! w.isCut) {
+            cable.className = "wire-" + w.color;
+            cable.textContent = (w.hasHint) ? `💡${w.value}` : `${w.value}`;
+            cable.disabled = false;
+        } else {
+            cable.className = "wire-" + w.color;
+            cable.textContent = `${w.value}`;
+            cable.disabled = true;
         }
-            */
+        cable.addEventListener("click", () => sendInput(w.label));
+        return cable;
+    }));
+}
+
+function renderOtherRack(container, wires) {
+    container.replaceChildren(...wires.map(w => {
+        const cable = document.createElement("button");
+
+        if (! w.isCut) {
+            cable.className = "wire";
+            cable.textContent = (w.hasHint) ? `💡${w.value}` : "";
+            cable.disabled = false;
+        } else {
+            cable.className = "wire-" + w.color;
+            cable.textContent = `${w.value}`;
+            cable.disabled = true;
+        }
+        cable.addEventListener("click", () => sendInput(w.label));
+        return cable;
+    }));
+}
+
+async function pollRacks() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/racks?slot=" + encodeURIComponent(slot);
+        const rack = await (await fetch(url, { cache: "no-store" })).json();
+
+        if (!rack.error) {
+            const rawRacks = JSON.stringify(rack);
+            
+            if (rawRacks !== lastRacks) {
+                renderOwnRack(document.getElementById("rack-own"), rack.own.wires);
+    
+                rack.others.forEach((oth, i) => {
+                    const el = document.getElementById("rack-other-" + (i + 1));
+                    if (el) renderOtherRack(el, oth.wires);
+                });
+    
+                lastRacks = rawRacks;
+            } 
+        }
     } catch (e) {
-        rack1.textContent = "(error): " + e;
-        rack2.textContent = "(error): " + e;
-        rack3.textContent = "(error): " + e;
-        rack4.textContent = "(error): " + e;
+        console.error("pollRacks: ", e);
     }
 }
 
@@ -152,6 +166,23 @@ async function loadActionMsg() {
     }
 }
 
+/*
+    <div id="duo-cut">Duo Cut</div>
+    <div id="solo-cut">Solo Cut</div>
+    <div id="remove-red">Remove Red</div>
+    <div id="choose-equipment">Choose Equipment</div>
+*/
+function renderActions(container, action) {
+    container.replaceChildren(...actions.map(a => {
+        const cable = document.createElement("button");
+        cable.class = "action";// + (w.isUsed ? " used" : "");
+        cable.disabled = a.isUsed;
+        cable.textContent = `${w.value}`;
+        cable.addEventListener("click", () => sendInput(w.label));
+        return cable;
+    }));
+}
+
 
 /* print result of last action */
 const resultMsg = document.getElementById("result");
@@ -181,7 +212,7 @@ async function loadGameStatus() {
         if (data.text != undefined) {
             if (data.text == "detonated") {
                 overlay.style.display = "flex";
-                statusG.textContent = "<h1>Congratulation!<\h1>Bomb detonated, game lost.";
+                statusG.textContent = "Oops...! Bomb detonated, game lost.";
             } else if (data.text == "defused") {
                 overlay.style.display = "flex";
                 statusG.textContent = "Bomb defused, game won.";
@@ -196,4 +227,23 @@ async function loadGameStatus() {
 }
 
 
-poll()
+/* get playerId's */
+const idOwn = document.getElementById("player-id-own");
+const idOth1 = document.getElementById("player-id-oth-1");
+const idOth2 = document.getElementById("player-id-oth-2");
+const idOth3 = document.getElementById("player-id-oth-3");
+
+function getPlayerId() {
+    idOwn.textContent = slot;
+    
+    const othIDs = [1, 2, 3, 4].filter(id => id !== Number(slot));  
+    idOth1.textContent = othIDs[0];
+    idOth2.textContent = othIDs[1];
+    idOth3.textContent = othIDs[2];
+}
+
+
+/* function calls */
+getPlayerId();
+loadYRWires();
+poll();

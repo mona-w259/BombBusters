@@ -1,4 +1,4 @@
-module GameLogic.Display (displayPlayerView, displayWirePickView, displayInfoMarkerView, displayTurnResult, displayBotDecision, announceHumanTurn, indexToLabel) where
+module GameLogic.Display (displayPlayerView, displayWirePickView, displayInfoMarkerView, displayTurnResult, displayBotDecision, announceHumanTurn, indexToLabel, wireFace) where
 
 import Control.Monad (unless, when)
 import Control.Monad.State
@@ -19,7 +19,7 @@ displayPlayerView pv = do
       others = pvOthers pv
       botStatus = isBot self
 
-      header = "\nPlayer " ++ show pid ++ " isBot: " ++ show botStatus
+      header = "Player " ++ show pid ++ " isBot: " ++ show botStatus
 
       equipText = "\nAvailable Equipment: " ++ equipmentSummary pv
 
@@ -128,19 +128,22 @@ formatWireOverview infos w =
       wireBox = "[" ++ emoji ++ "(" ++ valStr ++ ")" ++ "]"
    in wireBox ++ " "
 
+wireFace :: [(Int, (Int, WireColor))] -> Wire -> (String, String)
+wireFace infos w = 
+  let maybeInfo = lookup (wireIndex w) infos
+  in case (color w, maybeInfo) of
+    (Grey, _)                   -> ("⚫", show (value w))
+    (Hidden, Just (_, Yellow))  -> ("💡", "🟡")
+    (Hidden, Just (v, _))       -> ("💡", show v)
+    (c, Just (v, _))            -> (colorEmoji c, show v ++ "💡")
+    (Hidden, Nothing)           -> ("⬜", "?")
+    (c, Nothing)                -> (colorEmoji c, show (value w))
+
 formatWireLabeled :: [(Int, (Int, WireColor))] -> Wire -> String
 formatWireLabeled infos w =
-  let maybeInfo = lookup (wireIndex w) infos
-      (emoji, valStr) = case (color w, maybeInfo) of
-        (Grey, _) -> ("⚫", show (value w))
-        (Hidden, Just (_, Yellow)) -> ("💡", "🟡")
-        (Hidden, Just (v, _)) -> ("💡", show v)
-        (c, Just (v, _)) -> (colorEmoji c, show v ++ "💡")
-        (Hidden, Nothing) -> ("⬜", "?")
-        (c, Nothing) -> (colorEmoji c, show (value w))
+  let (emoji, valStr) = wireFace infos w
       lbl = indexToLabel (wireIndex w)
-      wireBox = "[" ++ lbl ++ ":" ++ emoji ++ "(" ++ valStr ++ ")" ++ "]"
-   in wireBox ++ " "
+  in "[" ++ lbl ++ ":" ++ emoji ++ "(" ++ valStr ++ ")] "
 
 
 displayTurnResult :: Outcome -> GameM ()

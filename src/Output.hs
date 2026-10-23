@@ -6,13 +6,6 @@ import qualified Data.Map as Map
 import Types
 
 
-colorEmoji :: WireColor -> String
-colorEmoji Blue = "🔵"
-colorEmoji Yellow = "🟡"
-colorEmoji Red = "🔴"
-colorEmoji Grey = "⚫"
-colorEmoji Hidden = "⬜"
-
 syncState :: GameM ()
 syncState = do
   gs <- get

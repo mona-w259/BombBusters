@@ -8,7 +8,7 @@ import Control.Monad
 import qualified Data.Text.Lazy as TL
 import qualified Data.Map as Map
 import Network.Wai.Middleware.Static (staticPolicy, addBase)
-import Data.Aeson (object, (.=))
+import Data.Aeson (object, (.=), Value, FromJSON(..), withObject, (.:))
 import Data.Time.Clock (diffUTCTime, getCurrentTime)
 
 import GameLoop
@@ -57,6 +57,28 @@ wrStatusText :: WaitingRoomStatus -> String
 wrStatusText Waiting = "waiting"
 wrStatusText Started = "started"
 wrStatusText Expired = "expired"
+
+rackFormatJson :: [InfoMarker] -> Player -> [Value]
+rackFormatJson infos pl = 
+  [ object
+    [ "index"   .= wireIndex ws
+    , "label"   .= indexToLabel (wireIndex ws)
+    , "color"   .= colorToString (color ws)
+    , "value"   .= val
+    , "isCut"   .= isCut ws
+    , "hasHint" .= (emoji == "💡")
+    ]
+    | ws <- playerWires pl, let (emoji, val) = wireFace infosForPlayer ws
+  ]
+  where
+    infosForPlayer = 
+      [ (idx, (val, col)) | InfoMarker {markerOwner = owner, markerIndex = idx, markerValue = val, markerColor = col} <- infos, owner == playerId pl ]
+    colorToString :: WireColor -> String
+    colorToString Blue   = "blue"
+    colorToString Yellow = "yellow"
+    colorToString Red    = "red"
+    colorToString Grey   = "grey"
+    colorToString Hidden = "hidden"
 
 
 
@@ -141,23 +163,20 @@ main = do
           Just gs -> do 
             json (object ["text" .= detonator gs])
 
-      get "/api/game/:code/racklabled" $ do
-        cd <- pathParam "code"      :: ActionM String
-        sl <- queryParam "slot"     :: ActionM Int
-        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
-        case wr of
-          Nothing -> json (object ["error" .= ("no rack yet" :: String)])
-          Just gs -> do
-            json (object ["text" .= Map.findWithDefault "" sl (rackLabled gs)])
 
-      get "/api/game/:code/rackoverview" $ do
+      get "/api/game/:code/racks" $ do
         cd <- pathParam "code"      :: ActionM String
         sl <- queryParam "slot"     :: ActionM Int
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
         case wr of
           Nothing -> json (object ["error" .= ("no rack yet" :: String)])
           Just gs -> do
-            json (object ["text" .= Map.findWithDefault "" sl (rackOverview gs)])
+            let pv    = getPlayerView sl gs
+                infos = pvInfoMarkers pv
+            json $ object
+              [ "own"     .= object [ "playerId" .= sl, "wires" .= rackFormatJson infos (pvSelf pv) ]
+              , "others"  .= [ object [ "playerId" .= playerId p, "wires" .= rackFormatJson infos p ]     | p <- pvOthers pv ]
+              ]
 
       get "/api/game/:code/turn" $ do
         cd <- pathParam "code"      :: ActionM String

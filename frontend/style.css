@@ -213,6 +213,15 @@ h1 {
     display: block;
 }
 
+.color-legend {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    vertical-align: middle;
+}
+
 
 .log {
     font-family: monospace;
@@ -225,12 +234,47 @@ h1 {
     text-align: left;
 }
 
-.wire {
+.rack {
+    margin-bottom: 20px;
+}
+
+.wire, .wire-hidden {
     background-color: #231f15;
     border-color: #3b311e;
     color: #f9e1a3;
+    height: 100px;
+    width: 35px;
 }
 
+.wire-blue {
+    background-color: #3661cd;
+    border-color: #3b311e;
+    color: #f9e1a3;
+    height: 100px;
+    width: 35px;
+}
+.wire-yellow {
+    background-color: #eccf46;
+    border-color: #3b311e;
+    color: #231f15;
+    height: 100px;
+    width: 35px;
+}
+.wire-red {
+    background-color: #f93c27;
+    border-color: #3b311e;
+    color: #231f15;
+    height: 100px;
+    width: 35px;
+}
+
+.wire-grey {
+    background-color: #8b6c40;
+    border-color: #3b311e;
+    color: #f9e1a3;
+    height: 100px;
+    width: 35px;
+}
 
 .equipment-container {
     position: relative;
@@ -446,6 +490,6 @@ h1 {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 
-#action {
-    white-space: pre-line;
+#action, #wire {
+    white-space: pre;
 }
