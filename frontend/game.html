@@ -13,21 +13,31 @@
 <body>
     <main class="game">
         <header class="header">
-            <h1>
-                Show Game
-                
-                <div class="info-container">
-                    <input type="checkbox" id="hint-click" class="info-toggle">
-                    <label for="hint-click" class="info-btn" title="Explain Symbols">
-                        ⓘ
-                    </label>
-                    <div class="info-popup">
-                        💡 = Info<br>
-                        <span class="color-legend" style="background-color: #231f15"></span> = Hidden<br>
-                        <span class="color-legend" style="background-color: #8b6c40"></span> = Cut
-                    </div>
+
+            <div class="life-gauge" id="lifeGauge">
+                <div class="life-pointer1" data-lpoint="4"></div>
+                <div class="life-pointer2" data-lpoint="3"></div>
+                <div class="life-pointer3" data-lpoint="2"></div>
+                <div class="life-pointer4" data-lpoint="1"></div>
+                <div class="life-pointer5" data-lpoint="0"></div>
+
+                <div class="life-center">
+                    <div id="lifeValue">...</div>
+                    <small>lives left</small>
                 </div>
-            </h1>
+            </div>
+
+            <div class="info-container">
+                <input type="checkbox" id="hint-click" class="info-toggle">
+                <label for="hint-click" class="info-btn" title="Explain Symbols">
+                    ⓘ
+                </label>
+                <div class="info-popup">
+                    💡 = Info<br>
+                    <span class="color-legend" style="background-color: #231f15"></span> = Hidden<br>
+                    <span class="color-legend" style="background-color: #8b6c40"></span> = Cut
+                </div>
+            </div>
         </header>
 
         <div class="rack">
@@ -48,19 +58,6 @@
             Your Rack (Player <span id="player-id-own"></span>):<br>
             <div id="rack-own"></div>
         </div>
-        
-        <div class="life-gauge" id="lifeGauge">
-            <div class="life-pointer1" data-lpoint="4"></div>
-            <div class="life-pointer2" data-lpoint="3"></div>
-            <div class="life-pointer3" data-lpoint="2"></div>
-            <div class="life-pointer4" data-lpoint="1"></div>
-            <div class="life-pointer5" data-lpoint="0"></div>
-
-            <div class="life-center">
-                <div id="lifeValue">...</div>
-                <small>lives left</small>
-            </div>
-        </div>
 
         <div id="currturn">...</div>
         <div id="action">...</div>
@@ -71,113 +68,125 @@
         </div>
 
         <div class="equipment-container">
-            Equipment<br>
+            <div class="equipment-title">Equipment</div>
 
-            <input type="checkbox" id="eq-dd-click" class="equipment-toggle">
-            <label for="eq-dd-click" class="equipment-btn">
-                DoubleDetector
-            </label>
-            <div class="equipment-popup">
-                <p>
-                    If you perform a duo cut, you may name 1 value (except yellow) and point to 2 cables 
-                    belonging to 1 team member, instead of just one cable.
-                </p>
-                <subeqi>This is your personal equipment, only you can use it.</subeqi>
+            <div class="equipment-list">
+                <div class="equipment-item">
+                    <input type="checkbox" id="eq-dd-click" class="equipment-toggle">
+                    <label for="eq-dd-click" class="equipment-btn">
+                        DoubleDetector
+                    </label>
+                    <div class="equipment-popup">
+                        <p>
+                            If you perform a duo cut, you may name 1 value (except yellow) and point to 2 cables 
+                            belonging to 1 team member, instead of just one cable.
+                        </p>
+                        <subeqi>This is your personal equipment, only you can use it.</subeqi>
                      
-                <div class="buttons">
-                    <form>
-                        <button type="choose" class="create-btn"
-                                formmethod="get" formnovalidate style="margin-top: 15px;">
-                            Choose                            
-                        </button>
-                    </form>
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-            </div>
             
-            <input type="checkbox" id="eq-td-click" class="equipment-toggle">
-            <label for="eq-td-click" class="equipment-btn">
-                TripleDetector (3)
-            </label>
-            <div class="equipment-popup">
-                <p>
-                    If you perform a duo cut, you may name 1 value (except yellow) and point to 3 cables 
-                    belonging to 1 team member, instead of just one cable.
-                </p>
-                <subeqi>This equipment works like the double detector, but with 3 cables.</subeqi>
-                
-                <div class="buttons">
-                    <form>
-                        <button type="choose" class="create-btn"
-                                formmethod="get" formnovalidate style="margin-top: 15px;">
-                            Choose                            
-                        </button>
-                    </form>
-                </div>
-            </div>
+                <div class="equipment-item">
+                    <input type="checkbox" id="eq-td-click" class="equipment-toggle">
+                    <label for="eq-td-click" class="equipment-btn">
+                        TripleDetector (3)
+                    </label>
+                    <div class="equipment-popup">
+                        <p>
+                            If you perform a duo cut, you may name 1 value (except yellow) and point to 3 cables 
+                            belonging to 1 team member, instead of just one cable.
+                        </p>
+                        <subeqi>This equipment works like the double detector, but with 3 cables.</subeqi>
 
-            <input type="checkbox" id="eq-sd-click" class="equipment-toggle">
-            <label for="eq-sd-click" class="equipment-btn">
-                SuperDetector (5)
-            </label>
-            <div class="equipment-popup">
-                <p>
-                    If you perform a duo cut, you may name 1 value (except yellow) and point to 1 entire cable rack 
-                    belonging to 1 team member, instead of just one cable.
-                </p>
-                <subeqi>This equipment works like the double detector, except with an entire cable rack.</subeqi>
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equipment-item">
+                    <input type="checkbox" id="eq-sd-click" class="equipment-toggle">
+                    <label for="eq-sd-click" class="equipment-btn">
+                        SuperDetector (5)
+                    </label>
+                    <div class="equipment-popup">
+                        <p>
+                            If you perform a duo cut, you may name 1 value (except yellow) and point to 1 entire cable rack 
+                            belonging to 1 team member, instead of just one cable.
+                        </p>
+                        <subeqi>This equipment works like the double detector, except with an entire cable rack.</subeqi>
                   
-                <div class="buttons">
-                    <form>
-                        <button type="choose" class="create-btn"
-                                formmethod="get" formnovalidate style="margin-top: 15px;">
-                            Choose                            
-                        </button>
-                    </form>
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <input type="checkbox" id="eq-st-click" class="equipment-toggle">
-            <label for="eq-st-click" class="equipment-btn">
-                Stabilizer (9)
-            </label>
-            <div class="equipment-popup">
-                <p>
-                    No matter how the action plays out, the detonator's pointer won't move any further 
-                    and the bomb won't explode.
-                </p>
-                <subeqi>You can combine this card with other tools.</subeqi>
+                <div class="equipment-item">
+                    <input type="checkbox" id="eq-st-click" class="equipment-toggle">
+                    <label for="eq-st-click" class="equipment-btn">
+                        Stabilizer (9)
+                    </label>
+                    <div class="equipment-popup">
+                        <p>
+                            No matter how the action plays out, the detonator's pointer won't move any further 
+                            and the bomb won't explode.
+                        </p>
+                        <subeqi>You can combine this card with other tools.</subeqi>
                      
-                <div class="buttons">
-                    <form>
-                        <button type="choose" class="create-btn"
-                                formmethod="get" formnovalidate style="margin-top: 15px;">
-                            Choose                            
-                        </button>
-                    </form>
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <input type="checkbox" id="eq-dr-click" class="equipment-toggle">
-            <label for="eq-dr-click" class="equipment-btn">
-                DoubleRadiator (10)
-            </label>
-            <div class="equipment-popup">
-                <p>
-                    If you perform a duo cut, you may name 2 values (including yellow) when you point to 1 cable  
-                    belonging to 1 team member, instead of just one value.
-                </p>
-                <subeqi>You must have both values ob your cable rack.</subeqi>
+                <div class="equipment-item">
+                    <input type="checkbox" id="eq-dr-click" class="equipment-toggle">
+                    <label for="eq-dr-click" class="equipment-btn">
+                        DoubleRadiator (10)
+                    </label>
+                    <div class="equipment-popup">
+                        <p>
+                            If you perform a duo cut, you may name 2 values (including yellow) when you point to 1 cable  
+                            belonging to 1 team member, instead of just one value.
+                        </p>
+                        <subeqi>You must have both values ob your cable rack.</subeqi>
                      
-                <div class="buttons">
-                    <form>
-                        <button type="choose" class="create-btn"
-                                formmethod="get" formnovalidate style="margin-top: 15px;">
-                            Choose                            
-                        </button>
-                    </form>
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
+            </div>
         </div>
 
         <div id="action-board">

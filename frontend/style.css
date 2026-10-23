@@ -35,8 +35,10 @@ body {
 }
 
 .header {
-    text-align: center;
-    margin-bottom: 35px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
 }
 
 h1 {
@@ -169,6 +171,7 @@ h1 {
 
 
 .info-container {
+    margin-left: auto;
     position: relative;
     display: inline-block;
 }
@@ -194,6 +197,7 @@ h1 {
 .info-popup {
     display: none;
     position: absolute;
+    z-index: 11;
     padding: 10px 20px 10px 10px;
     background: #3b311e;
     border: 1px solid #3b311e;
@@ -278,10 +282,21 @@ h1 {
 
 .equipment-container {
     position: relative;
+}
+
+.equipment-title {
+    margin-bottom: 6px;
+}
+
+.equipment-list {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: 10px;
+}
+
+.equipment-item {
+    position: relative;
 }
 
 .equipment-toggle {
@@ -289,7 +304,8 @@ h1 {
 }
 
 .equipment-btn {
-    display: inline;
+    display: block;
+    box-sizing: border-box;
     text-align: center;
     padding: 8px 14px;
     border: 1px solid #ccc;
@@ -306,6 +322,12 @@ h1 {
 
 .equipment-popup {
     display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-sizing: border-box;
     padding: 10px;
     background: #3b311e;
     border: 1px solid #3b311e;

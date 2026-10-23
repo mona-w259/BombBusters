@@ -11,7 +11,6 @@ async function poll() {
         if (data.text == "defused" || data.text == "detonated") {
             loadGameStatus();
         } else {
-            loadYRWires();
             loadDetonator();
             loadCurrTurn();
             loadActionMsg();
