@@ -16,6 +16,18 @@ import InitGame
 import WaitingRoom
 import Types
 import Output
+import GameLogic.Display
+import GameLogic.Util
+import GameLogic.InBox
+
+-------------- data types, instances --------------
+data InputReq = InputReq {
+  irSlot :: Int, 
+  irText :: String
+  }
+
+instance FromJSON InputReq where
+  parseJSON = withObject "InputReq" $ \obj -> InputReq <$> obj .: "slot" <*> obj .: "text"
 
 ----------------- small functions -----------------
 page :: FilePath -> ActionM ()
@@ -163,12 +175,12 @@ main = do
           Just gs -> do 
             json (object ["text" .= detonator gs])
 
-
+      
       get "/api/game/:code/racks" $ do
         cd <- pathParam "code"      :: ActionM String
         sl <- queryParam "slot"     :: ActionM Int
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
-        case wr of
+        case wr of 
           Nothing -> json (object ["error" .= ("no rack yet" :: String)])
           Just gs -> do
             let pv    = getPlayerView sl gs
@@ -209,3 +221,15 @@ main = do
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do
             json (object ["text" .= gsStatusText (Types.status gs)])
+
+      post "/api/game/:code/input" $ do
+        cd  <- pathParam "code"      :: ActionM String
+        req <- jsonData
+        wr  <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["ok" .= False, "error" .= ("no such game" :: String)])
+          Just gs -> do
+            ok <- liftIO (pushInput (inBox gs) (irSlot req) (irText req))
+            json $ if ok
+              then object ["ok" .= True]
+              else object ["ok" .= False, "error" .= ("unknown player" :: String)]

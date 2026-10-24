@@ -38,7 +38,7 @@ readIntB :: PlayerView -> String -> GameM Int
 readIntB pv prompt = do
   modify (\gs -> gs { actionMsg = (prompt ++ "  (ESC + Enter to go back)") })
   syncState
-  input <- liftIO getLine
+  input <- readInput pv
   if isBack input
     then liftIO (throwIO GoBack)
     else case readMaybe input :: Maybe Int of
@@ -52,7 +52,7 @@ readLabelB :: PlayerView -> String -> GameM Int
 readLabelB pv prompt = do
   modify (\gs -> gs { actionMsg = (prompt ++ "  (ESC + Enter to go back)") })
   syncState
-  input <- liftIO getLine
+  input <- readInput pv
   if isBack input
     then liftIO (throwIO GoBack)
     else case input of
@@ -74,7 +74,7 @@ askPlayerToChooseWire pv opts kind = do
   readChoice
   where
     readChoice = do
-      input <- liftIO getLine
+      input <- readInput pv
       case input of
         [c] | c >= 'a' && c <= 'z' ->
           let n = fromEnum c - fromEnum 'a'
@@ -296,7 +296,7 @@ chooseActionOrEquipment pv = do
       let tokens  = map (show . fst) numbered ++ ["e" | hasEq]
       modify (\gs -> gs { actionMsg = "Enter the number or letter of the action you choose (" ++ intercalate " or " tokens ++ "):" })
       syncState
-      input <- liftIO getLine
+      input <- readInput pv
       case input of
         "e" | hasEq -> Right <$> chooseEquipment pv
         _ -> case readMaybe input :: Maybe Int of

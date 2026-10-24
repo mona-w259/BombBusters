@@ -9,6 +9,7 @@ import qualified Config
 import Types
 import Control.Concurrent.STM (TVar)
 import Output
+import GameLogic.InBox
 
 initWires :: IO ([Wire], Wire, [Wire])
 initWires = do
@@ -143,6 +144,7 @@ initGameState l ml codeI syncTv = do
       eq = initEquipment
   cMs <- initColorMarkers redWire yellowWires
   (tO, startingPlayer) <- initTurnOrder
+  iB <- newInBox (map playerId ps)
   return
     GameState
       { wires = allWires,
@@ -167,5 +169,6 @@ initGameState l ml codeI syncTv = do
         rackOverview = empty,
         actionMsg = "",
         resultMsg = "",
-        syncVar = syncTv
+        syncVar = syncTv,
+        inBox = iB
       }

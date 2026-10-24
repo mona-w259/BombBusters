@@ -98,10 +98,10 @@ joinWaitingRoom wrs rawCode = do
   case result of
     Nothing -> return (Left NoSuchGame)
     Just wr 
-      | status wr /= Waiting            -> return (Left GameClosed)
+      | status wr /= Waiting                -> return (Left GameClosed)
       | reg_playersWR wr >= h_playersWR wr  -> return (Left GameFull)
       | otherwise -> do
-          let slot = reg_playersWR wr + 1
+          let slot = ((4 - h_playersWR wr) + reg_playersWR wr ) +1 -- % 4 +1     -- let bots be first slots, human players last ones
           writeTVar (waitingRooms wrs) (Map.insert code wr {reg_playersWR = slot} rooms)
           return (Right (code, slot))
 

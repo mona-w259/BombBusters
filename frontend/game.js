@@ -125,7 +125,7 @@ async function pollRacks() {
                 });
     
                 lastRacks = rawRacks;
-            } 
+            }
         }
     } catch (e) {
         console.error("pollRacks: ", e);
@@ -222,6 +222,21 @@ async function loadGameStatus() {
         }
     } catch (e) {
         actionMsg.textContent = "(error): " + e;
+    }
+}
+
+
+async function sendInput(text) {
+    try {
+        const res = await fetch("api/game/" + encodeURIComponent(code) + "/input", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slot: Number(slot), text })
+        });
+        const d = await res.json();
+        if (!d.ok) console.warn("Input rejected: ", d.error);
+    } catch (e) {
+        console.warn("Server not reachable");
     }
 }
 

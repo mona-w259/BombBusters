@@ -6,6 +6,7 @@ import Data.Maybe
 import Text.Read
 import Types
 import Output
+import GameLogic.InBox
 
 getPlayerView :: PlayerId -> GameState -> PlayerView
 getPlayerView pid gs =
@@ -64,11 +65,19 @@ findPlayer pidTarget pList =
         Just p -> p
         Nothing -> errorMessage $ "Player with id " ++ show pidTarget ++ " not found."
 
+readInput :: PlayerView -> GameM String
+readInput pv = do
+  let pid = playerId (pvSelf pv)
+  iB <- gets inBox
+  liftIO (clearInput iB pid)
+  syncState
+  liftIO (readInputFor iB pid)
+
 readInt :: PlayerView -> String -> GameM Int
 readInt pv prompt = do
   modify (\gs -> gs { actionMsg = prompt } )
   syncState
-  input <- liftIO getLine
+  input <- readInput pv
   case readMaybe input :: Maybe Int of
     Just n -> return n
     Nothing -> do
@@ -80,7 +89,7 @@ readLabel :: PlayerView -> String -> GameM Int
 readLabel pv prompt = do
   modify (\gs -> gs { actionMsg = prompt } )
   syncState
-  input <- liftIO getLine
+  input <- readInput pv
   case input of
     [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
     _ -> do

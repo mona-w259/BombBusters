@@ -38,6 +38,7 @@ library
         GameLogic.Input
         GameLogic.Util
         GameLogic.Equipment
+        GameLogic.InBox
         BotLogic.Interface
         BotLogic.BotTypes
         BotLogic.Strategies
