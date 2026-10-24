@@ -33,6 +33,10 @@
                     ⓘ
                 </label>
                 <div class="info-popup">
+                    Each cable has a value ranging from 1 to 12.<br>
+                    Each value appears exactly four times.<br><br>
+                    There are two yellow cables and one red cable.<br>Their exact values are unknown.<br><br>
+                    All cable holders are sorted in ascending order.<br><br>
                     💡 = Info<br>
                     <span class="color-legend" style="background-color: #231f15"></span> = Hidden<br>
                     <span class="color-legend" style="background-color: #8b6c40"></span> = Cut
@@ -67,6 +71,120 @@
         <div>
             Possible Yellow (2/3) and Red (1/2) Wires: <span id="yr-wires">...</span>
         </div>
+
+
+        <div class="action-container">
+            <div class="action-title">Actions</div>
+            
+            <div class="action-list">
+                <div class="action-item">
+                    <input type="checkbox" id="ac-dc-click" class="action-toggle">
+                    <label for="ac-dc-click" class="action-btn">
+                        Duo Cut
+                    </label>
+                    <div class="action-popup">
+                        <p>
+                            You have to choose a player and click on one of your wires and one of theirs to make a cut with their wire.
+                        </p>
+                     
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-item">
+                    <input type="checkbox" id="ac-sc2-click" class="action-toggle">
+                    <label for="ac-sc2-click" class="action-btn">
+                        Solo Cut - 2 wires
+                    </label>
+                    <div class="action-popup">
+                        <p>
+                            You have to click on two of your wires (same value) to make a cut.
+                        </p>
+                        <subeqi>Only possible if the other two wires with the value you choose are cut already or if you have both yellow wires.</subeqi>
+                     
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-item">
+                    <input type="checkbox" id="ac-sc4-click" class="action-toggle">
+                    <label for="ac-sc4-click" class="action-btn">
+                        Solo Cut - 4 wires
+                    </label>
+                    <div class="action-popup">
+                        <p>
+                            You have to click on four of your wires (same value) to make a cut.
+                        </p>
+                     
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-item">
+                    <input type="checkbox" id="ac-rr-click" class="action-toggle">
+                    <label for="ac-rr-click" class="action-btn">
+                        Remove Red
+                    </label>
+                    <div class="action-popup">
+                        <p>
+                            You can cut the red wire if its the last wire on your rack.
+                        </p>
+                     
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-item">
+                    <input type="checkbox" id="ac-ce-click" class="action-toggle">
+                    <label for="ac-ce-click" class="action-btn">
+                        Choose Equipment
+                    </label>
+                    <div class="action-popup">
+                        <p>
+                            You can use an equipment if you do not know what to cut.
+                        </p>
+                     
+                        <div class="buttons">
+                            <form>
+                                <button type="choose" class="create-btn"
+                                        formmethod="get" formnovalidate style="margin-top: 15px;">
+                                    Choose                            
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <div class="equipment-container">
             <div class="equipment-title">Equipment</div>
@@ -190,20 +308,6 @@
             </div>
         </div>
 
-        <div id="action-board">
-            Choose Action:
-            <div class="action">
-                <div id="duo-cut">Duo Cut</div></div>
-            <div class="action">
-                <div id="solo-cut">Solo Cut</div>
-            </div>
-            <div class="action">
-                <div id="remove-red">Remove Red</div>
-            </div>
-            <div class="action">
-                <div id="choose-equipment">Choose Equipment</div>
-            </div>
-        </div>
 
         <div class="buttons">
             <form method="get" action="/">
