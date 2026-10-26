@@ -170,5 +170,6 @@ initGameState l ml codeI syncTv = do
         actionMsg = "",
         resultMsg = "",
         syncVar = syncTv,
-        inBox = iB
+        inBox = iB,
+        actionMenu = []
       }

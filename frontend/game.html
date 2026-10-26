@@ -77,26 +77,6 @@
             <div class="action-title">Actions</div>
             
             <div class="action-list">
-                <div class="action-item">
-                    <input type="checkbox" id="ac-dc-click" class="action-toggle">
-                    <label for="ac-dc-click" class="action-btn">
-                        Duo Cut
-                    </label>
-                    <div class="action-popup">
-                        <p>
-                            You have to choose a player and click on one of your wires and one of theirs to make a cut with their wire.
-                        </p>
-                     
-                        <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="action-item">
                     <input type="checkbox" id="ac-sc2-click" class="action-toggle">
@@ -110,12 +90,10 @@
                         <subeqi>Only possible if the other two wires with the value you choose are cut already or if you have both yellow wires.</subeqi>
                      
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="1"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -131,12 +109,29 @@
                         </p>
                      
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="2"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-item">
+                    <input type="checkbox" id="ac-dc-click" class="action-toggle">
+                    <label for="ac-dc-click" class="action-btn">
+                        Duo Cut
+                    </label>
+                    <div class="action-popup">
+                        <p>
+                            You have to choose a player and click on one of your wires and one of theirs to make a cut with their wire.
+                        </p>
+                     
+                        <div class="buttons">
+                            <button type="button" class="create-btn" data-input="3"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -152,12 +147,10 @@
                         </p>
                      
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="4"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -173,12 +166,10 @@
                         </p>
                      
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="e"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -203,12 +194,10 @@
                         <subeqi>This is your personal equipment, only you can use it.</subeqi>
                      
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="dD"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -226,12 +215,10 @@
                         <subeqi>This equipment works like the double detector, but with 3 cables.</subeqi>
 
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="tD"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -249,12 +236,10 @@
                         <subeqi>This equipment works like the double detector, except with an entire cable rack.</subeqi>
                   
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="sD"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -272,12 +257,10 @@
                         <subeqi>You can combine this card with other tools.</subeqi>
                      
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="st"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -295,12 +278,10 @@
                         <subeqi>You must have both values ob your cable rack.</subeqi>
                      
                         <div class="buttons">
-                            <form>
-                                <button type="choose" class="create-btn"
-                                        formmethod="get" formnovalidate style="margin-top: 15px;">
-                                    Choose                            
-                                </button>
-                            </form>
+                            <button type="button" class="create-btn" data-input="dR"
+                                    style="margin-top: 15px;">
+                                        Choose
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -73,6 +73,16 @@ readInput pv = do
   syncState
   liftIO (readInputFor iB pid)
 
+readPromptInput :: PlayerView -> String -> GameM String
+readPromptInput pv prompt = do
+  let pid = playerId (pvSelf pv)
+  iB <- gets inBox
+  liftIO (clearInput iB pid)
+  modify (\gs -> gs { actionMsg = prompt })
+  syncState
+  liftIO (readInputFor iB pid)
+
+
 readInt :: PlayerView -> String -> GameM Int
 readInt pv prompt = do
   modify (\gs -> gs { actionMsg = prompt } )

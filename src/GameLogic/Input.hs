@@ -213,9 +213,6 @@ isExclusive :: Selectable -> Bool
 isExclusive (SelectEquipment e) = name e /= Stabilizer
 isExclusive SelectDoubleDetector = True
 
-canSoloCut :: PlayerView -> Bool
-canSoloCut pv = canSoloCut2 pv || canSoloCut4 pv
-
 canSoloCut2 :: PlayerView -> Bool
 canSoloCut2 pv =
   let ws = filter (\w -> isCut w == False) (playerWires (pvSelf pv))
@@ -248,64 +245,62 @@ canRemoveRed pv =
    in not (null uncutWs) && all ((== Red) . color) uncutWs
 
 
-actionOptions :: PlayerView -> [(String, PlayerView -> GameM Action)]
+actionOptions :: PlayerView -> [(String, Bool, PlayerView -> GameM Action)]
 actionOptions pv =
-     [ ("Solo Cut",    handleSoloCutInput)   | canSoloCut pv ]
-  ++ [ ("Duo Cut",     handleDualCutInput)   | canDualCut pv ]
-  ++ [ ("Remove Reds", handleRemoveRedInput) | canRemoveRed pv ]
+  [ ("Solo Cut (2)", canSoloCut2 pv,  handleSoloCut2Input)
+  , ("Solo Cut (4)", canSoloCut4 pv,  handleSoloCut4Input)
+  , ("Dual Cut",     canDualCut pv,   handleDualCutInput)
+  , ("Remove Red",   canRemoveRed pv, handleRemoveRedInput)
+  ]
+
+menuEntries :: PlayerView -> Bool -> [(String, String, Bool)]
+menuEntries pv hasEq = 
+  [(show i, lbl, ok) | (i, (lbl, ok, _)) <- zip [1 :: Int ..] (actionOptions pv)]
+  ++ [("e", "Choose Equipment", hasEq)]
 
 chooseAction :: PlayerView -> GameM Action
 chooseAction pv = do
   displayPlayerView pv
-  modify (\gs -> gs { actionMsg = ("Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:") })
   let opts      = actionOptions pv
       numbered  = zip [1 :: Int ..] opts
-  if null opts
-    then do
-      modify (\gs -> gs { actionMsg = "No actions available." })
-      syncState
-      liftIO (threadDelay 1000000) >> chooseAction pv
-    else do
-      mapM_ (\(i, (lbl, _)) -> modify (\gs -> gs { actionMsg = (show i ++ ") " ++ lbl) })) numbered
-      syncState
-      let prompt = "Enter the number of the action you choose (" ++ intercalate " or " (map (show . fst) numbered) ++ "):"
-      input <- readIntB pv prompt
-      case lookup input [(i, h) | (i, (_, h)) <- numbered] of
-        Just h  -> h pv
-        Nothing -> do
-          modify (\gs -> gs { resultMsg = "Invalid Input, try again." })
-          syncState 
-          chooseAction pv
+  modify (\gs -> gs { actionMenu = menuEntries pv False })
+  input <- readIntB pv "Choose an action."
+  modify (\gs -> gs { actionMenu = [] })
+  syncState
+  case lookup input [ (k, h) | (k, (_, True, h)) <- zip [1 :: Int ..] opts ] of
+    Just h -> h pv
+    Nothing -> do
+      modify (\gs -> gs { resultMsg = "Invalid Input, try again." })
+      syncState 
+      chooseAction pv
 
 chooseActionOrEquipment :: PlayerView -> GameM (Either Action [Selectable])
 chooseActionOrEquipment pv = do
   displayPlayerView pv
-  modify (\gs -> gs { actionMsg = ("Player " ++ show (playerId (pvSelf pv)) ++ " - choose action:") })
   let opts      = actionOptions pv
       numbered  = zip [1 :: Int ..] opts
       hasEq     = not (null (availableEquipment pv))
-  if null opts && not hasEq
+      actionsAv = any (\(_, ok, _) -> ok) opts
+  if not actionsAv && not hasEq
     then do
-      modify (\gs -> gs { actionMsg = "No actions available." })
+      modify (\gs -> gs { actionMsg = "No actions and no equipment available.", actionMenu = [] })
       syncState
       liftIO (threadDelay 1000000) >> chooseActionOrEquipment pv
     else do
-      mapM_ (\(i, (lbl, _)) -> modify (\gs -> gs { actionMsg = (show i ++ ") " ++ lbl) })) numbered
-      when hasEq $ modify (\gs -> gs { actionMsg = "e) Choose equipment" })
+      modify (\gs -> gs { actionMenu = menuEntries pv hasEq })
       syncState
-      let tokens  = map (show . fst) numbered ++ ["e" | hasEq]
-      modify (\gs -> gs { actionMsg = "Enter the number or letter of the action you choose (" ++ intercalate " or " tokens ++ "):" })
+      input <- readPromptInput pv "Choose an action."
+      modify (\gs -> gs { actionMenu = [] })
       syncState
-      input <- readInput pv
       case input of
         "e" | hasEq -> Right <$> chooseEquipment pv
         _ -> case readMaybe input :: Maybe Int of
-          Just i | Just h <- lookup i [(k, h) | (k, (_, h)) <- numbered] ->
+          Just i | Just h <- lookup i [(k, h) | (k, (_, True, h)) <- zip [1 :: Int ..] opts ] ->
             Left <$> h pv
           _ -> do
             modify (\gs -> gs { resultMsg = "Invalid input, try again." })
             syncState
-            liftIO (threadDelay 1000000) >> chooseActionOrEquipment pv
+            chooseActionOrEquipment pv
 
 handleSuperDetectorInput :: PlayerView -> GameM EquipmentUse
 handleSuperDetectorInput pv = do
@@ -560,46 +555,35 @@ checkInputDD pv otherId selfPos (a, b) =
       | otherwise =
           (True, "Valid Double Detector Input.")
 
-handleSoloCutInput :: PlayerView -> GameM Action
-handleSoloCutInput pv = do
+handleSoloCut2Input :: PlayerView -> GameM Action
+handleSoloCut2Input pv = do
   displayWirePickView pv Nothing
-  let c2 = canSoloCut2 pv
-      c4 = canSoloCut4 pv
-  count <- case (c2, c4) of
-    (True, False) -> do
-      modify (\gs -> gs { resultMsg = "Solo Cut - cutting two (2) wires." }) 
-      syncState
-      pure 2
-    (False, True) -> do
-      modify (\gs -> gs { resultMsg = "Solo Cut - cutting four (4) wires." })
-      syncState
-      pure 4
-    _             -> readIntB pv "Solo Cut - cut two (2) or four (4) wires? Enter 2 or 4:"
-  case count of
-    2 -> do
-      a <- readLabelB pv "First wire:"
-      b <- readLabelB pv "Second wire:"
-      let (valid, msg) = checkInputSC2 pv (a, b)
-      modify (\gs -> gs { resultMsg = msg })
-      syncState
-      if valid
-        then return $ SoloCut2 (a, b)
-        else chooseAction pv
-    4 -> do
-      a <- readLabelB pv "First wire:"
-      b <- readLabelB pv "Second wire:"
-      c <- readLabelB pv "Third wire:"
-      d <- readLabelB pv "Fourth wire:"
-      let (valid, msg) = checkInputSC4 pv (a, b, c, d)
-      modify (\gs -> gs { resultMsg = msg })
-      syncState
-      if valid
-        then return $ SoloCut4 (a, b, c, d)
-        else liftIO (threadDelay 1000000) >> chooseAction pv
-    _ -> do
-      modify (\gs -> gs { resultMsg = "Invalid choice. Please enter 2 or 4." })
-      syncState
-      chooseAction pv
+  modify (\gs -> gs { resultMsg = "Solo Cut - cutting two (2) wires." }) 
+  syncState
+  a <- readLabelB pv "First wire:"
+  b <- readLabelB pv "Second wire:"
+  let (valid, msg) = checkInputSC2 pv (a, b)
+  modify (\gs -> gs { resultMsg = msg })
+  syncState
+  if valid
+    then return $ SoloCut2 (a, b)
+    else chooseAction pv
+
+handleSoloCut4Input :: PlayerView -> GameM Action
+handleSoloCut4Input pv = do
+  displayWirePickView pv Nothing
+  modify (\gs -> gs { resultMsg = "Solo Cut - cutting four (4) wires." })
+  syncState
+  a <- readLabelB pv "First wire:"
+  b <- readLabelB pv "Second wire:"
+  c <- readLabelB pv "Third wire:"
+  d <- readLabelB pv "Fourth wire:"
+  let (valid, msg) = checkInputSC4 pv (a, b, c, d)
+  modify (\gs -> gs { resultMsg = msg })
+  syncState
+  if valid
+    then return $ SoloCut4 (a, b, c, d)
+    else chooseAction pv
 
 handlePlaceInfoMarker :: PlayerView -> GameM Action
 handlePlaceInfoMarker pv = do

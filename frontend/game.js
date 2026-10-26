@@ -165,23 +165,6 @@ async function loadActionMsg() {
     }
 }
 
-/*
-    <div id="duo-cut">Duo Cut</div>
-    <div id="solo-cut">Solo Cut</div>
-    <div id="remove-red">Remove Red</div>
-    <div id="choose-equipment">Choose Equipment</div>
-*/
-function renderActions(container, action) {
-    container.replaceChildren(...actions.map(a => {
-        const cable = document.createElement("button");
-        cable.class = "action";// + (w.isUsed ? " used" : "");
-        cable.disabled = a.isUsed;
-        cable.textContent = `${w.value}`;
-        cable.addEventListener("click", () => sendInput(w.label));
-        return cable;
-    }));
-}
-
 
 /* print result of last action */
 const resultMsg = document.getElementById("result");
@@ -225,6 +208,11 @@ async function loadGameStatus() {
     }
 }
 
+
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-input]");
+    if (btn) sendInput(btn.dataset.input);
+});
 
 async function sendInput(text) {
     try {

@@ -137,7 +137,8 @@ data GameState = GameState
     actionMsg :: String,
     resultMsg :: String,
     syncVar :: TVar (Map.Map Code GameState),
-    inBox :: InBox
+    inBox :: InBox,
+    actionMenu :: [(String, String, Bool)]
   }
 
 data PlayerView = PlayerView
