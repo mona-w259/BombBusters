@@ -62,6 +62,12 @@ readLabelB pv prompt = do
         syncState
         readLabelB pv prompt
 
+readPlayerId :: PlayerView -> String -> GameM Int
+readPlayerId pv prompt = setAwaiting pv "player" >> readIntB pv prompt
+
+readWire :: PlayerView -> String -> GameM Int
+readWire pv prompt = setAwaiting pv "wire" >> readLabelB pv prompt
+
 promptFor :: ChoiceKind -> String
 promptFor PickWireToCut = "Choose which matching wire to cut."
 promptFor PickInfoMarkerSlot = "Place an Info Marker on a wire."
@@ -179,6 +185,7 @@ selectLoop pv remaining selected = do
         indexed
       when canFinish $ modify (\gs -> gs { actionMsg = "0 | Done (proceed with selected equipment)" })
       syncState
+      setAwaiting pv "equipment"
       input <- readIntB pv "Enter number:"
       case input of
         0 | canFinish -> pure selected
@@ -263,9 +270,10 @@ chooseAction pv = do
   displayPlayerView pv
   let opts      = actionOptions pv
       numbered  = zip [1 :: Int ..] opts
+  setAwaiting pv "menu"
   modify (\gs -> gs { actionMenu = menuEntries pv False })
   input <- readIntB pv "Choose an action."
-  modify (\gs -> gs { actionMenu = [] })
+  modify (\gs -> gs { actionMenu = [], awaiting = (0, "") })
   syncState
   case lookup input [ (k, h) | (k, (_, True, h)) <- zip [1 :: Int ..] opts ] of
     Just h -> h pv
@@ -281,16 +289,17 @@ chooseActionOrEquipment pv = do
       numbered  = zip [1 :: Int ..] opts
       hasEq     = not (null (availableEquipment pv))
       actionsAv = any (\(_, ok, _) -> ok) opts
+  setAwaiting pv "menu"
   if not actionsAv && not hasEq
     then do
-      modify (\gs -> gs { actionMsg = "No actions and no equipment available.", actionMenu = [] })
+      modify (\gs -> gs { actionMsg = "No actions and no equipment available.", actionMenu = [], awaiting = (0, "") })
       syncState
       liftIO (threadDelay 1000000) >> chooseActionOrEquipment pv
     else do
       modify (\gs -> gs { actionMenu = menuEntries pv hasEq })
       syncState
       input <- readPromptInput pv "Choose an action."
-      modify (\gs -> gs { actionMenu = [] })
+      modify (\gs -> gs { actionMenu = [], awaiting = (0, "") })
       syncState
       case input of
         "e" | hasEq -> Right <$> chooseEquipment pv
@@ -304,7 +313,7 @@ chooseActionOrEquipment pv = do
 
 handleSuperDetectorInput :: PlayerView -> GameM EquipmentUse
 handleSuperDetectorInput pv = do
-  otherId <- readIntB pv "SuperDetector - enter target player id:"
+  otherId <- readPlayerId pv "SuperDetector - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       modify (\gs -> gs { resultMsg = "Invalid player id." })
@@ -314,7 +323,7 @@ handleSuperDetectorInput pv = do
   where
     askWire otherId target = do
       displayWirePickView pv (Just target)
-      pos <- readLabelB pv "Your wire:"
+      pos <- readWire pv "Your wire:"
       let (valid, msg) = checkInputSD pv otherId pos
       modify (\gs -> gs { resultMsg = msg })
       syncState
@@ -349,7 +358,7 @@ checkInputSD pv otherId pos =
 
 handleTripleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleTripleDetectorInput pv = do
-  otherId <- readIntB pv "Triple Detector - enter target player id:"
+  otherId <- readPlayerId pv "Triple Detector - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       modify (\gs -> gs { resultMsg = "Invalid player id." })
@@ -364,10 +373,10 @@ handleTripleDetectorInput pv = do
   where
     askWires otherId target = do
       displayWirePickView pv (Just target)
-      selfPos <- readLabelB pv "Your wire:"
-      a <- readLabelB pv "First target wire:"
-      b <- readLabelB pv "Second target wire:"
-      c <- readLabelB pv "Third target wire:"
+      selfPos <- readWire pv "Your wire:"
+      a <- readWire pv "First target wire:"
+      b <- readWire pv "Second target wire:"
+      c <- readWire pv "Third target wire:"
       let (valid, msg) = checkInputTD pv otherId selfPos (a, b, c)
       modify (\gs -> gs { resultMsg = msg })
       syncState
@@ -421,7 +430,7 @@ checkInputTD pv otherId selfPos (a, b, c) =
 
 handleDoubleRadiatorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleRadiatorInput pv = do
-  otherId <- readIntB pv "Double Radiator - enter target player id:"
+  otherId <- readPlayerId pv "Double Radiator - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       modify (\gs -> gs { resultMsg = "Invalid player id." })
@@ -431,9 +440,9 @@ handleDoubleRadiatorInput pv = do
   where
     askWires otherId target = do
       displayWirePickView pv (Just target)
-      pos1 <- readLabelB pv "Your first wire:"
-      pos2 <- readLabelB pv "Your second wire:"
-      otherPos <- readLabelB pv "Target wire:"
+      pos1 <- readWire pv "Your first wire:"
+      pos2 <- readWire pv "Your second wire:"
+      otherPos <- readWire pv "Target wire:"
       let (valid, msg) = checkInputDR pv otherId (pos1, pos2) otherPos
           ws = playerWires (pvSelf pv)
       modify (\gs -> gs { resultMsg = msg })
@@ -486,7 +495,7 @@ checkInputDR pv otherId (p1, p2) otherPos =
 
 handleDoubleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleDetectorInput pv = do
-  otherId <- readIntB pv "Double Detector - enter target player id:"
+  otherId <- readPlayerId pv "Double Detector - enter target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       modify (\gs -> gs { resultMsg = "Invalid player id." })
@@ -501,9 +510,9 @@ handleDoubleDetectorInput pv = do
   where
     askWires otherId target = do
       displayWirePickView pv (Just target)
-      selfPos <- readLabelB pv "Your wire:"
-      a <- readLabelB pv "First target wire:"
-      b <- readLabelB pv "Second target wire:"
+      selfPos <- readWire pv "Your wire:"
+      a <- readWire pv "First target wire:"
+      b <- readWire pv "Second target wire:"
       let (valid, msg) = checkInputDD pv otherId selfPos (a, b)
       modify (\gs -> gs { resultMsg = msg })
       syncState
@@ -560,8 +569,8 @@ handleSoloCut2Input pv = do
   displayWirePickView pv Nothing
   modify (\gs -> gs { resultMsg = "Solo Cut - cutting two (2) wires." }) 
   syncState
-  a <- readLabelB pv "First wire:"
-  b <- readLabelB pv "Second wire:"
+  a <- readWire pv "First wire:"
+  b <- readWire pv "Second wire:"
   let (valid, msg) = checkInputSC2 pv (a, b)
   modify (\gs -> gs { resultMsg = msg })
   syncState
@@ -574,10 +583,10 @@ handleSoloCut4Input pv = do
   displayWirePickView pv Nothing
   modify (\gs -> gs { resultMsg = "Solo Cut - cutting four (4) wires." })
   syncState
-  a <- readLabelB pv "First wire:"
-  b <- readLabelB pv "Second wire:"
-  c <- readLabelB pv "Third wire:"
-  d <- readLabelB pv "Fourth wire:"
+  a <- readWire pv "First wire:"
+  b <- readWire pv "Second wire:"
+  c <- readWire pv "Third wire:"
+  d <- readWire pv "Fourth wire:"
   let (valid, msg) = checkInputSC4 pv (a, b, c, d)
   modify (\gs -> gs { resultMsg = msg })
   syncState
@@ -600,7 +609,7 @@ handlePlaceInfoMarker pv = do
 
 handleDualCutInput :: PlayerView -> GameM Action
 handleDualCutInput pv = do
-  otherId <- readIntB pv "Duo Cut - target player id:"
+  otherId <- readPlayerId pv "Duo Cut - target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       modify (\gs -> gs { resultMsg = "Invalid player id, try again." })
@@ -610,8 +619,8 @@ handleDualCutInput pv = do
   where
     askWires otherId target = do
       displayWirePickView pv (Just target)
-      a <- readLabelB pv "Your wire:"
-      b <- readLabelB pv "Target wire:"
+      a <- readWire pv "Your wire:"
+      b <- readWire pv "Target wire:"
       let (valid, msg) = checkInputDC pv otherId (a, b)
       modify (\gs -> gs { resultMsg = msg })
       syncState
@@ -622,7 +631,7 @@ handleDualCutInput pv = do
 handleRemoveRedInput :: PlayerView -> GameM Action
 handleRemoveRedInput pv = do
   displayWirePickView pv Nothing
-  pos <- readLabelB pv "Remove Red - enter the red wire:"
+  pos <- readWire pv "Remove Red - enter the red wire:"
   let (valid, msg) = checkInputRR pv pos
   modify (\gs -> gs { resultMsg = msg })
   syncState

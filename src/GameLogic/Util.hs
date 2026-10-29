@@ -257,3 +257,6 @@ anonymise :: Wire -> Wire
 anonymise w = case color w of
     Yellow -> w { wireIndex = -1, value = -1 }
     _ -> w { wireIndex = -1 }
+
+setAwaiting :: PlayerView -> String -> GameM ()
+setAwaiting pv kind = modify (\gs -> gs { awaiting = (playerId (pvSelf pv), kind) })

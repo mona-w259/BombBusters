@@ -17,6 +17,7 @@ async function poll() {
             loadResultMsg();
             pollRacks();
             loadChoosePlayerIds();
+            loadAwaiting();
         }
         
     } catch (e) {
@@ -282,6 +283,27 @@ async function loadChoosePlayerIds() {
         idBtnOth1.textContent = "(error): " + e;
         idBtnOth2.textContent = "(error): " + e;
         idBtnOth3.textContent = "(error): " + e;
+    }
+}
+
+
+/* load state of shown action */
+const sections = {
+    menu:      document.querySelector(".action-container"),
+    equipment: document.querySelector(".equipment-container"),
+    player:    document.querySelector(".choose-player-id-container"),
+};
+
+async function loadAwaiting() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/awaiting?slot=" + encodeURIComponent(slot);
+        const data = await (await fetch(url, { cache: "no-store" })).json();
+        if (data.text === undefined) return;
+
+        Object.entries(sections).forEach(([kind, el]) => { el.hidden = (kind !== data.text); });
+        document.body.dataset.awaiting = data.text;
+    } catch (e) {
+        console.error("loadAwaiting: ", e);
     }
 }
 

@@ -222,6 +222,16 @@ main = do
           Just gs -> do
             json (object ["text" .= gsStatusText (Types.status gs)])
 
+      get "/api/game/:code/awaiting" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let (pid, kind) = awaiting gs
+            json (object ["text" .= (if pid == sl then kind else "")])
+
       post "/api/game/:code/input" $ do
         cd  <- pathParam "code"      :: ActionM String
         req <- jsonData

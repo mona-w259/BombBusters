@@ -26,7 +26,7 @@
                     <small>lives left</small>
                 </div>
             </div>
-
+        
             <div>Possible yellow (2/3) and red (1/2) wires<br><span id="yr-wires">...</span></div>
 
             <div class="info-container">
@@ -70,110 +70,65 @@
         <div id="action">...</div>
         <div id="result">...</div>
 
-        <div class="action-container">
+        <div class="action-container" hidden>
             <div class="action-title">Actions</div>
             
             <div class="action-list">
 
                 <div class="action-item">
-                    <input type="checkbox" id="ac-sc2-click" class="action-toggle">
-                    <label for="ac-sc2-click" class="action-btn">
-                        Solo Cut - 2 wires
-                    </label>
+                    <button type="button" class="action-btn" data-input="1">Solo Cut - 2 wires</button>
+    
                     <div class="action-popup">
                         <p>
                             You have to click on two of your wires (same value) to make a cut.
                         </p>
-                        <subeqi>Only possible if the other two wires with the value you choose are cut already or if you have both yellow wires.</subeqi>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="1"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
+                        <p class="subeqi">Only possible if the other two wires with the value you choose are cut already or if you have both yellow wires.</p>
                     </div>
                 </div>
 
                 <div class="action-item">
-                    <input type="checkbox" id="ac-sc4-click" class="action-toggle">
-                    <label for="ac-sc4-click" class="action-btn">
-                        Solo Cut - 4 wires
-                    </label>
+                    <button type="button" class="action-btn" data-input="2">Solo Cut - 4 wires</button>
+    
                     <div class="action-popup">
                         <p>
                             You have to click on four of your wires (same value) to make a cut.
                         </p>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="2"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
                     </div>
                 </div>
 
                 <div class="action-item">
-                    <input type="checkbox" id="ac-dc-click" class="action-toggle">
-                    <label for="ac-dc-click" class="action-btn">
-                        Duo Cut
-                    </label>
+                    <button type="button" class="action-btn" data-input="3">Duo Cut</button>
+    
                     <div class="action-popup">
                         <p>
                             You have to choose a player and click on one of your wires and one of theirs to make a cut with their wire.
                         </p>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="3"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
                     </div>
                 </div>
 
                 <div class="action-item">
-                    <input type="checkbox" id="ac-rr-click" class="action-toggle">
-                    <label for="ac-rr-click" class="action-btn">
-                        Remove Red
-                    </label>
+                    <button type="button" class="action-btn" data-input="4">Remove Red</button>
+
                     <div class="action-popup">
                         <p>
                             You can cut the red wire if its the last wire on your rack.
                         </p>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="4"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
                     </div>
                 </div>
 
                 <div class="action-item">
-                    <input type="checkbox" id="ac-ce-click" class="action-toggle">
-                    <label for="ac-ce-click" class="action-btn">
-                        Choose Equipment
-                    </label>
+                    <button type="button" class="action-btn" data-input="e">Choose Equipment</button>
+    
                     <div class="action-popup">
                         <p>
                             You can use an equipment if you do not know what to cut.
                         </p>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="e"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="choose-player-id-container">
+        <div class="choose-player-id-container" hidden>
             <div class="choose-player-id-title">Choose the Player, you want to do the duo cut with.</div>
             <div class="player-ids">
                 <button type="button" class="id-btn" id="id-btn-1"></button>
@@ -182,112 +137,67 @@
             </div>
         </div>
 
-        <div class="equipment-container">
+        <div class="equipment-container" hidden>
             <div class="equipment-title">Equipment</div>
 
             <div class="equipment-list">
                 <div class="equipment-item">
-                    <input type="checkbox" id="eq-dd-click" class="equipment-toggle">
-                    <label for="eq-dd-click" class="equipment-btn">
-                        DoubleDetector
-                    </label>
+                    <button type="button" class="equipment-btn" data-input="DoubleDetector">DoubleDetector</button>
+    
                     <div class="equipment-popup">
                         <p>
                             If you perform a duo cut, you may name 1 value (except yellow) and point to 2 cables 
                             belonging to 1 team member, instead of just one cable.
                         </p>
-                        <subeqi>This is your personal equipment, only you can use it.</subeqi>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="dD"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
+                        <p class="subeqi">This is your personal equipment, only you can use it.</p>
                     </div>
                 </div>
             
                 <div class="equipment-item">
-                    <input type="checkbox" id="eq-td-click" class="equipment-toggle">
-                    <label for="eq-td-click" class="equipment-btn">
-                        TripleDetector (3)
-                    </label>
+                    <button type="button" class="equipment-btn" data-input="TripleDetector">TripleDetector (3)</button>
+    
                     <div class="equipment-popup">
                         <p>
                             If you perform a duo cut, you may name 1 value (except yellow) and point to 3 cables 
                             belonging to 1 team member, instead of just one cable.
                         </p>
-                        <subeqi>This equipment works like the double detector, but with 3 cables.</subeqi>
-
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="tD"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
+                        <p class="subeqi">This equipment works like the double detector, but with 3 cables.</p>
                     </div>
                 </div>
 
                 <div class="equipment-item">
-                    <input type="checkbox" id="eq-sd-click" class="equipment-toggle">
-                    <label for="eq-sd-click" class="equipment-btn">
-                        SuperDetector (5)
-                    </label>
+                    <button type="button" class="equipment-btn" data-input="SuperDetector">SuperDetector (5)</button>
+    
                     <div class="equipment-popup">
                         <p>
                             If you perform a duo cut, you may name 1 value (except yellow) and point to 1 entire cable rack 
                             belonging to 1 team member, instead of just one cable.
                         </p>
-                        <subeqi>This equipment works like the double detector, except with an entire cable rack.</subeqi>
-                  
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="sD"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
+                        <p class="subeqi">This equipment works like the double detector, except with an entire cable rack.</p>
                     </div>
                 </div>
 
                 <div class="equipment-item">
-                    <input type="checkbox" id="eq-st-click" class="equipment-toggle">
-                    <label for="eq-st-click" class="equipment-btn">
-                        Stabilizer (9)
-                    </label>
+                    <button type="button" class="equipment-btn" data-input="Stabilizer">Stabilizer (9)</button>
+        
                     <div class="equipment-popup">
                         <p>
                             No matter how the action plays out, the detonator's pointer won't move any further 
                             and the bomb won't explode.
                         </p>
-                        <subeqi>You can combine this card with other tools.</subeqi>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="st"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
+                        <p class="subeqi">You can combine this card with other tools.</p>
                     </div>
                 </div>
 
                 <div class="equipment-item">
-                    <input type="checkbox" id="eq-dr-click" class="equipment-toggle">
-                    <label for="eq-dr-click" class="equipment-btn">
-                        DoubleRadiator (10)
-                    </label>
+                    <button type="button" class="equipment-btn" data-input="DoubleRadiator">DoubleRadiator (10)</button>
+        
                     <div class="equipment-popup">
                         <p>
                             If you perform a duo cut, you may name 2 values (including yellow) when you point to 1 cable  
                             belonging to 1 team member, instead of just one value.
                         </p>
-                        <subeqi>You must have both values ob your cable rack.</subeqi>
-                     
-                        <div class="buttons">
-                            <button type="button" class="create-btn" data-input="dR"
-                                    style="margin-top: 15px;">
-                                        Choose
-                            </button>
-                        </div>
+                        <p class="subeqi">You must have both values ob your cable rack.</p>
                     </div>
                 </div>
 
