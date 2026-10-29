@@ -175,35 +175,25 @@ chooseEquipment pv = do
 selectLoop :: PlayerView -> [Selectable] -> [Selectable] -> GameM [Selectable]
 selectLoop pv remaining selected = do
   let   allowed = allowedRemaining remaining selected
+        canFinish = not (null selected)
   if null allowed
     then pure selected
     else do
-      let indexed = zip [1 .. length allowed] allowed
-          canFinish = not (null selected)
-      mapM_
-        (\(i, s) -> modify (\gs -> gs { actionMsg = (show i ++ " | " ++ showSelectable s) }))
-        indexed
-      when canFinish $ modify (\gs -> gs { actionMsg = "0 | Done (proceed with selected equipment)" })
-      syncState
       setAwaiting pv "equipment"
-      input <- readIntB pv "Enter number:"
-      case input of
-        0 | canFinish -> pure selected
-        n
-          | n >= 1 && n <= length allowed -> do
-              let eq = allowed !! (n - 1)
-                  remaining' = filter (/= eq) remaining
-              selectLoop pv remaining' (eq : selected)
-        _ -> do
-          modify (\gs -> gs { resultMsg = resultMsg gs ++ "Invalid input, try again." })
-          syncState
-          liftIO (threadDelay 1000000) >> selectLoop pv remaining selected
+      input <- readPromptInput pv "Choose equipment (click \"Done\" when finished)."
+      when (isBack input) (liftIO (throwIO GoBack))
+      case [s | s <- allowed, showSelectable s == input] of
+        (s : _) -> selectLoop pv (filter (/= s) remaining) (s : selected)
+        []
+          | input == "0", canFinish -> pure selected
+          | otherwise -> do
+            modify (\gs -> gs { resultMsg = resultMsg gs ++ "Invalid input, try again." })
+            syncState
+            liftIO (threadDelay 1000000) >> selectLoop pv remaining selected
 
 showSelectable :: Selectable -> String
-showSelectable (SelectEquipment e) =
-  show (name e) ++ " | " ++ description e
-showSelectable SelectDoubleDetector =
-  "DoubleDetector | Personal detector (can combine with Stabilizer)"
+showSelectable (SelectEquipment e)  = show (name e)
+showSelectable SelectDoubleDetector = "DoubleDetector"
 
 allowedRemaining :: [Selectable] -> [Selectable] -> [Selectable]
 allowedRemaining remaining selected

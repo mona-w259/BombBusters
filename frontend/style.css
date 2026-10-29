@@ -242,6 +242,7 @@ h1 {
 .rack {
     flex: 1 1 280px;
     min-width: 455px;
+    min-height: 160px;
     margin-bottom: 20px;
 }
 

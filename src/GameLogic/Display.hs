@@ -176,7 +176,7 @@ showBotAction (PubRemoveRed idx) =
   "Remove Red - wire " ++ indexToLabel idx
 showBotAction (PubDualCut pid targetIdx w) =
   "Dual Cut - called " ++ showCallOut w
-    ++ " → Player " ++ show pid ++ "'s [" ++ indexToLabel targetIdx ++ "]"
+    ++ " → Player " ++ show pid ++ "'s " ++ show targetIdx ++ ". wire"
 showBotAction (PubPlaceInfoMarker idx) =
   "Place Info Marker - wire " ++ indexToLabel idx
 

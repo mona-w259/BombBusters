@@ -29,6 +29,8 @@
         
             <div>Possible yellow (2/3) and red (1/2) wires<br><span id="yr-wires">...</span></div>
 
+            <div>Current turn<br><span id="currturn">...</span></div>
+
             <div class="info-container">
                 <input type="checkbox" id="hint-click" class="info-toggle">
                 <label for="hint-click" class="info-btn" title="Explain Symbols">
@@ -66,7 +68,6 @@
             <div id="rack-own"></div>
         </div>
 
-        <div id="currturn">...</div>
         <div id="action">...</div>
         <div id="result">...</div>
 
@@ -135,6 +136,7 @@
                 <button type="button" class="id-btn" id="id-btn-2"></button>
                 <button type="button" class="id-btn" id="id-btn-3"></button>
             </div>
+            <button type="button" class="create-btn" data-input="back">Back</button>
         </div>
 
         <div class="equipment-container" hidden>
@@ -202,6 +204,9 @@
                 </div>
 
             </div>
+
+            <button type="button" class="create-btn" data-input="0">Done</button>
+            <button type="button" class="create-btn" data-input="back">Back</button>
         </div>
 
 

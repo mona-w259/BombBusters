@@ -208,8 +208,7 @@ checkActivePlayers gs =
           | curr `elem` activeIds -> curr
           | otherwise             -> a
    in gs
-        { players = activePlayers,
-          turnOrder = newTurnOrder,
+        { turnOrder = newTurnOrder,
           currentPlayer = newCurrent
         }
 

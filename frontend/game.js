@@ -161,7 +161,7 @@ async function loadCurrTurn() {
         const data = await (await fetch(url)).json();
 
         if (data.text != undefined) {
-            annTurn.textContent = "Current turn: Player " + data.text + " - it's your turn!";
+            annTurn.textContent = "Player " + data.text + " - it's your turn!";
         }
     } catch (e) {
         annTurn.textContent = "(error): " + e;
