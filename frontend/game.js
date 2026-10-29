@@ -1,7 +1,7 @@
 const params = new URLSearchParams(location.search);
 const code = params.get("code") || "";
 const slot = params.get("slot") || "";
-let lastRacks= "";
+let lastRacks = "";
 
 async function poll() {
     try {
@@ -16,6 +16,7 @@ async function poll() {
             loadActionMsg();
             loadResultMsg();
             pollRacks();
+            loadChoosePlayerIds();
         }
         
     } catch (e) {
@@ -75,14 +76,15 @@ async function loadDetonator() {
 function renderOwnRack(container, wires) {
     container.replaceChildren(...wires.map(w => {
         const cable = document.createElement("button");
+        const value = getValueWire(w);
 
         if (! w.isCut) {
             cable.className = "wire-" + w.color;
-            cable.textContent = (w.hasHint) ? `💡${w.value}` : `${w.value}`;
+            cable.textContent = (w.hasHint) ? `💡${value}` : `${value}`;
             cable.disabled = false;
         } else {
             cable.className = "wire-" + w.color;
-            cable.textContent = `${w.value}`;
+            cable.textContent = `${value}`;
             cable.disabled = true;
         }
         cable.addEventListener("click", () => sendInput(w.label));
@@ -93,14 +95,15 @@ function renderOwnRack(container, wires) {
 function renderOtherRack(container, wires) {
     container.replaceChildren(...wires.map(w => {
         const cable = document.createElement("button");
+        const value = getValueWire(w);
 
         if (! w.isCut) {
             cable.className = "wire";
-            cable.textContent = (w.hasHint) ? `💡${w.value}` : "";
+            cable.textContent = (w.hasHint) ? `💡${value}` : " ";
             cable.disabled = false;
         } else {
             cable.className = "wire-" + w.color;
-            cable.textContent = `${w.value}`;
+            cable.textContent = `${value}`;
             cable.disabled = true;
         }
         cable.addEventListener("click", () => sendInput(w.label));
@@ -130,6 +133,21 @@ async function pollRacks() {
     } catch (e) {
         console.error("pollRacks: ", e);
     }
+}
+
+function getValueWire(w) {
+    let valAddOn = "";
+
+    switch (w.color) {
+        case "yellow":
+            valAddOn = ".1";
+            break;
+        case "red":
+            valAddOn = ".5";
+            break;
+    }
+    
+    return w.value + valAddOn;
 }
 
 
@@ -204,7 +222,7 @@ async function loadGameStatus() {
             return;
         }
     } catch (e) {
-        actionMsg.textContent = "(error): " + e;
+        statusG.textContent = "(error): " + e;
     }
 }
 
@@ -216,7 +234,7 @@ document.addEventListener("click", (e) => {
 
 async function sendInput(text) {
     try {
-        const res = await fetch("api/game/" + encodeURIComponent(code) + "/input", {
+        const res = await fetch("/api/game/" + encodeURIComponent(code) + "/input", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ slot: Number(slot), text })
@@ -242,6 +260,29 @@ function getPlayerId() {
     idOth1.textContent = othIDs[0];
     idOth2.textContent = othIDs[1];
     idOth3.textContent = othIDs[2];
+}
+
+
+const idBtnOth1 = document.getElementById("id-btn-1");
+const idBtnOth2 = document.getElementById("id-btn-2");
+const idBtnOth3 = document.getElementById("id-btn-3");
+
+async function loadChoosePlayerIds() {
+    try {
+        idBtnOth1.textContent = "Player " + idOth1.textContent;
+        idBtnOth1.dataset.input = Number(idOth1.textContent);
+
+        idBtnOth2.textContent = "Player " + idOth2.textContent;
+        idBtnOth2.dataset.input = Number(idOth2.textContent);        
+        
+        idBtnOth3.textContent = "Player " + idOth3.textContent;
+        idBtnOth3.dataset.input = Number(idOth3.textContent);
+    } 
+    catch (e) {
+        idBtnOth1.textContent = "(error): " + e;
+        idBtnOth2.textContent = "(error): " + e;
+        idBtnOth3.textContent = "(error): " + e;
+    }
 }
 
 

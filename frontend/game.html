@@ -27,6 +27,8 @@
                 </div>
             </div>
 
+            <div>Possible yellow (2/3) and red (1/2) wires<br><span id="yr-wires">...</span></div>
+
             <div class="info-container">
                 <input type="checkbox" id="hint-click" class="info-toggle">
                 <label for="hint-click" class="info-btn" title="Explain Symbols">
@@ -35,7 +37,7 @@
                 <div class="info-popup">
                     Each cable has a value ranging from 1 to 12.<br>
                     Each value appears exactly four times.<br><br>
-                    There are two yellow cables and one red cable.<br>Their exact values are unknown.<br><br>
+                    There are two yellow cables and one red cable.<br>All yellow wires end in ".1" and all red wired end in ".5".<br>Their exact values are unknown.<br><br>
                     All cable holders are sorted in ascending order.<br><br>
                     💡 = Info<br>
                     <span class="color-legend" style="background-color: #231f15"></span> = Hidden<br>
@@ -67,11 +69,6 @@
         <div id="currturn">...</div>
         <div id="action">...</div>
         <div id="result">...</div>
-
-        <div>
-            Possible Yellow (2/3) and Red (1/2) Wires: <span id="yr-wires">...</span>
-        </div>
-
 
         <div class="action-container">
             <div class="action-title">Actions</div>
@@ -176,6 +173,14 @@
             </div>
         </div>
 
+        <div class="choose-player-id-container">
+            <div class="choose-player-id-title">Choose the Player, you want to do the duo cut with.</div>
+            <div class="player-ids">
+                <button type="button" class="id-btn" id="id-btn-1"></button>
+                <button type="button" class="id-btn" id="id-btn-2"></button>
+                <button type="button" class="id-btn" id="id-btn-3"></button>
+            </div>
+        </div>
 
         <div class="equipment-container">
             <div class="equipment-title">Equipment</div>

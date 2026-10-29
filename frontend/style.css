@@ -283,7 +283,7 @@ h1 {
     width: 35px;
 }
 
-.equipment-container, .action-container {
+.equipment-container, .action-container, .choose-player-id-container {
     background-color: #888;
     padding: 10px 10px 10px 10px;
     border-radius: 8px;
@@ -291,11 +291,11 @@ h1 {
     position: relative;
 }
 
-.equipment-title, .action-title {
+.equipment-title, .action-title, .choose-player-id-title {
     margin-bottom: 10px;
 }
 
-.equipment-list, .action-list {
+.equipment-list, .action-list, .player-ids {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
