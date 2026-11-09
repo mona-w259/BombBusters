@@ -27,9 +27,9 @@
                 </div>
             </div>
         
-            <div>Possible yellow (2/3) and red (1/2) wires<br><span id="yr-wires">...</span></div>
+            <div style="font-size: large;">Possible yellow (2/3) and red (1/2) wires<br><span id="yr-wires">...</span></div>
 
-            <div>Current turn<br><span id="currturn">...</span></div>
+            <div style="font-size: large;">Current turn<br><span id="currturn">...</span></div>
 
             <div class="info-container">
                 <input type="checkbox" id="hint-click" class="info-toggle">
@@ -41,6 +41,7 @@
                     Each value appears exactly four times.<br><br>
                     There are two yellow cables and one red cable.<br>All yellow wires end in ".1" and all red wired end in ".5".<br>Their exact values are unknown.<br><br>
                     All cable holders are sorted in ascending order.<br><br>
+
                     💡 = Info<br>
                     <span class="color-legend" style="background-color: #231f15"></span> = Hidden<br>
                     <span class="color-legend" style="background-color: #8b6c40"></span> = Cut
@@ -140,7 +141,24 @@
         </div>
 
         <div class="equipment-container" hidden>
-            <div class="equipment-title">Equipment</div>
+            <div class="equipment-title">
+                Equipment
+                
+                <input type="checkbox" id="equi-hint-click" class="equi-info-toggle">
+                <label for="equi-hint-click" class="equi-info-btn" title="Explain Equipment">
+                    ⓘ
+                </label>
+                <div class="equi-info-popup">
+                    To unlock the equipment, at least two wires of the value in brackets after the equipment name have to be cut.<br>
+                    Example:<br> 'TripleDetector (3)' means, after at least two wires with the value '3' are cut, you can use the TripleDetector <br><br>
+
+                    <span class="color-legend" style="background-color: #ffffd3"></span> = Locked<br>
+                    <span class="color-legend" style="background-color: #f4e2b6"></span> = Usable<br>
+                    <span class="color-legend" style="background-color: #e3e3e3"></span> = Used
+
+                </div>
+            </div>
+
 
             <div class="equipment-list">
                 <div class="equipment-item">

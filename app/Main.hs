@@ -175,19 +175,32 @@ main = do
           Just gs -> do 
             json (object ["text" .= detonator gs])
 
-      
       get "/api/game/:code/racks" $ do
         cd <- pathParam "code"      :: ActionM String
         sl <- queryParam "slot"     :: ActionM Int
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
         case wr of 
-          Nothing -> json (object ["error" .= ("no rack yet" :: String)])
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do
             let pv    = getPlayerView sl gs
                 infos = pvInfoMarkers pv
             json $ object
               [ "own"     .= object [ "playerId" .= sl, "wires" .= rackFormatJson infos (pvSelf pv) ]
               , "others"  .= [ object [ "playerId" .= playerId p, "wires" .= rackFormatJson infos p ]     | p <- pvOthers pv ]
+              ]
+
+      get "/api/game/:code/equipment" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of 
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let pv = getPlayerView sl gs
+                pl = pvSelf pv
+            json $ object
+              [  "personalEquipment" .= object [ "name" .= ("DoubleDetector" :: String), "unlocked" .= True, "used" .= doubleDetector pl ]
+              ,  "otherEquipment" .= [ object [ "name" .= name e, "unlocked" .= unlocked e, "used" .= used e ] | e <- equipment gs]
               ]
 
       get "/api/game/:code/turn" $ do

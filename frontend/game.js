@@ -18,6 +18,7 @@ async function poll() {
             pollRacks();
             loadChoosePlayerIds();
             loadAwaiting();
+            pollEquipment();
         }
         
     } catch (e) {
@@ -63,7 +64,7 @@ async function loadDetonator() {
             if (Number.isNaN(detValue)) return;
 
             lifePointers.forEach (point => {
-                point.style.display = (Number(point.dataset.lpoint) === data.text) ? "" : "none";
+                point.style.display = (Number(point.dataset.lpoint) === detValue) ? "" : "none";
             })
         }
     } catch (e) {
@@ -152,6 +153,36 @@ function getValueWire(w) {
 }
 
 
+/* print equipment as used, when used */
+
+function renderEquipment(eq) {
+    const btn = document.querySelector(`.equipment-btn[data-input="${eq.name}"]`);
+    if (!btn) return;
+
+    const item = btn.closest(".equipment-item");
+    const locked = !eq.unlocked;
+
+    btn.disabled = locked || eq.used;
+    item.classList.toggle("used", eq.used);
+    item.classList.toggle("locked", locked);
+}
+
+async function pollEquipment() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/equipment?slot=" + encodeURIComponent(slot);
+        const eq = await (await fetch(url, { cache: "no-store" })).json();
+
+        eq.otherEquipment.forEach(e => {
+            renderEquipment(e);
+        });
+        renderEquipment(eq.personalEquipment);
+    } 
+    catch (e) {
+        console.error("loadEquipment: ", e);
+    }
+}
+
+
 /* announce current turn */
 const annTurn = document.getElementById("currturn");
 
@@ -200,6 +231,7 @@ async function loadResultMsg() {
         resultMsg.textContent = "(error): " + e;
     }
 }
+
 
 /* print end state */
 const statusG = document.getElementById("gamestatusend");

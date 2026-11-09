@@ -40,10 +40,24 @@ body {
 }
 
 .header-game {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    padding: 0px 10px 40px;
+}
+
+.header-game > :nth-child(1) {
+    justify-self: start;      /* ganz links */
+}
+
+.header-game > :nth-child(2),
+.header-game > :nth-child(3) {
+    justify-self: center;     /* Mitte von 25–50 % bzw. 50–75 % */
+    text-align: center;
+}
+
+.header-game > :nth-child(4) {
+    justify-self: end;        /* ganz rechts */
 }
 
 h1 {
@@ -181,32 +195,36 @@ h1 {
     display: inline-block;
 }
 
-.info-toggle {
+.info-toggle, .equi-info-toggle {
     display: none;
 }
 
-.info-btn {
+.info-btn, .equi-info-btn {
     display: inline;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
     font-weight: bold;
     cursor: pointer;
     user-select: none;
+}
+
+.info-btn {
+    font-size: 36px;
 }
 
 .info-btn:hover {
     color: #3b311e;
 }
 
-.info-popup {
+.equi-info-btn:hover {
+    color: #edf2d4;
+}
+
+.info-popup, .equi-info-popup {
     display: none;
     position: absolute;
-    right: 0;
     z-index: 11;
     padding: 10px 20px 10px 10px;
-    background: #3b311e;
-    border: 1px solid #3b311e;
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     white-space: nowrap;
@@ -215,11 +233,27 @@ h1 {
     font-weight: normal;
 }
 
-.info-popup p {
+.info-popup {    
+    right: 0;
+    top: 100%;
+    margin-top: 6px;
+    background: #3b311e;
+    border: 1px solid #3b311e;
+}
+
+.equi-info-popup {
+    left: 0;
+    bottom: 100%;
+    margin-bottom: 6px;
+    background: #96876b;
+    border: 1px solid #796642;
+}
+
+.info-popup p, .equi-info-popup p {
     margin: 5px 0;
 }
 
-.info-toggle:checked ~ .info-popup {
+.info-toggle:checked ~ .info-popup, .equi-info-toggle:checked ~ .equi-info-popup {
     display: block;
 }
 
@@ -295,10 +329,12 @@ body:not([data-awaiting="wire"]) .other-racks button {
     border-radius: 8px;
     border: 3px solid #3b311e;
     position: relative;
+    margin: 20px 0px;
 }
 
 .equipment-title, .action-title, .choose-player-id-title {
     margin-bottom: 10px;
+    position: relative;
 }
 
 .equipment-list, .action-list, .player-ids {
@@ -310,6 +346,14 @@ body:not([data-awaiting="wire"]) .other-racks button {
 
 .equipment-item, .action-item {
     position: relative;
+}
+
+.equipment-item.used {
+    filter: grayscale(1);
+}
+
+.equipment-item.locked {
+    filter: sepia(1);
 }
 
 .equipment-btn, .action-btn, .id-btn {
@@ -327,6 +371,11 @@ body:not([data-awaiting="wire"]) .other-racks button {
 
 .equipment-btn:hover, .action-btn:hover, .id-btn:hover {
     color: #9d8d65;
+}
+
+.equipment-btn:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .equipment-popup, .action-popup {
