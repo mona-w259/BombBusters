@@ -38,10 +38,10 @@ page pName = do
 waitingURL :: Code -> Int -> TL.Text
 waitingURL cd slot = TL.pack("/waiting?code=" ++ cd ++ "&slot=" ++ show slot)
 
-validatePL :: Int -> Int -> Int -> Maybe String
+validatePL :: Int -> Int -> Int -> Maybe TL.Text
 validatePL h l ml
-  | total < 4   = Just "The amount of players is less then 4!"
-  | total > 4   = Just "The amount of players is more then 4!"
+  | total < 4   = Just "TooFewPlayers"
+  | total > 4   = Just "TooManyPlayers"
   | otherwise   = Nothing
   where total = h + l + ml
 
@@ -54,10 +54,10 @@ prepareGame wrs wr = do
   registerGame wrs cd gs
   void . forkIO $ runGame gs
 
-errorText :: JoinGameError -> TL.Text
-errorText NoSuchGame = "Kein Spiel mit diesem Code gefunden"
-errorText GameFull   = "Das Spiel ist bereits voll"
-errorText GameClosed = "Das Spiel wurde bereits gestartet oder ist abgelaufen"
+errorCode :: JoinGameError -> TL.Text
+errorCode NoSuchGame = "NoSuchGame"
+errorCode GameFull   = "GameFull"
+errorCode GameClosed = "GameClosed"
 
 gsStatusText :: GameStatus -> String
 gsStatusText InProgress           = "in progress"
@@ -129,17 +129,17 @@ main = do
         logic     <- formParam "logic_bots" :: ActionM Int
         ml        <- formParam "ml_bots"    :: ActionM Int
         case (validatePL humans logic ml) of 
-          Just err -> redirect ("/newGame?error=" <> TL.pack err)
+          Just err -> redirect ("/newGame?error=" <> err)
           Nothing -> do
             cd <- liftIO (createWaitingRoom wrs humans logic ml)
-            _ <- liftIO . forkIO . void $ watchWR wrs cd (prepareGame wrs)
+            _  <- liftIO . forkIO . void $ watchWR wrs cd (prepareGame wrs)
             redirect (waitingURL cd 1)
       
       post "/joinGame" $ do
         cd     <- formParam "game_code"  :: ActionM String
         result <- liftIO (atomically (joinWaitingRoom wrs cd))
         case result of
-          Left err            -> redirect ("/joinGame?error=" <> errorText err)
+          Left err            -> redirect ("/joinGame?error=" <> errorCode err)
           Right (cdR, slot)  -> redirect (waitingURL cdR slot)
 
 

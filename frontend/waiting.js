@@ -45,4 +45,30 @@ async function poll() {
     setTimeout(poll, 1000);
 }
 
+
+// show errors
+const errorBox = document.getElementById("error");
+let errorTimer;
+
+function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.hidden = false;
+    clearTimeout(errorTimer);
+    errorTimer = setTimeout(() => { errorBox.hidden = true; }, 5000);
+}
+
+async function sendInput(text, rackOwner) {
+    try {
+        const res = await fetch("/api/game/" + encodeURIComponent(code) + "/input", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slot: Number(slot), text, rackOwner })
+        });
+        const d = await res.json();
+        if (!d.ok) showError(d.error || "Input rejected.");
+    } catch (e) {
+        showError("Server not reachable.");
+    }
+}
+
 poll();

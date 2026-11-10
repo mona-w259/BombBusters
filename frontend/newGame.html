@@ -11,13 +11,15 @@
 
 <body>
     <main class="card">
-        <header class="header">
+        <header class="header" style="margin-bottom: 20px;">
             <h1>Create Your Game</h1>
             <p class="subtitle">
                 Choose the amount of players, logic bots and machine learning (ML) bots. <br>
                 Summed up, the amount of players must be 4!
             </p>
         </header>
+
+        <div id="error" role="alert" hidden></div>
 
         <form method="post" action="/newGame">
             <div class="settings">
@@ -52,6 +54,8 @@
             </div>
         </form>
     </main>
+    
+    <script src="./error.js"></script>
 </body> 
     
 </html>
