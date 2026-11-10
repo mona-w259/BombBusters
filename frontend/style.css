@@ -47,17 +47,17 @@ body {
 }
 
 .header-game > :nth-child(1) {
-    justify-self: start;      /* ganz links */
+    justify-self: start;      
 }
 
 .header-game > :nth-child(2),
 .header-game > :nth-child(3) {
-    justify-self: center;     /* Mitte von 25–50 % bzw. 50–75 % */
+    justify-self: center;   
     text-align: center;
 }
 
 .header-game > :nth-child(4) {
-    justify-self: end;        /* ganz rechts */
+    justify-self: end;      
 }
 
 h1 {
@@ -329,7 +329,7 @@ body:not([data-awaiting="wire"]) .other-racks button {
     border-radius: 8px;
     border: 3px solid #3b311e;
     position: relative;
-    margin: 20px 0px;
+    margin-top: 20px;
 }
 
 .equipment-title, .action-title, .choose-player-id-title {

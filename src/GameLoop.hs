@@ -5,7 +5,7 @@ import Data.Time.Clock (getCurrentTime)
 import BenchmarkLog (writeGameLog)
 import GameLogic.Actions (handleAction)
 import GameLogic.Core
-import GameLogic.Display (displayPlayerView, displayTurnResult, displayBotDecision, announceHumanTurn)
+import GameLogic.Display (displayPlayerView, displayTurnResult, displayDecision, announceHumanTurn)
 import GameLogic.Input (handlePlaceInfoMarker, handleChooseBots)
 import GameLogic.Util
 import BotLogic.Interface
@@ -52,9 +52,12 @@ gameLoop = do
             then do
               displayPlayerView pv
               let a = botPlaceMarker pv
-              displayBotDecision (Just (toPublicAction a)) []
+              displayDecision (Just (toPublicAction a)) []
               pure a
-            else announceHumanTurn pv >> handlePlaceInfoMarker pv
+            else do
+              announceHumanTurn pv 
+              tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
+              handlePlaceInfoMarker pv
           _ <- handleAction pv act id
           pure ()
         else do

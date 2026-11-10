@@ -104,6 +104,7 @@ main = do
       middleware (staticPolicy (addBase "frontend"))
 
 
+
       -------------- GET REQUESTS --------------
       get "/"         $ page "homepage.html"
       get "/newGame"  $ page "newGame.html"
@@ -117,7 +118,6 @@ main = do
         if started 
           then page "game.html"
           else redirect (waitingURL cd slot)
-
 
 
 
@@ -199,7 +199,7 @@ main = do
             let pv = getPlayerView sl gs
                 pl = pvSelf pv
             json $ object
-              [  "personalEquipment" .= object [ "name" .= ("DoubleDetector" :: String), "unlocked" .= True, "used" .= doubleDetector pl ]
+              [  "personalEquipment" .= object [ "name" .= ("DoubleDetector" :: String), "unlocked" .= True, "used" .= not (doubleDetector pl) ]
               ,  "otherEquipment" .= [ object [ "name" .= name e, "unlocked" .= unlocked e, "used" .= used e ] | e <- equipment gs]
               ]
 
@@ -213,19 +213,21 @@ main = do
 
       get "/api/game/:code/actionmessage" $ do
         cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
         case wr of
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do
-            json (object ["text" .= actionMsg gs])
+            json (object ["text" .= Map.findWithDefault "" sl (actionMsg gs)])
 
       get "/api/game/:code/resultmessage" $ do
         cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
         wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
         case wr of
           Nothing -> json (object ["error" .= ("no such game" :: String)])
           Just gs -> do
-            json (object ["text" .= resultMsg gs])
+            json (object ["text" .= Map.findWithDefault "" sl (resultMsg gs)])
       
       get "/api/game/:code/statusgame" $ do
         cd <- pathParam "code"      :: ActionM String

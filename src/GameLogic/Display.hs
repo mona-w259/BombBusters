@@ -1,4 +1,4 @@
-module GameLogic.Display (displayPlayerView, displayWirePickView, displayInfoMarkerView, displayTurnResult, displayBotDecision, announceHumanTurn, indexToLabel, wireFace) where
+module GameLogic.Display (displayPlayerView, displayWirePickView, displayInfoMarkerView, displayTurnResult, displayDecision, announceHumanTurn, indexToLabel, wireFace) where
 
 import Control.Monad (unless, when)
 import Control.Monad.State
@@ -18,15 +18,8 @@ displayPlayerView pv = do
       allInfos = pvInfoMarkers pv
       others = pvOthers pv
       botStatus = isBot self
-
       header = "Player " ++ show pid ++ " isBot: " ++ show botStatus
-
       equipText = "\nAvailable Equipment: " ++ equipmentSummary pv
-
-      hasHumanOnlooker = any (not . isBot) others
-      displaySelf
-        | botStatus && hasHumanOnlooker = censorPlayerWires self
-        | otherwise = self
 
   liftIO bbClearScreen
   printRack self allInfos
@@ -34,8 +27,7 @@ displayPlayerView pv = do
   unless (null others) $ do
     mapM_ (\oth -> printRack oth allInfos) others
     
-  modify (\gs -> gs { actionMsg = header ++ equipText })
-  syncState
+  tellAction pid (header ++ equipText)
 
 
 equipmentSummary :: PlayerView -> String
@@ -81,13 +73,6 @@ announceHumanTurn pv = do
     modify (\gs -> gs { currentPlayer = playerId self })
     syncState
     liftIO (bbDelay 3000000)
-
-censorPlayerWires :: Player -> Player
-censorPlayerWires p = p { playerWires = map hide (playerWires p) }
-  where
-    hide w
-      | isCut w == True = w
-      | otherwise = w { color = Hidden, value = -1 }
 
 printRack :: Player -> [InfoMarker] -> GameM ()
 printRack pl infos = do
@@ -152,33 +137,33 @@ displayTurnResult outcome = do
   let msg = case outcome of
               CutSuccess -> "Successful cut!"
               _ -> "Oops! Wrong wire..."
-  modify (\gs -> gs { resultMsg = msg })
+  tellAllResult msg
   syncState
   liftIO (bbDelay 3000000)
 
-displayBotDecision :: Maybe PublicAction -> [PublicEquipmentUse] -> GameM ()
-displayBotDecision act equip = do
+displayDecision :: Maybe PublicAction -> [PublicEquipmentUse] -> GameM ()
+displayDecision act equip = do
   -- update usable equipment
---  case equip of
---    [] -> pure ()
---    _  -> "Equipment : " ++ intercalate ", " (map showEquipUse equip)
+  case equip of
+    [] -> pure ()
+    _  -> tellAllAction ("Equipment: " ++ intercalate ", " (map showEquipUse equip))
+
   let msg = maybe "(equipment only)" showBotAction act
-  modify (\gs -> gs { actionMsg = msg })
-  syncState
+  tellAllAction msg 
   liftIO (bbDelay 1500000)
 
 showBotAction :: PublicAction -> String
 showBotAction (PubSoloCut2 (a, b)) =
-  "Solo Cut 2 - wires " ++ indexToLabel a ++ ", " ++ indexToLabel b
+  "Solo Cut 2 - " ++ show (a + 1) ++ ". and " ++ show (b + 1) ++ ". wire"
 showBotAction (PubSoloCut4 (a, b, c, d)) =
-  "Solo Cut 4 - wires " ++ intercalate ", " (map indexToLabel [a, b, c, d])
+  "Solo Cut 4 - " ++ show (a + 1) ++ "., " ++ show (b + 1) ++ ",. " ++ show (c + 1) ++ ". and " ++ show (d + 1) ++ ". wire"
 showBotAction (PubRemoveRed idx) =
-  "Remove Red - wire " ++ indexToLabel idx
+  "Remove Red - " ++ show (idx + 1) ++ ". wire"
 showBotAction (PubDualCut pid targetIdx w) =
   "Dual Cut - called " ++ showCallOut w
-    ++ " → Player " ++ show pid ++ "'s " ++ show targetIdx ++ ". wire"
+    ++ " → Player " ++ show pid ++ "'s " ++ show (targetIdx + 1) ++ ". wire"
 showBotAction (PubPlaceInfoMarker idx) =
-  "Place Info Marker - wire " ++ indexToLabel idx
+  "Placed Info Marker on " ++ show (idx + 1) ++ ". wire"
 
 showEquipUse :: PublicEquipmentUse -> String
 showEquipUse PubUseStabilizer =

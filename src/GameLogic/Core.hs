@@ -3,7 +3,7 @@ module GameLogic.Core where
 import Control.Monad.State
 import Config (bbDelay)
 import GameLogic.Actions
-import GameLogic.Display (displayPlayerView, displayBotDecision, announceHumanTurn)
+import GameLogic.Display (displayPlayerView, displayDecision, announceHumanTurn)
 import GameLogic.Equipment
 import GameLogic.Input
 import GameLogic.Util
@@ -14,24 +14,26 @@ import Output
 playerTurn :: PlayerView -> GameM Outcome
 playerTurn pv = do
   let pubOf act eq = (fmap toPublicAction act, map toPublicEquipmentUse eq)
+      pid = playerId (pvSelf pv)
   (act, equip) <- if isBot (pvSelf pv)
     then do
       displayPlayerView pv
+      tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
       liftIO (bbDelay 2000000)
-      modify (\gs -> gs { actionMsg = "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..." })
-      syncState
       result@(a, eq) <- liftIO (botAction pv)
       let (pubA, pubEq) = pubOf a eq
-      displayBotDecision pubA pubEq
+      displayDecision pubA pubEq
       return result
-    else announceHumanTurn pv >> humanAction pv
+    else do
+      announceHumanTurn pv 
+      humanAction pv
   let f = handleStabilizer equip
   eqOutcome <- handleEquipment f pv equip
   actOutcome <- case act of
     Just a -> handleAction pv a f
     Nothing -> pure ActionDone
   let outcome = mergeOutcome eqOutcome actOutcome
-  modify $ markDoubleDetectorUsed (playerId (pvSelf pv)) equip . markEquipmentUsed equip
+  modify $ markDoubleDetectorUsed pid equip . markEquipmentUsed equip
   gs' <- get
   let (pubAct, pubEquip) = pubOf act equip
       tlog = TurnLog
@@ -42,6 +44,7 @@ playerTurn pv = do
           logOutcome = outcome
         }
   modify (appendTurnLog tlog)
+  displayDecision pubAct pubEquip
   syncState
   pure outcome
 

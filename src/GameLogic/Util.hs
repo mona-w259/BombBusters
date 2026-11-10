@@ -78,33 +78,30 @@ readPromptInput pv prompt = do
   let pid = playerId (pvSelf pv)
   iB <- gets inBox
   liftIO (clearInput iB pid)
-  modify (\gs -> gs { actionMsg = prompt })
-  syncState
+  tellAction pid prompt
   liftIO (readInputFor iB pid)
 
 
 readInt :: PlayerView -> String -> GameM Int
 readInt pv prompt = do
-  modify (\gs -> gs { actionMsg = prompt } )
-  syncState
+  let pid = playerId (pvSelf pv)
+  tellAction pid prompt
   input <- readInput pv
   case readMaybe input :: Maybe Int of
     Just n -> return n
     Nothing -> do
-      modify (\gs -> gs { resultMsg = "Invalid number. Please enter a valid integer." })
-      syncState
+      tellResult pid "Invalid number." -- Please enter a valid integer."
       readInt pv prompt
 
 readLabel :: PlayerView -> String -> GameM Int
 readLabel pv prompt = do
-  modify (\gs -> gs { actionMsg = prompt } )
-  syncState
+  let pid = playerId (pvSelf pv)
+  tellAction pid prompt
   input <- readInput pv
   case input of
     [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
     _ -> do
-      modify (\gs -> gs { resultMsg = "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)." })
-      syncState
+      tellResult pid "Invalid input." -- Please enter a single lowercase letter (e.g. a, b, c).
       readLabel pv prompt
 
 cutAtPosition :: Int -> [Wire] -> [Wire]

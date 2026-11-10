@@ -139,6 +139,7 @@ async function pollRacks() {
 
 function getValueWire(w) {
     let valAddOn = "";
+    const raw = String(w.value).replace("💡", "");
 
     switch (w.color) {
         case "yellow":
@@ -149,7 +150,7 @@ function getValueWire(w) {
             break;
     }
     
-    return w.value + valAddOn;
+    return raw + valAddOn;
 }
 
 
@@ -204,8 +205,8 @@ const actionMsg = document.getElementById("action");
 
 async function loadActionMsg() {
     try {
-        const url = "/api/game/" + encodeURIComponent(code) + "/actionmessage"
-        const data = await (await fetch(url)).json();
+        const url = "/api/game/" + encodeURIComponent(code) + "/actionmessage?slot=" + encodeURIComponent(slot);
+        const data = await (await fetch(url, { cache: "no-store" })).json();
 
         if (data.text != undefined) {
             actionMsg.textContent = "Action: " + data.text;
@@ -221,8 +222,8 @@ const resultMsg = document.getElementById("result");
 
 async function loadResultMsg() {
     try {
-        const url = "/api/game/" + encodeURIComponent(code) + "/resultmessage"
-        const data = await (await fetch(url)).json();
+        const url = "/api/game/" + encodeURIComponent(code) + "/resultmessage?slot=" + encodeURIComponent(slot);
+        const data = await (await fetch(url, { cache: "no-store" })).json();
 
         if (data.text != undefined) {
             resultMsg.textContent = "Result: " + data.text;
