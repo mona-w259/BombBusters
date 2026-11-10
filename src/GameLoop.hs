@@ -22,7 +22,7 @@ runGame gs = do
 startGame :: GameM ()
 startGame = do
   gs <- get
-  botIds <- liftIO $ (handleChooseBots gs (turnOrder gs))
+  botIds <- liftIO $ (handleChooseBots gs [1..4])
   modify $ selectBots botIds
   syncState
   gameLoop

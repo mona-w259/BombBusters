@@ -31,7 +31,7 @@ getPlayerView pid gs =
               pvTurnHistory = turnHistory gs,
               pvUnlockingValues = unlockingValues gs
             }
-        Nothing -> errorMessage $ "player not found pid: " ++ show pid
+        Nothing -> errorMessage $ "Player not found pid: " ++ show pid
 
 updateGameStateFromView :: PlayerView -> GameState -> GameState
 updateGameStateFromView pv gs =

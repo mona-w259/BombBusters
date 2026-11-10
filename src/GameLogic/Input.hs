@@ -718,7 +718,6 @@ checkInputRR pv a
 
 handleChooseBots :: GameState -> [PlayerId] -> IO [PlayerId]
 handleChooseBots gs pids = do
-  let l = l_players gs
-      ml = ml_players gs
-      total_amount = l + ml
-  return $ shortenList total_amount pids
+  let h = h_players gs
+      h_ids = shortenList h pids
+  return $ filter (`notElem` h_ids) pids
