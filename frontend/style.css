@@ -278,7 +278,7 @@ h1 {
     flex: 1 1 280px;
     min-width: 455px;
     min-height: 160px;
-    margin-bottom: 20px;
+    margin: 20px 0px;
 }
 
 body:not([data-awaiting="wire"]) #rack button,

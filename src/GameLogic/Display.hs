@@ -1,11 +1,11 @@
-module GameLogic.Display (displayPlayerView, displayWirePickView, displayInfoMarkerView, displayTurnResult, displayDecision, announceHumanTurn, indexToLabel, wireFace) where
+module GameLogic.Display (displayPlayerView, displayTurnResult, displayDecision, announceHumanTurn, indexToLabel, wireFace) where
 
 import Control.Monad (unless, when)
 import Control.Monad.State
 import Data.List (intercalate)
-import Data.Map (insert)
+import Data.Maybe (catMaybes)
 import Types
-import Config (bbDelay, bbClearScreen)
+import Config (bbDelay)
 import Output
 
 indexToLabel :: Int -> String
@@ -15,20 +15,11 @@ displayPlayerView :: PlayerView -> GameM ()
 displayPlayerView pv = do
   let self = pvSelf pv
       pid = playerId self
-      allInfos = pvInfoMarkers pv
-      others = pvOthers pv
       botStatus = isBot self
       header = "Player " ++ show pid ++ " isBot: " ++ show botStatus
       equipText = "\nAvailable Equipment: " ++ equipmentSummary pv
 
-  liftIO bbClearScreen
-  printRack self allInfos
-
-  unless (null others) $ do
-    mapM_ (\oth -> printRack oth allInfos) others
-    
   tellAction pid (header ++ equipText)
-
 
 equipmentSummary :: PlayerView -> String
 equipmentSummary pv =
@@ -37,81 +28,14 @@ equipmentSummary pv =
       items = availEq ++ dd
   in if null items then "(none)" else intercalate ", " items
 
-
-displayWirePickView :: PlayerView -> Maybe Player -> GameM ()
-displayWirePickView pv mTarget = do
-  let allInfos = pvInfoMarkers pv
-      self = pvSelf pv
-  liftIO bbClearScreen
---  instructionMessage (pvOutBox pv) (ToPlayer pid) "YOUR RACK"
-  printRackLabeled self allInfos
-  case mTarget of
-    Nothing -> pure ()
-    Just target -> do
---      instructionMessage ob (ToPlayer pid) "TARGET RACK"
-      printRackLabeled target allInfos
-
-displayInfoMarkerView :: PlayerView -> GameM ()
-displayInfoMarkerView pv = do
-  let self = pvSelf pv
-      others = pvOthers pv
-      allInfos = pvInfoMarkers pv
-  liftIO bbClearScreen
---  instructionMessage (pvOutBox pv) ToAll "YOUR RACK"
-  printRackLabeled self allInfos
-  unless (null others) $ do
---    instructionMessage (pvOutBox pv) ToAll "OTHER PLAYERS"
-    mapM_ (\oth -> printRackLabeled oth allInfos) others
-
 announceHumanTurn :: PlayerView -> GameM ()
 announceHumanTurn pv = do
   let self = pvSelf pv
       multiHuman = any (not . isBot) (pvOthers pv)
   when (not (isBot self) && multiHuman) $ do
--- neccessary?    
-    liftIO bbClearScreen
     modify (\gs -> gs { currentPlayer = playerId self })
     syncState
     liftIO (bbDelay 3000000)
-
-printRack :: Player -> [InfoMarker] -> GameM ()
-printRack pl infos = do
-  let pid = playerId pl
-      pwires = playerWires pl
-      infosForPlayer =
-        [ (idx, (val, col))
-        | InfoMarker {markerOwner = owner, markerIndex = idx, markerValue = val, markerColor = col} <- infos,
-          owner == pid
-        ]
-      msg = " " ++ concatMap (formatWireOverview infosForPlayer) pwires ++ "\n"
-  modify (\gs -> gs { rackOverview = insert pid msg (rackOverview gs) })
-  syncState
-
-printRackLabeled :: Player -> [InfoMarker] -> GameM ()
-printRackLabeled pl infos = do
-  let pid = playerId pl
-      pwires = playerWires pl
-      infosForPlayer =
-        [ (idx, (val, col))
-        | InfoMarker {markerOwner = owner, markerIndex = idx, markerValue = val, markerColor = col} <- infos,
-          owner == pid
-        ]
-      msg = " " ++ concatMap (formatWireLabeled infosForPlayer) pwires ++ "\n"
-  modify (\gs -> gs { rackLabled = insert pid msg (rackLabled gs) })
-  syncState
-
-formatWireOverview :: [(Int, (Int, WireColor))] -> Wire -> String
-formatWireOverview infos w =
-  let maybeInfo = lookup (wireIndex w) infos
-      (emoji, valStr) = case (color w, maybeInfo) of
-        (Grey, _) -> ("⚫", show (value w))
-        (Hidden, Just (_, Yellow)) -> ("💡", "🟡")
-        (Hidden, Just (v, _)) -> ("💡", show v)
-        (c, Just (v, _)) -> (colorEmoji c, show v ++ "💡")
-        (Hidden, Nothing) -> ("⬜", "?")
-        (c, Nothing) -> (colorEmoji c, show (value w))
-      wireBox = "[" ++ emoji ++ "(" ++ valStr ++ ")" ++ "]"
-   in wireBox ++ " "
 
 wireFace :: [(Int, (Int, WireColor))] -> Wire -> (String, String)
 wireFace infos w = 
@@ -124,13 +48,6 @@ wireFace infos w =
     (Hidden, Nothing)           -> ("⬜", "?")
     (c, Nothing)                -> (colorEmoji c, show (value w))
 
-formatWireLabeled :: [(Int, (Int, WireColor))] -> Wire -> String
-formatWireLabeled infos w =
-  let (emoji, valStr) = wireFace infos w
-      lbl = indexToLabel (wireIndex w)
-  in "[" ++ lbl ++ ":" ++ emoji ++ "(" ++ valStr ++ ")] "
-
-
 displayTurnResult :: Outcome -> GameM ()
 displayTurnResult ActionDone = pure ()
 displayTurnResult outcome = do
@@ -138,25 +55,24 @@ displayTurnResult outcome = do
               CutSuccess -> "Successful cut!"
               _ -> "Oops! Wrong wire..."
   tellAllResult msg
-  syncState
   liftIO (bbDelay 3000000)
 
 displayDecision :: Maybe PublicAction -> [PublicEquipmentUse] -> GameM ()
 displayDecision act equip = do
-  -- update usable equipment
-  case equip of
-    [] -> pure ()
-    _  -> tellAllAction ("Equipment: " ++ intercalate ", " (map showEquipUse equip))
+  let equipText = case equip of
+        [] -> Nothing
+        _  -> Just ("Equipment: " ++ intercalate ", " (map showEquipUse equip))
+      parts = catMaybes [equipText, fmap showBotAction act]
 
-  let msg = maybe "(equipment only)" showBotAction act
-  tellAllAction msg 
-  liftIO (bbDelay 1500000)
+  unless (null parts) $ do
+    tellAllAction (intercalate " | " parts)
+    liftIO (bbDelay 1500000)
 
 showBotAction :: PublicAction -> String
 showBotAction (PubSoloCut2 (a, b)) =
-  "Solo Cut 2 - " ++ show (a + 1) ++ ". and " ++ show (b + 1) ++ ". wire"
+  "Solo Cut 2 - " ++ show (a + 1) ++ "., " ++ show (b + 1) ++ ". wire"
 showBotAction (PubSoloCut4 (a, b, c, d)) =
-  "Solo Cut 4 - " ++ show (a + 1) ++ "., " ++ show (b + 1) ++ ",. " ++ show (c + 1) ++ ". and " ++ show (d + 1) ++ ". wire"
+  "Solo Cut 4 - " ++ intercalate "., " (map show $ map (+1) [a, b, c, d]) ++ ". wire" 
 showBotAction (PubRemoveRed idx) =
   "Remove Red - " ++ show (idx + 1) ++ ". wire"
 showBotAction (PubDualCut pid targetIdx w) =
@@ -169,16 +85,17 @@ showEquipUse :: PublicEquipmentUse -> String
 showEquipUse PubUseStabilizer =
   "Stabilizer"
 showEquipUse (PubUseSuperDetector pid w) =
-  "SuperDetector called " ++ showCallOut w ++ " → Player " ++ show pid
+  "SuperDetector called " ++ showCallOut w 
+    ++ " → Player " ++ show pid
 showEquipUse (PubUseTripleDetector pid (a, b, c) w) =
   "TripleDetector called " ++ showCallOut w
-    ++ " → Player " ++ show pid ++ " [" ++ intercalate ", " (map indexToLabel [a, b, c]) ++ "]"
+    ++ " → Player " ++ show pid ++ " [" ++ intercalate "., " (map show $ map (+1) [a, b, c]) ++ ". wire]"
 showEquipUse (PubUseDoubleDetector pid (a, b) w) =
   "DoubleDetector called " ++ showCallOut w
-    ++ " → Player " ++ show pid ++ " [" ++ indexToLabel a ++ ", " ++ indexToLabel b ++ "]"
+    ++ " → Player " ++ show pid ++ " [" ++ intercalate "., " (map show $ map (+1) [a, b]) ++ ". wire]"
 showEquipUse (PubUseDoubleRadiator pid tgt (w1, w2)) =
   "DoubleRadiator called " ++ showCallOut w1 ++ ", " ++ showCallOut w2
-    ++ " → Player " ++ show pid ++ " [" ++ indexToLabel tgt ++ "]"
+    ++ " → Player " ++ show pid ++ " [" ++ show (tgt + 1) ++ ". wire]"
 
 showCallOut :: Wire -> String
 showCallOut w = case color w of

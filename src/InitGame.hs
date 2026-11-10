@@ -166,7 +166,6 @@ initGameState l ml codeI syncTv = do
         turnHistory = [],
         unlockingValues = [(unlockingVal e, name e) | e <- eq],
         rackLabled = empty,
-        rackOverview = empty,
         actionMsg = empty,
         resultMsg = empty,
         syncVar = syncTv,

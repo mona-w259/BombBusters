@@ -133,7 +133,6 @@ data GameState = GameState
     unlockingValues :: [(Int, EquipmentName)],
     -- neccessary for displaying
     rackLabled :: Map.Map PlayerId String,
-    rackOverview :: Map.Map PlayerId String,
     actionMsg :: Map.Map PlayerId String,
     resultMsg :: Map.Map PlayerId String,
     syncVar :: TVar (Map.Map Code GameState),

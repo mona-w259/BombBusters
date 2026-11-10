@@ -73,7 +73,6 @@ promptFor PickInfoMarkerSlot = "Place an Info Marker on a wire."
 askPlayerToChooseWire :: PlayerView -> [Int] -> ChoiceKind -> GameM Int
 askPlayerToChooseWire pv opts kind = do
   let pid = playerId (pvSelf pv)
-  displayWirePickView pv Nothing
   tellAction pid (promptFor kind ++ "\nOptions: " ++ unwords (map indexToLabel opts))
   readChoice
   where
@@ -303,7 +302,7 @@ chooseActionOrEquipment pv = do
 
 handleSuperDetectorInput :: PlayerView -> GameM EquipmentUse
 handleSuperDetectorInput pv = do
-  otherId <- readPlayerId pv "SuperDetector - enter target player id:"
+  otherId <- readPlayerId pv "SuperDetector - choose target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult (playerId (pvSelf pv)) "Invalid player id."
@@ -311,7 +310,6 @@ handleSuperDetectorInput pv = do
     Just target -> askWire otherId target
   where
     askWire otherId target = do
-      displayWirePickView pv (Just target)
       pos <- readWire pv "Your wire:"
       let (valid, msg) = checkInputSD pv otherId pos
       tellResult (playerId (pvSelf pv)) msg
@@ -346,7 +344,7 @@ checkInputSD pv otherId pos =
 
 handleTripleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleTripleDetectorInput pv = do
-  otherId <- readPlayerId pv "Triple Detector - enter target player id:"
+  otherId <- readPlayerId pv "Triple Detector - choose target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult (playerId (pvSelf pv)) "Invalid player id."
@@ -358,7 +356,6 @@ handleTripleDetectorInput pv = do
       | otherwise -> askWires otherId target
   where
     askWires otherId target = do
-      displayWirePickView pv (Just target)
       selfPos <- readWire pv "Your wire:"
       a <- readWire pv "First target wire:"
       b <- readWire pv "Second target wire:"
@@ -415,7 +412,7 @@ checkInputTD pv otherId selfPos (a, b, c) =
 
 handleDoubleRadiatorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleRadiatorInput pv = do
-  otherId <- readPlayerId pv "Double Radiator - enter target player id:"
+  otherId <- readPlayerId pv "Double Radiator - choose target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult (playerId (pvSelf pv)) "Invalid player id."
@@ -423,7 +420,6 @@ handleDoubleRadiatorInput pv = do
     Just target -> askWires otherId target
   where
     askWires otherId target = do
-      displayWirePickView pv (Just target)
       pos1 <- readWire pv "Your first wire:"
       pos2 <- readWire pv "Your second wire:"
       otherPos <- readWire pv "Target wire:"
@@ -476,7 +472,7 @@ checkInputDR pv otherId (p1, p2) otherPos =
 handleDoubleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleDetectorInput pv = do
   let pid = playerId (pvSelf pv)
-  otherId <- readPlayerId pv "Double Detector - enter target player id:"
+  otherId <- readPlayerId pv "Double Detector - choose target player id:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult pid "Invalid player id."
@@ -488,7 +484,6 @@ handleDoubleDetectorInput pv = do
       | otherwise -> askWires otherId target
   where
     askWires otherId target = do
-      displayWirePickView pv (Just target)
       selfPos <- readWire pv "Your wire:"
       a <- readWire pv "First target wire:"
       b <- readWire pv "Second target wire:"
@@ -545,7 +540,6 @@ checkInputDD pv otherId selfPos (a, b) =
 handleSoloCut2Input :: PlayerView -> GameM Action
 handleSoloCut2Input pv = do
   let pid = playerId (pvSelf pv)
-  displayWirePickView pv Nothing
   tellResult pid "Solo Cut - cutting two (2) wires."
   a <- readWire pv "First wire:"
   b <- readWire pv "Second wire:"
@@ -558,7 +552,6 @@ handleSoloCut2Input pv = do
 handleSoloCut4Input :: PlayerView -> GameM Action
 handleSoloCut4Input pv = do
   let pid = playerId (pvSelf pv)
-  displayWirePickView pv Nothing
   tellResult (playerId (pvSelf pv)) "Solo Cut - cutting four (4) wires."
   a <- readWire pv "First wire:"
   b <- readWire pv "Second wire:"
@@ -574,7 +567,6 @@ handlePlaceInfoMarker :: PlayerView -> GameM Action
 handlePlaceInfoMarker pv = do
   let   self  = pvSelf pv
         pid   = playerId self
-  displayInfoMarkerView pv
   pos <- readLabel pv $ "Pick a wire for your info marker:"
   let (valid, msg) = checkInputInitInfo pv pos
   tellResult pid msg
@@ -594,7 +586,6 @@ handleDualCutInput pv = do
     Just target -> askWires otherId target
   where
     askWires otherId target = do
-      displayWirePickView pv (Just target)
       a <- readWire pv "Your wire:"
       b <- readWire pv "Target wire:"
       let (valid, msg) = checkInputDC pv otherId (a, b)
@@ -605,8 +596,7 @@ handleDualCutInput pv = do
 
 handleRemoveRedInput :: PlayerView -> GameM Action
 handleRemoveRedInput pv = do
-  displayWirePickView pv Nothing
-  pos <- readWire pv "Remove Red - enter the red wire:"
+  pos <- readWire pv "Remove Red - choose the red wire:"
   let (valid, msg) = checkInputRR pv pos
   tellResult (playerId (pvSelf pv)) msg
   if valid
