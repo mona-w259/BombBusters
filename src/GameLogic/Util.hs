@@ -255,4 +255,7 @@ anonymise w = case color w of
     _ -> w { wireIndex = -1 }
 
 setAwaiting :: PlayerView -> String -> GameM ()
-setAwaiting pv kind = modify (\gs -> gs { awaiting = (playerId (pvSelf pv), kind) })
+setAwaiting pv kind = modify (\gs -> gs { awaiting = (playerId (pvSelf pv), kind) }) >> syncState
+
+setAwaitingZero :: GameM ()
+setAwaitingZero = modify (\gs -> gs { awaiting = (0, "") }) >> syncState

@@ -137,7 +137,6 @@ data GameState = GameState
     resultMsg :: Map.Map PlayerId String,
     syncVar :: TVar (Map.Map Code GameState),
     inBox :: InBox,
-    actionMenu :: [(String, String, Bool)],
     awaiting :: (PlayerId, String)      -- String: "menu" | "equipment" | "player" | "wire"
   }
 

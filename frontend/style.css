@@ -349,7 +349,7 @@ body:not([data-awaiting="wire"]) .other-racks button {
     position: relative;
 }
 
-.equipment-item.used {
+.equipment-item.used, .action-item.unusable {
     filter: grayscale(1);
 }
 
@@ -374,7 +374,7 @@ body:not([data-awaiting="wire"]) .other-racks button {
     color: #9d8d65;
 }
 
-.equipment-btn:disabled {
+.equipment-btn:disabled, .action-btn:disabled {
     cursor: not-allowed;
     pointer-events: none;
 }

@@ -3,6 +3,7 @@ module GameLogic.Input
     handlePlaceInfoMarker,
     askPlayerToChooseWire,
     handleChooseBots,
+    actionOptions,
     -- exposed for tests
     checkInputInitInfo,
     checkInputSC2,
@@ -236,32 +237,25 @@ canRemoveRed pv =
    in not (null uncutWs) && all ((== Red) . color) uncutWs
 
 
-actionOptions :: PlayerView -> [(String, Bool, PlayerView -> GameM Action)]
+actionOptions :: PlayerView -> [(String, Bool, PlayerView -> GameM Action, Int)]
 actionOptions pv =
-  [ ("Solo Cut (2)", canSoloCut2 pv,  handleSoloCut2Input)
-  , ("Solo Cut (4)", canSoloCut4 pv,  handleSoloCut4Input)
-  , ("Dual Cut",     canDualCut pv,   handleDualCutInput)
-  , ("Remove Red",   canRemoveRed pv, handleRemoveRedInput)
+  [ ("Solo Cut (2)", canSoloCut2 pv,  handleSoloCut2Input,  1)
+  , ("Solo Cut (4)", canSoloCut4 pv,  handleSoloCut4Input,  2)
+  , ("Dual Cut",     canDualCut pv,   handleDualCutInput,   3)
+  , ("Remove Red",   canRemoveRed pv, handleRemoveRedInput, 4)
   ]
-
-menuEntries :: PlayerView -> Bool -> [(String, String, Bool)]
-menuEntries pv hasEq = 
-  [(show i, lbl, ok) | (i, (lbl, ok, _)) <- zip [1 :: Int ..] (actionOptions pv)]
-  ++ [("e", "Choose Equipment", hasEq)]
 
 chooseAction :: PlayerView -> GameM Action
 chooseAction pv = do
   displayPlayerView pv
   let opts      = actionOptions pv
-      numbered  = zip [1 :: Int ..] opts
       pid       = playerId (pvSelf pv)
   setAwaiting pv "menu"
-  modify (\gs -> gs { actionMenu = menuEntries pv False })
   tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
   input <- readIntB pv "Choose an action."
-  modify (\gs -> gs { actionMenu = [], awaiting = (0, "") })
-  syncState
-  case lookup input [ (k, h) | (k, (_, True, h)) <- numbered ] of
+  setAwaitingZero
+
+  case lookup input [ (k, h) | (_, True, h, k) <- opts ] of
     Just h -> h pv
     Nothing -> do
       tellResult (playerId (pvSelf pv)) "Invalid input, try again."
@@ -271,30 +265,25 @@ chooseActionOrEquipment :: PlayerView -> GameM (Either Action [Selectable])
 chooseActionOrEquipment pv = do
   displayPlayerView pv
   let opts      = actionOptions pv
-      numbered  = zip [1 :: Int ..] opts
-      hasEq     = not (null (availableEquipment pv))
-      actionsAv = any (\(_, ok, _) -> ok) opts
+      actionsAv = any (\(_, ok, _, _) -> ok) opts
       pid       = playerId (pvSelf pv)
   setAwaiting pv "menu"
-  if not actionsAv && not hasEq
+  if not actionsAv
     then do
       tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
-      tellAction pid "No actions and no equipment available."
-      modify (\gs -> gs { actionMenu = [], awaiting = (0, "") })
-      syncState
+      tellAction pid "No actions available."
+      setAwaitingZero
       liftIO (threadDelay 1000000) >> chooseActionOrEquipment pv
     else do
-      modify (\gs -> gs { actionMenu = menuEntries pv hasEq })
       tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
       input <- readPromptInput pv "Choose an action."
-      modify (\gs -> gs { actionMenu = [], awaiting = (0, "") })
-      syncState
+      setAwaitingZero
       case input of
         "e" -> Right <$> do
           setAwaiting pv "equipment"
           chooseEquipment pv
         _ -> case readMaybe input :: Maybe Int of
-          Just i | Just h <- lookup i [(k, h) | (k, (_, True, h)) <- numbered ] ->
+          Just i | Just h <- lookup i [(k, h) | (_, True, h, k) <- opts ] ->
             Left <$> h pv
           _ -> do
             tellResult pid "Invalid input, try again."

@@ -18,6 +18,7 @@ async function poll() {
             pollRacks();
             loadChoosePlayerIds();
             loadAwaiting();
+            pollActions();
             pollEquipment();
         }
         
@@ -154,7 +155,35 @@ function getValueWire(w) {
 }
 
 
-/* print equipment as used, when used */
+/* print action black/white, when unusable */
+
+function renderAction(a) {
+    const btn = document.querySelector(`.action-btn[data-input="${a.key}"]`);
+    if (!btn) return;
+
+    const item = btn.closest(".action-item");
+    const unusable = !a.usable;
+
+    btn.disabled = unusable;
+    item.classList.toggle("unusable", unusable);
+}
+
+async function pollActions() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/actions?slot=" + encodeURIComponent(slot);
+        const a = await (await fetch(url, { cache: "no-store" })).json();
+
+        a.actions.forEach(act => {
+            renderAction(act);
+        });
+    } 
+    catch (e) {
+        console.error("pollActions: ", e);
+    }
+}
+
+
+/* print equipment black/white, when used */
 
 function renderEquipment(eq) {
     const btn = document.querySelector(`.equipment-btn[data-input="${eq.name}"]`);
@@ -179,7 +208,7 @@ async function pollEquipment() {
         renderEquipment(eq.personalEquipment);
     } 
     catch (e) {
-        console.error("loadEquipment: ", e);
+        console.error("pollEquipment: ", e);
     }
 }
 

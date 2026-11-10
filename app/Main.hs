@@ -19,6 +19,7 @@ import Output
 import GameLogic.Display
 import GameLogic.Util
 import GameLogic.InBox
+import GameLogic.Input
 
 -------------- data types, instances --------------
 data InputReq = InputReq {
@@ -189,6 +190,18 @@ main = do
               , "others"  .= [ object [ "playerId" .= playerId p, "wires" .= rackFormatJson infos p ]     | p <- pvOthers pv ]
               ]
 
+      get "/api/game/:code/actions" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of 
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let pv = getPlayerView sl gs
+                opts = actionOptions pv
+            json $ object
+              [ "actions" .= [ object [ "key" .= k, "usable" .= u ] | (_, u, _, k) <- opts ] ]
+
       get "/api/game/:code/equipment" $ do
         cd <- pathParam "code"      :: ActionM String
         sl <- queryParam "slot"     :: ActionM Int
@@ -246,6 +259,7 @@ main = do
           Just gs -> do
             let (pid, kind) = awaiting gs
             json (object ["text" .= (if pid == sl then kind else "")])
+
 
       post "/api/game/:code/input" $ do
         cd  <- pathParam "code"      :: ActionM String
