@@ -3,7 +3,6 @@ const code = params.get("code") || "";
 const slot = params.get("slot") || "";
 const $ = (id) => document.getElementById(id);
 
-// textContent statt innerHTML: der Code kommt aus der URL und ist nicht vertrauenswürdig
 $("code").textContent = code;
 
 function fmt(sec) {
@@ -21,54 +20,28 @@ function stop(msg) {
 async function poll() {
     try {
         const res = await fetch("/api/waitingRoom/" + encodeURIComponent(code));
-        const s = await res.json();
+        const wr = await res.json();
 
-        if (s.status === "started") {
+        if (wr.status === "started") {
             // all players registered -> redirect to game
             location.href = "/game?code=" + encodeURIComponent(code) + "&slot=" + encodeURIComponent(slot);
             return;
         }
-        if (s.status === "expired") {
-            stop("More then 10 minutes since the waiting room was established. Dismiss game.");
+        if (wr.status === "expired") {
+            showError("More then 10 minutes since the waiting room was established. Game dismissed.");
             return;
         }
-        if (s.status === "missing") {
-            stop("This game does not exist (anymore).");
+        if (wr.status === "missing") {
+            showError("This game does not exist (anymore).");
             return;
         }
 
-        $("count").textContent = "Registered players: " + s.registered + " / " + s.humans;
-        $("timer").textContent = "Remaining time: " + fmt(s.secondsLeft) + " min";
-    } catch (e) {
-        // Server kurz nicht erreichbar: einfach weiter versuchen
-    }
+        $("count").textContent = "Registered players: " + wr.registered + " / " + wr.humans;
+        $("timer").textContent = "Remaining time: " + fmt(wr.secondsLeft) + " min";
+    } 
+    catch (e) {}
+    
     setTimeout(poll, 1000);
-}
-
-
-// show errors
-const errorBox = document.getElementById("error");
-let errorTimer;
-
-function showError(msg) {
-    errorBox.textContent = msg;
-    errorBox.hidden = false;
-    clearTimeout(errorTimer);
-    errorTimer = setTimeout(() => { errorBox.hidden = true; }, 5000);
-}
-
-async function sendInput(text, rackOwner) {
-    try {
-        const res = await fetch("/api/game/" + encodeURIComponent(code) + "/input", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slot: Number(slot), text, rackOwner })
-        });
-        const d = await res.json();
-        if (!d.ok) showError(d.error || "Input rejected.");
-    } catch (e) {
-        showError("Server not reachable.");
-    }
 }
 
 poll();

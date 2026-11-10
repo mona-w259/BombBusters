@@ -41,8 +41,9 @@ body {
 
 .header-game {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: auto minmax(0, 5fr) minmax(0, 3fr) auto;
     align-items: center;
+    column-gap: 16px;
     padding: 0px 10px 40px;
 }
 
