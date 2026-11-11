@@ -13,7 +13,6 @@
 module Config
     ( benchMode
     , bbDelay
-    , bbClearScreen
     , maxModels
     , maxDetonateProb
     , stabilizerThreshold
@@ -27,7 +26,6 @@ import Data.Maybe (isJust)
 import System.Environment (lookupEnv)
 import System.IO.Unsafe (unsafePerformIO)
 import Text.Read (readMaybe)
-import qualified System.Console.ANSI as ANSI
 
 {-# NOINLINE benchMode #-}
 benchMode :: Bool
@@ -35,9 +33,6 @@ benchMode = unsafePerformIO (isJust <$> lookupEnv "BB_FAST")
 
 bbDelay :: Int -> IO ()
 bbDelay n = unless benchMode (threadDelay n)
-
-bbClearScreen :: IO ()
-bbClearScreen = unless benchMode ANSI.clearScreen
 
 {-# NOINLINE maxModels #-}
 maxModels :: Int

@@ -1,4 +1,4 @@
-module GameLogic.Display (displayPlayerView, displayTurnResult, displayDecision, announceHumanTurn, indexToLabel, wireFace) where
+module GameLogic.Display (displayTurnResult, displayDecision, announceHumanTurn, indexToLabel, wireFace) where
 
 import Control.Monad (unless, when)
 import Control.Monad.State
@@ -10,23 +10,6 @@ import Output
 
 indexToLabel :: Int -> String
 indexToLabel i = [toEnum (fromEnum 'a' + i)]
-
-displayPlayerView :: PlayerView -> GameM ()
-displayPlayerView pv = do
-  let self = pvSelf pv
-      pid = playerId self
-      botStatus = isBot self
-      header = "Player " ++ show pid ++ " isBot: " ++ show botStatus
-      equipText = "\nAvailable Equipment: " ++ equipmentSummary pv
-
-  tellAction pid (header ++ equipText)
-
-equipmentSummary :: PlayerView -> String
-equipmentSummary pv =
-  let availEq = [ show (name e) | e <- pvEquipment pv, unlocked e, not (used e) ]
-      dd = [ "DoubleDetector" | doubleDetector (pvSelf pv) ]
-      items = availEq ++ dd
-  in if null items then "(none)" else intercalate ", " items
 
 announceHumanTurn :: PlayerView -> GameM ()
 announceHumanTurn pv = do
@@ -66,7 +49,7 @@ displayDecision act equip = do
 
   unless (null parts) $ do
     tellAllAction (intercalate " | " parts)
-    liftIO (bbDelay 1500000)
+    liftIO (bbDelay 3000000)
 
 showBotAction :: PublicAction -> String
 showBotAction (PubSoloCut2 (a, b)) =

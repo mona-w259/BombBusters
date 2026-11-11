@@ -3,7 +3,7 @@ module GameLogic.Core where
 import Control.Monad.State
 import Config (bbDelay)
 import GameLogic.Actions
-import GameLogic.Display (displayPlayerView, displayDecision, announceHumanTurn)
+import GameLogic.Display (displayDecision, announceHumanTurn)
 import GameLogic.Equipment
 import GameLogic.Input
 import GameLogic.Util
@@ -17,7 +17,6 @@ playerTurn pv = do
       pid = playerId (pvSelf pv)
   (act, equip) <- if isBot (pvSelf pv)
     then do
-      displayPlayerView pv
       tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
       liftIO (bbDelay 2000000)
       result@(a, eq) <- liftIO (botAction pv)

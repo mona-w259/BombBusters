@@ -17,7 +17,6 @@ module GameLogic.Input
 where
 
 import Data.List
-import GameLogic.Display
 import GameLogic.Util
 import Types
 import Control.Concurrent (threadDelay)
@@ -74,7 +73,7 @@ promptFor PickInfoMarkerSlot = "Place an Info Marker on a wire."
 askPlayerToChooseWire :: PlayerView -> [Int] -> ChoiceKind -> GameM Int
 askPlayerToChooseWire pv opts kind = do
   let pid = playerId (pvSelf pv)
-  tellAction pid (promptFor kind ++ "\nOptions: " ++ unwords (map indexToLabel opts))
+  tellAction pid (promptFor kind ++ "\nOptions: " ++ unwords (map show $ map (+1) opts))
   readChoice
   where
     readChoice = do
@@ -157,7 +156,6 @@ availableEquipment pv =
 
 chooseEquipment :: PlayerView -> GameM [Selectable]
 chooseEquipment pv = do
-  displayPlayerView pv
   let available = availableEquipment pv
       pid = (playerId (pvSelf pv))
   if null available
@@ -247,7 +245,6 @@ actionOptions pv =
 
 chooseAction :: PlayerView -> GameM Action
 chooseAction pv = do
-  displayPlayerView pv
   let opts      = actionOptions pv
       pid       = playerId (pvSelf pv)
   setAwaiting pv "menu"
@@ -263,7 +260,6 @@ chooseAction pv = do
 
 chooseActionOrEquipment :: PlayerView -> GameM (Either Action [Selectable])
 chooseActionOrEquipment pv = do
-  displayPlayerView pv
   let opts      = actionOptions pv
       actionsAv = any (\(_, ok, _, _) -> ok) opts
       pid       = playerId (pvSelf pv)
