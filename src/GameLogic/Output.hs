@@ -1,4 +1,4 @@
-module Output where
+module GameLogic.Output where
 
 import Control.Monad.State
 import Control.Concurrent.STM

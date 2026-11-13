@@ -7,9 +7,9 @@ import GameLogic.Display (displayDecision, announceHumanTurn)
 import GameLogic.Equipment
 import GameLogic.Input
 import GameLogic.Util
+import GameLogic.Output
 import BotLogic.Interface
 import Types
-import Output
 
 playerTurn :: PlayerView -> GameM Outcome
 playerTurn pv = do

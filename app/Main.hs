@@ -15,17 +15,17 @@ import GameLoop
 import InitGame
 import WaitingRoom
 import Types
-import Output
+import GameLogic.Output
 import GameLogic.Display
 import GameLogic.Util
-import GameLogic.InBox
+import GameLogic.InputBox
 import GameLogic.Input
 
 -------------- data types, instances --------------
 data InputReq = InputReq {
-  irSlot :: Int, 
-  irText :: String
-  }
+  slotIR :: Int, 
+  textIR :: String
+}
 
 instance FromJSON InputReq where
   parseJSON = withObject "InputReq" $ \obj -> InputReq <$> obj .: "slot" <*> obj .: "text"
@@ -268,7 +268,7 @@ main = do
         case wr of
           Nothing -> json (object ["ok" .= False, "error" .= ("no such game" :: String)])
           Just gs -> do
-            ok <- liftIO (pushInput (inBox gs) (irSlot req) (irText req))
+            ok <- liftIO (pushInput (inputBox gs) (slotIR req) (textIR req))
             json $ if ok
               then object ["ok" .= True]
               else object ["ok" .= False, "error" .= ("unknown player" :: String)]

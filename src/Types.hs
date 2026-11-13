@@ -3,7 +3,7 @@ module Types where
 import Control.Monad.State
 import Control.Concurrent.STM (TVar)
 import Data.Map as Map
-import GameLogic.InBox
+import GameLogic.InputBox
 
 data WireColor = Blue | Yellow | Red | Grey | Hidden
   deriving (Show, Eq, Ord)
@@ -136,7 +136,7 @@ data GameState = GameState
     actionMsg :: Map.Map PlayerId String,
     resultMsg :: Map.Map PlayerId String,
     syncVar :: TVar (Map.Map Code GameState),
-    inBox :: InBox,
+    inputBox :: InputBox,
     awaiting :: (PlayerId, String)      -- String: "menu" | "equipment" | "player" | "wire"
   }
 

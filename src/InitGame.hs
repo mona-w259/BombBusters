@@ -8,8 +8,8 @@ import System.Random.Shuffle (shuffle')
 import qualified Config
 import Types
 import Control.Concurrent.STM (TVar)
-import Output
-import GameLogic.InBox
+import GameLogic.Output
+import GameLogic.InputBox
 
 initWires :: IO ([Wire], Wire, [Wire])
 initWires = do
@@ -144,7 +144,7 @@ initGameState l ml codeI syncTv = do
       eq = initEquipment
   cMs <- initColorMarkers redWire yellowWires
   (tO, startingPlayer) <- initTurnOrder
-  iB <- newInBox (map playerId ps)
+  iB <- newInputBox (map playerId ps)
   return
     GameState
       { wires = allWires,
@@ -169,6 +169,6 @@ initGameState l ml codeI syncTv = do
         actionMsg = empty,
         resultMsg = empty,
         syncVar = syncTv,
-        inBox = iB,
+        inputBox = iB,
         awaiting = (0, "")
       }

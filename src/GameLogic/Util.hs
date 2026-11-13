@@ -3,10 +3,8 @@ module GameLogic.Util where
 import Control.Monad.State
 import Data.List
 import Data.Maybe
-import Text.Read
 import Types
-import Output
-import GameLogic.InBox
+import GameLogic.Output
 
 getPlayerView :: PlayerId -> GameState -> PlayerView
 getPlayerView pid gs =
@@ -64,45 +62,6 @@ findPlayer pidTarget pList =
    in case maybePlayer of
         Just p -> p
         Nothing -> errorMessage $ "Player with id " ++ show pidTarget ++ " not found."
-
-readInput :: PlayerView -> GameM String
-readInput pv = do
-  let pid = playerId (pvSelf pv)
-  iB <- gets inBox
-  liftIO (clearInput iB pid)
-  syncState
-  liftIO (readInputFor iB pid)
-
-readPromptInput :: PlayerView -> String -> GameM String
-readPromptInput pv prompt = do
-  let pid = playerId (pvSelf pv)
-  iB <- gets inBox
-  liftIO (clearInput iB pid)
-  tellAction pid prompt
-  liftIO (readInputFor iB pid)
-
-
-readInt :: PlayerView -> String -> GameM Int
-readInt pv prompt = do
-  let pid = playerId (pvSelf pv)
-  tellAction pid prompt
-  input <- readInput pv
-  case readMaybe input :: Maybe Int of
-    Just n -> return n
-    Nothing -> do
-      tellResult pid "Invalid number." -- Please enter a valid integer."
-      readInt pv prompt
-
-readLabel :: PlayerView -> String -> GameM Int
-readLabel pv prompt = do
-  let pid = playerId (pvSelf pv)
-  tellAction pid prompt
-  input <- readInput pv
-  case input of
-    [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
-    _ -> do
-      tellResult pid "Invalid input." -- Please enter a single lowercase letter (e.g. a, b, c).
-      readLabel pv prompt
 
 cutAtPosition :: Int -> [Wire] -> [Wire]
 cutAtPosition pos = map (\w -> if wireIndex w == pos then (if color w == Blue then w {color = Grey, isCut = True} else w {isCut = True}) else w)

@@ -38,7 +38,9 @@ library
         GameLogic.Input
         GameLogic.Util
         GameLogic.Equipment
-        GameLogic.InBox
+        GameLogic.InputBox
+        GameLogic.InputReader
+        GameLogic.Output
         BotLogic.Interface
         BotLogic.BotTypes
         BotLogic.Strategies
@@ -47,7 +49,6 @@ library
         BotLogic.Inference
         BenchmarkLog
         WaitingRoom
-        Output
     build-depends:
         base ^>=4.20.0.0,
         mtl,

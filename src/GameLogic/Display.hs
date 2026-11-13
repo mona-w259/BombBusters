@@ -4,9 +4,9 @@ import Control.Monad (unless, when)
 import Control.Monad.State
 import Data.List (intercalate)
 import Data.Maybe (catMaybes)
+import GameLogic.Output
 import Types
 import Config (bbDelay)
-import Output
 
 indexToLabel :: Int -> String
 indexToLabel i = [toEnum (fromEnum 'a' + i)]

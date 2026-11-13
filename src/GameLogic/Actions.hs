@@ -2,8 +2,8 @@ module GameLogic.Actions (handleAction, placeInfoMarkerUpdate) where
 
 import Control.Monad.State
 import GameLogic.Util
+import GameLogic.Output
 import Types
-import Output
 
 -- pure action handlers, rely on valid input 
 

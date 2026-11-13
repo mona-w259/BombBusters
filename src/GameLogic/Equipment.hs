@@ -4,8 +4,8 @@ import Control.Monad.State
 import Data.List
 import GameLogic.Actions
 import GameLogic.Util
+import GameLogic.Output
 import Types
-import Output
 
 handleEquipment :: Modifier -> PlayerView -> [EquipmentUse] -> GameM Outcome
 handleEquipment _ _ [] = pure ActionDone

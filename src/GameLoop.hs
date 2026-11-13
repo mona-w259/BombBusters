@@ -8,9 +8,9 @@ import GameLogic.Core
 import GameLogic.Display (displayTurnResult, displayDecision, announceHumanTurn)
 import GameLogic.Input (handlePlaceInfoMarker, handleChooseBots)
 import GameLogic.Util
+import GameLogic.Output
 import BotLogic.Interface
 import Types
-import Output
 
 runGame :: GameState -> IO ()
 runGame gs = do

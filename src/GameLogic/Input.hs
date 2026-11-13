@@ -18,57 +18,86 @@ where
 
 import Data.List
 import GameLogic.Util
+import GameLogic.Output
+import GameLogic.InputReader
 import Types
 import Control.Concurrent (threadDelay)
-import Control.Exception (Exception, throwIO, try)
+import Control.Exception (throwIO, try)
 import Control.Monad (when)
 import Control.Monad.State
 import Text.Read (readMaybe)
-import Output
 
 -- input handlers, this is where invalid input should be filtered out before envoking the pure handlers 
 
-data GoBack = GoBack deriving Show
-instance Exception GoBack
-
-isBack :: String -> Bool
-isBack s = s == "\ESC" || s == "back"
-
-readIntB :: PlayerView -> String -> GameM Int
-readIntB pv prompt = do
-  let pid = playerId (pvSelf pv)
-  tellAction pid prompt 
-  input <- readInput pv
-  if isBack input
-    then liftIO (throwIO GoBack)
-    else case readMaybe input :: Maybe Int of
-      Just n -> return n
-      Nothing -> do
-        tellResult pid "Invalid number."    --  Please enter a valid integer.
-        readIntB pv prompt
-
-readLabelB :: PlayerView -> String -> GameM Int
-readLabelB pv prompt = do
-  let pid = playerId (pvSelf pv)
-  tellAction pid prompt 
-  input <- readInput pv
-  if isBack input
-    then liftIO (throwIO GoBack)
-    else case input of
-      [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
-      _ -> do
-        tellResult pid "Invalid input."     -- "Please enter a single lowercase letter."
-        readLabelB pv prompt
-
-readPlayerId :: PlayerView -> String -> GameM Int
-readPlayerId pv prompt = setAwaiting pv "player" >> readIntB pv prompt
-
-readWire :: PlayerView -> String -> GameM Int
-readWire pv prompt = setAwaiting pv "wire" >> readLabelB pv prompt
+------------------------------------------------------------------
+--                      SMALL FUNCTIONS                         --
+------------------------------------------------------------------
 
 promptFor :: ChoiceKind -> String
 promptFor PickWireToCut = "Choose which matching wire to cut."
 promptFor PickInfoMarkerSlot = "Place an Info Marker on a wire."
+
+-- Number of uncut wires still on a player's rack.
+uncutOn :: Player -> Int
+uncutOn p = length [ w | w <- playerWires p, isCut w == False ]
+
+-- Number of uncut wires still on each other player's rack.
+otherUncutCounts :: PlayerView -> [Int]
+otherUncutCounts pv = map uncutOn (pvOthers pv)
+
+maxOtherUncut :: PlayerView -> Int
+maxOtherUncut pv = maximum (0 : otherUncutCounts pv)
+
+availableEquipment :: PlayerView -> [Selectable]
+availableEquipment pv =
+  let eqs = map SelectEquipment $
+              filter (\e -> not (used e) && canUseEquipment pv (name e))
+                     (unlockedEquipment pv)
+      dd = [ SelectDoubleDetector
+           | doubleDetector (pvSelf pv), maxOtherUncut pv >= 2
+           ]
+   in eqs ++ dd
+
+showSelectable :: Selectable -> String
+showSelectable (SelectEquipment e)  = show (name e)
+showSelectable SelectDoubleDetector = "DoubleDetector"
+
+allowedRemaining :: [Selectable] -> [Selectable] -> [Selectable]
+allowedRemaining remaining selected
+  | null selected = remaining
+  | any isExclusive selected =
+      filter isStabilizer remaining
+  | otherwise = remaining
+
+isStabilizer :: Selectable -> Bool
+isStabilizer (SelectEquipment e) = name e == Stabilizer
+isStabilizer _ = False
+
+isExclusive :: Selectable -> Bool
+isExclusive (SelectEquipment e) = name e /= Stabilizer
+isExclusive SelectDoubleDetector = True
+
+------------------------------------------------------------------
+--                   ACTION ROUND FUNCTIONS                     --
+------------------------------------------------------------------
+
+selectLoop :: PlayerView -> [Selectable] -> [Selectable] -> GameM [Selectable]
+selectLoop pv remaining selected = do
+  let   allowed = allowedRemaining remaining selected
+        canFinish = not (null selected)
+  if null allowed
+    then pure selected
+    else do
+      setAwaiting pv "equipment"
+      input <- readPromptInput pv "Choose equipment (click \"Done\" when finished)."
+      when (isBack input) (liftIO (throwIO GoBack))
+      case [s | s <- allowed, showSelectable s == input] of
+        (s : _) -> selectLoop pv (filter (/= s) remaining) (s : selected)
+        []
+          | input == "0", canFinish -> pure selected
+          | otherwise -> do
+            tellResult (playerId (pvSelf pv)) "Invalid input, try again."
+            liftIO (threadDelay 1000000) >> selectLoop pv remaining selected
 
 askPlayerToChooseWire :: PlayerView -> [Int] -> ChoiceKind -> GameM Int
 askPlayerToChooseWire pv opts kind = do
@@ -88,8 +117,16 @@ askPlayerToChooseWire pv opts kind = do
                   tellResult pid "Invalid choice. Please pick from the listed options."
                   liftIO (threadDelay 1000000) >> readChoice
         _ -> do
-          tellResult pid "Invalid input."     -- Please enter a single lowercase letter (e.g. a, b, c).
+          tellResult pid "Invalid input."     -- single lowercase letter (e.g. a, b, c)
           readChoice
+
+actionOptions :: PlayerView -> [(String, Bool, PlayerView -> GameM Action, Int)]
+actionOptions pv =
+  [ ("Solo Cut (2)", canSoloCut2 pv,  handleSoloCut2Input,  1)
+  , ("Solo Cut (4)", canSoloCut4 pv,  handleSoloCut4Input,  2)
+  , ("Dual Cut",     canDualCut pv,   handleDualCutInput,   3)
+  , ("Remove Red",   canRemoveRed pv, handleRemoveRedInput, 4)
+  ]
 
 humanAction :: PlayerView -> GameM (Maybe Action, [EquipmentUse])
 humanAction pv = do
@@ -113,26 +150,10 @@ humanActionAttempt pv = do
           pure (Just act, eqUse)
         else pure (Nothing, eqUse)
 
-chooseEquipmentUse :: PlayerView -> Selectable -> GameM EquipmentUse
-chooseEquipmentUse pv s = case s of
-  SelectEquipment e ->
-    case name e of
-      Stabilizer -> pure UseStabilizer
-      SuperDetector -> handleSuperDetectorInput pv
-      TripleDetector -> handleTripleDetectorInput pv
-      DoubleRadiator -> handleDoubleRadiatorInput pv
-  SelectDoubleDetector -> handleDoubleDetectorInput pv
 
--- Number of uncut wires still on a player's rack.
-uncutOn :: Player -> Int
-uncutOn p = length [ w | w <- playerWires p, isCut w == False ]
-
--- Number of uncut wires still on each other player's rack.
-otherUncutCounts :: PlayerView -> [Int]
-otherUncutCounts pv = map uncutOn (pvOthers pv)
-
-maxOtherUncut :: PlayerView -> Int
-maxOtherUncut pv = maximum (0 : otherUncutCounts pv)
+------------------------------------------------------------------
+--                   CAN DO CUT FUNCTIONS                       --
+------------------------------------------------------------------
 
 -- A multi-slot detector requires at least one other player with enough
 -- distinct uncut positions to fill its query. SuperDetector queries the
@@ -143,65 +164,6 @@ canUseEquipment pv nm = case nm of
   SuperDetector  -> maxOtherUncut pv >= 1
   Stabilizer     -> True
   DoubleRadiator -> maxOtherUncut pv >= 1
-
-availableEquipment :: PlayerView -> [Selectable]
-availableEquipment pv =
-  let eqs = map SelectEquipment $
-              filter (\e -> not (used e) && canUseEquipment pv (name e))
-                     (unlockedEquipment pv)
-      dd = [ SelectDoubleDetector
-           | doubleDetector (pvSelf pv), maxOtherUncut pv >= 2
-           ]
-   in eqs ++ dd
-
-chooseEquipment :: PlayerView -> GameM [Selectable]
-chooseEquipment pv = do
-  let available = availableEquipment pv
-      pid = (playerId (pvSelf pv))
-  if null available
-    then do
-      tellAction pid "No equipment available."
-      pure []
-    else do
-      tellAction pid "Choose equipment:"
-      selectLoop pv available []
-
-selectLoop :: PlayerView -> [Selectable] -> [Selectable] -> GameM [Selectable]
-selectLoop pv remaining selected = do
-  let   allowed = allowedRemaining remaining selected
-        canFinish = not (null selected)
-  if null allowed
-    then pure selected
-    else do
-      setAwaiting pv "equipment"
-      input <- readPromptInput pv "Choose equipment (click \"Done\" when finished)."
-      when (isBack input) (liftIO (throwIO GoBack))
-      case [s | s <- allowed, showSelectable s == input] of
-        (s : _) -> selectLoop pv (filter (/= s) remaining) (s : selected)
-        []
-          | input == "0", canFinish -> pure selected
-          | otherwise -> do
-            tellResult (playerId (pvSelf pv)) "Invalid input, try again."
-            liftIO (threadDelay 1000000) >> selectLoop pv remaining selected
-
-showSelectable :: Selectable -> String
-showSelectable (SelectEquipment e)  = show (name e)
-showSelectable SelectDoubleDetector = "DoubleDetector"
-
-allowedRemaining :: [Selectable] -> [Selectable] -> [Selectable]
-allowedRemaining remaining selected
-  | null selected = remaining
-  | any isExclusive selected =
-      filter isStabilizer remaining
-  | otherwise = remaining
-
-isStabilizer :: Selectable -> Bool
-isStabilizer (SelectEquipment e) = name e == Stabilizer
-isStabilizer _ = False
-
-isExclusive :: Selectable -> Bool
-isExclusive (SelectEquipment e) = name e /= Stabilizer
-isExclusive SelectDoubleDetector = True
 
 canSoloCut2 :: PlayerView -> Bool
 canSoloCut2 pv =
@@ -235,13 +197,31 @@ canRemoveRed pv =
    in not (null uncutWs) && all ((== Red) . color) uncutWs
 
 
-actionOptions :: PlayerView -> [(String, Bool, PlayerView -> GameM Action, Int)]
-actionOptions pv =
-  [ ("Solo Cut (2)", canSoloCut2 pv,  handleSoloCut2Input,  1)
-  , ("Solo Cut (4)", canSoloCut4 pv,  handleSoloCut4Input,  2)
-  , ("Dual Cut",     canDualCut pv,   handleDualCutInput,   3)
-  , ("Remove Red",   canRemoveRed pv, handleRemoveRedInput, 4)
-  ]
+------------------------------------------------------------------
+--                    CHOOSE FUNCTIONS                          --
+------------------------------------------------------------------
+
+chooseEquipmentUse :: PlayerView -> Selectable -> GameM EquipmentUse
+chooseEquipmentUse pv s = case s of
+  SelectEquipment e ->
+    case name e of
+      Stabilizer -> pure UseStabilizer
+      SuperDetector -> handleSuperDetectorInput pv
+      TripleDetector -> handleTripleDetectorInput pv
+      DoubleRadiator -> handleDoubleRadiatorInput pv
+  SelectDoubleDetector -> handleDoubleDetectorInput pv
+
+chooseEquipment :: PlayerView -> GameM [Selectable]
+chooseEquipment pv = do
+  let available = availableEquipment pv
+      pid = (playerId (pvSelf pv))
+  if null available
+    then do
+      tellAction pid "No equipment available."
+      pure []
+    else do
+      tellAction pid "Choose equipment:"
+      selectLoop pv available []
 
 chooseAction :: PlayerView -> GameM Action
 chooseAction pv = do
@@ -264,14 +244,13 @@ chooseActionOrEquipment pv = do
       actionsAv = any (\(_, ok, _, _) -> ok) opts
       pid       = playerId (pvSelf pv)
   setAwaiting pv "menu"
+  tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
   if not actionsAv
     then do
-      tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
       tellAction pid "No actions available."
       setAwaitingZero
       liftIO (threadDelay 1000000) >> chooseActionOrEquipment pv
     else do
-      tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
       input <- readPromptInput pv "Choose an action."
       setAwaitingZero
       case input of
@@ -284,6 +263,11 @@ chooseActionOrEquipment pv = do
           _ -> do
             tellResult pid "Invalid input, try again."
             chooseActionOrEquipment pv
+
+
+------------------------------------------------------------------
+--                 HANDLE INPUT FUNCTIONS                       --
+------------------------------------------------------------------
 
 handleSuperDetectorInput :: PlayerView -> GameM EquipmentUse
 handleSuperDetectorInput pv = do
@@ -301,31 +285,6 @@ handleSuperDetectorInput pv = do
       if valid
         then pure $ UseSuperDetector otherId pos (playerWires (pvSelf pv) !! pos)
         else liftIO (threadDelay 1000000) >> askWire otherId target
-
-checkInputSD :: PlayerView -> PlayerId -> Int -> (Bool, String)
-checkInputSD pv otherId pos =
-  let p = pvSelf pv
-      pid = playerId p
-      ws = playerWires p
-      n = length ws
-      col = if pos >= 0 && pos < n then color (ws !! pos) else Grey
-      cutted = if pos >= 0 && pos < n then isCut (ws !! pos) else True
-      validIds = filter (/= pid) (pvTurnOrder pv)
-   in validate col cutted otherId validIds pos n
-  where
-    validate col cutted otherIdCandidate validIds posCandidate nLen
-      | otherIdCandidate `notElem` validIds =
-          (False, "Invalid Id.")
-      | posCandidate < 0 || posCandidate >= nLen =
-          (False, "Invalid position: Out of range.")
-      | cutted == True =
-          (False, "Chosen wire already cut.")
-      | col == Red =
-          (False, "Chosen wire cannot be red.")
-      | col == Yellow =
-          (False, "Chosen wire cannot be yellow.")
-      | otherwise =
-          (True, "Valid Super Detector Input.")
 
 handleTripleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleTripleDetectorInput pv = do
@@ -351,50 +310,6 @@ handleTripleDetectorInput pv = do
         then pure $ UseTripleDetector otherId selfPos (a, b, c) (playerWires (pvSelf pv) !! selfPos)
         else liftIO (threadDelay 1000000) >> askWires otherId target
 
-checkInputTD :: PlayerView -> PlayerId -> Int -> (Int, Int, Int) -> (Bool, String)
-checkInputTD pv otherId selfPos (a, b, c) =
-  let self = pvSelf pv
-      pid = playerId self
-      validIds = filter (/= pid) (pvTurnOrder pv)
-   in case maybeFindPlayer otherId (pvOthers pv) of
-        Nothing -> (False, "Invalid Id.")
-        Just otherP ->
-          let selfWires = playerWires self
-              otherWires = playerWires otherP
-              nSelf = length selfWires
-              nOther = length otherWires
-              selfCol =
-                if selfPos >= 0 && selfPos < nSelf
-                  then color (selfWires !! selfPos)
-                  else Grey
-              otherCols i =
-                if i >= 0 && i < nOther
-                  then color (otherWires !! i)
-                  else Grey
-              selfCutted = 
-                if selfPos >= 0 && selfPos < nSelf
-                  then isCut (selfWires !! selfPos)
-                  else True
-           in validate validIds selfPos selfCol (a, b, c) otherCols nSelf nOther selfCutted
-  where
-    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate, cCandidate) otherCols nSelf nOther selfCutted
-      | otherId `notElem` validIds =
-          (False, "Invalid Id.")
-      | selfPosCandidate < 0 || selfPosCandidate >= nSelf =
-          (False, "Invalid position: own wire out of range.")
-      | selfCutted == True =
-          (False, "Chosen own wire already cut.")
-      | selfCol /= Blue =
-          (False, "Chosen own wire must be blue.")
-      | any (< 0) [aCandidate, bCandidate, cCandidate] || any (>= nOther) [aCandidate, bCandidate, cCandidate] =
-          (False, "One or more target wire positions out of range.")
-      | Grey `elem` map otherCols [aCandidate, bCandidate, cCandidate] =
-          (False, "One or more chosen wires already cut.")
-      | length (nub [aCandidate, bCandidate, cCandidate]) < 3 =
-          (False, "Chosen wire positions must be distinct.")
-      | otherwise =
-          (True, "Valid Triple Detector Input.")
-
 handleDoubleRadiatorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleRadiatorInput pv = do
   otherId <- readPlayerId pv "Double Radiator - choose target player id:"
@@ -415,44 +330,6 @@ handleDoubleRadiatorInput pv = do
       if valid
         then pure $ UseDoubleRadiator otherId (pos1, pos2) otherPos (ws !! pos1, ws !! pos2)
         else liftIO (threadDelay 1000000) >> askWires otherId target
-
-checkInputDR :: PlayerView -> PlayerId -> (Int, Int) -> Int -> (Bool, String)
-checkInputDR pv otherId (p1, p2) otherPos =
-  let self = pvSelf pv
-      pid = playerId self
-      validIds = filter (/= pid) (pvTurnOrder pv)
-   in case maybeFindPlayer otherId (pvOthers pv) of
-        Nothing -> (False, "Invalid Id.")
-        Just otherP ->
-          let selfWires = playerWires self
-              otherWires = playerWires otherP
-              nSelf = length selfWires
-              nOther = length otherWires
-              selfCol i =
-                if i >= 0 && i < nSelf
-                  then color (selfWires !! i)
-                  else Grey
-              othCutted i = 
-                if i >= 0 && i < nOther
-                  then isCut (otherWires !! i)
-                  else True
-           in validate validIds (p1, p2) otherPos selfCol nSelf nOther othCutted
-  where
-    validate validIds (p1Candidate, p2Candidate) otherPosCandidate selfCol nSelf nOther othCutted
-      | otherId `notElem` validIds =
-          (False, "Invalid Id.")
-      | any (< 0) [p1Candidate, p2Candidate] || any (>= nSelf) [p1Candidate, p2Candidate] =
-          (False, "Own wire position out of range.")
-      | p1Candidate == p2Candidate =
-          (False, "The two call-out wires must be distinct.")
-      | any (\p -> selfCol p /= Blue && selfCol p /= Yellow) [p1Candidate, p2Candidate] =
-          (False, "Both own wires must be blue or yellow and uncut.")
-      | otherPosCandidate < 0 || otherPosCandidate >= nOther =
-          (False, "Other wire position out of range.")
-      | othCutted otherPosCandidate == True =
-          (False, "Chosen other wire already cut.")
-      | otherwise =
-          (True, "Valid Double Radiator Input.")
 
 handleDoubleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleDetectorInput pv = do
@@ -477,50 +354,6 @@ handleDoubleDetectorInput pv = do
       if valid
         then pure $ UseDoubleDetector otherId selfPos (a, b) (playerWires (pvSelf pv) !! selfPos)
         else liftIO (threadDelay 1000000) >> askWires otherId target
-
-checkInputDD :: PlayerView -> PlayerId -> Int -> (Int, Int) -> (Bool, String)
-checkInputDD pv otherId selfPos (a, b) =
-  let self = pvSelf pv
-      pid = playerId self
-      validIds = filter (/= pid) (pvTurnOrder pv)
-   in case maybeFindPlayer otherId (pvOthers pv) of
-        Nothing -> (False, "Invalid Id.")
-        Just otherP ->
-          let selfWires = playerWires self
-              otherWires = playerWires otherP
-              nSelf = length selfWires
-              nOther = length otherWires
-              selfCol =
-                if selfPos >= 0 && selfPos < nSelf
-                  then color (selfWires !! selfPos)
-                  else Grey
-              otherCol i =
-                if i >= 0 && i < nOther
-                  then color (otherWires !! i)
-                  else Grey
-              selfCutted = 
-                if selfPos >= 0 && selfPos < nSelf
-                  then isCut (selfWires !! selfPos)
-                  else True
-           in validate validIds selfPos selfCol (a, b) otherCol nSelf nOther selfCutted
-  where
-    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate) otherCol nSelf nOther selfCutted
-      | otherId `notElem` validIds =
-          (False, "Invalid Id.")
-      | selfPosCandidate < 0 || selfPosCandidate >= nSelf =
-          (False, "Invalid position: own wire out of range.")
-      | selfCutted == True =
-          (False, "Chosen own wire already cut.")
-      | selfCol /= Blue =
-          (False, "Chosen own wire must be blue.")
-      | any (< 0) [aCandidate, bCandidate] || any (>= nOther) [aCandidate, bCandidate] =
-          (False, "One or more target wire positions out of range.")
-      | Grey `elem` map otherCol [aCandidate, bCandidate] =
-          (False, "One or more chosen wires already cut.")
-      | aCandidate == bCandidate =
-          (False, "Chosen wire positions must be distinct.")
-      | otherwise =
-          (True, "Valid Double Detector Input.")
 
 handleSoloCut2Input :: PlayerView -> GameM Action
 handleSoloCut2Input pv = do
@@ -587,6 +420,169 @@ handleRemoveRedInput pv = do
   if valid
     then return $ RemoveRed pos
     else liftIO (threadDelay 1000000) >> chooseAction pv
+
+
+handleChooseBots :: GameState -> [PlayerId] -> IO [PlayerId]
+handleChooseBots gs pids = do
+  let h = h_players gs
+      h_ids = shortenList h pids
+  return $ filter (`notElem` h_ids) pids
+
+
+------------------------------------------------------------------
+--                  CHECK INPUT FUNCTIONS                       --
+------------------------------------------------------------------
+
+checkInputSD :: PlayerView -> PlayerId -> Int -> (Bool, String)
+checkInputSD pv otherId pos =
+  let p = pvSelf pv
+      pid = playerId p
+      ws = playerWires p
+      n = length ws
+      col = if pos >= 0 && pos < n then color (ws !! pos) else Grey
+      cutted = if pos >= 0 && pos < n then isCut (ws !! pos) else True
+      validIds = filter (/= pid) (pvTurnOrder pv)
+   in validate col cutted otherId validIds pos n
+  where
+    validate col cutted otherIdCandidate validIds posCandidate nLen
+      | otherIdCandidate `notElem` validIds =
+          (False, "Invalid Id.")
+      | posCandidate < 0 || posCandidate >= nLen =
+          (False, "Invalid position: Out of range.")
+      | cutted == True =
+          (False, "Chosen wire already cut.")
+      | col == Red =
+          (False, "Chosen wire cannot be red.")
+      | col == Yellow =
+          (False, "Chosen wire cannot be yellow.")
+      | otherwise =
+          (True, "Valid Super Detector Input.")
+
+checkInputTD :: PlayerView -> PlayerId -> Int -> (Int, Int, Int) -> (Bool, String)
+checkInputTD pv otherId selfPos (a, b, c) =
+  let self = pvSelf pv
+      pid = playerId self
+      validIds = filter (/= pid) (pvTurnOrder pv)
+   in case maybeFindPlayer otherId (pvOthers pv) of
+        Nothing -> (False, "Invalid Id.")
+        Just otherP ->
+          let selfWires = playerWires self
+              otherWires = playerWires otherP
+              nSelf = length selfWires
+              nOther = length otherWires
+              selfCol =
+                if selfPos >= 0 && selfPos < nSelf
+                  then color (selfWires !! selfPos)
+                  else Grey
+              otherCols i =
+                if i >= 0 && i < nOther
+                  then color (otherWires !! i)
+                  else Grey
+              selfCutted = 
+                if selfPos >= 0 && selfPos < nSelf
+                  then isCut (selfWires !! selfPos)
+                  else True
+           in validate validIds selfPos selfCol (a, b, c) otherCols nSelf nOther selfCutted
+  where
+    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate, cCandidate) otherCols nSelf nOther selfCutted
+      | otherId `notElem` validIds =
+          (False, "Invalid Id.")
+      | selfPosCandidate < 0 || selfPosCandidate >= nSelf =
+          (False, "Invalid position: own wire out of range.")
+      | selfCutted == True =
+          (False, "Chosen own wire already cut.")
+      | selfCol /= Blue =
+          (False, "Chosen own wire must be blue.")
+      | any (< 0) [aCandidate, bCandidate, cCandidate] || any (>= nOther) [aCandidate, bCandidate, cCandidate] =
+          (False, "One or more target wire positions out of range.")
+      | Grey `elem` map otherCols [aCandidate, bCandidate, cCandidate] =
+          (False, "One or more chosen wires already cut.")
+      | length (nub [aCandidate, bCandidate, cCandidate]) < 3 =
+          (False, "Chosen wire positions must be distinct.")
+      | otherwise =
+          (True, "Valid Triple Detector Input.")
+
+checkInputDR :: PlayerView -> PlayerId -> (Int, Int) -> Int -> (Bool, String)
+checkInputDR pv otherId (p1, p2) otherPos =
+  let self = pvSelf pv
+      pid = playerId self
+      validIds = filter (/= pid) (pvTurnOrder pv)
+   in case maybeFindPlayer otherId (pvOthers pv) of
+        Nothing -> (False, "Invalid Id.")
+        Just otherP ->
+          let selfWires = playerWires self
+              otherWires = playerWires otherP
+              nSelf = length selfWires
+              nOther = length otherWires
+              selfCol i =
+                if i >= 0 && i < nSelf
+                  then color (selfWires !! i)
+                  else Grey
+              othCutted i = 
+                if i >= 0 && i < nOther
+                  then isCut (otherWires !! i)
+                  else True
+           in validate validIds (p1, p2) otherPos selfCol nSelf nOther othCutted
+  where
+    validate validIds (p1Candidate, p2Candidate) otherPosCandidate selfCol nSelf nOther othCutted
+      | otherId `notElem` validIds =
+          (False, "Invalid Id.")
+      | any (< 0) [p1Candidate, p2Candidate] || any (>= nSelf) [p1Candidate, p2Candidate] =
+          (False, "Own wire position out of range.")
+      | p1Candidate == p2Candidate =
+          (False, "The two call-out wires must be distinct.")
+      | any (\p -> selfCol p /= Blue && selfCol p /= Yellow) [p1Candidate, p2Candidate] =
+          (False, "Both own wires must be blue or yellow and uncut.")
+      | otherPosCandidate < 0 || otherPosCandidate >= nOther =
+          (False, "Other wire position out of range.")
+      | othCutted otherPosCandidate == True =
+          (False, "Chosen other wire already cut.")
+      | otherwise =
+          (True, "Valid Double Radiator Input.")
+
+checkInputDD :: PlayerView -> PlayerId -> Int -> (Int, Int) -> (Bool, String)
+checkInputDD pv otherId selfPos (a, b) =
+  let self = pvSelf pv
+      pid = playerId self
+      validIds = filter (/= pid) (pvTurnOrder pv)
+   in case maybeFindPlayer otherId (pvOthers pv) of
+        Nothing -> (False, "Invalid Id.")
+        Just otherP ->
+          let selfWires = playerWires self
+              otherWires = playerWires otherP
+              nSelf = length selfWires
+              nOther = length otherWires
+              selfCol =
+                if selfPos >= 0 && selfPos < nSelf
+                  then color (selfWires !! selfPos)
+                  else Grey
+              otherCol i =
+                if i >= 0 && i < nOther
+                  then color (otherWires !! i)
+                  else Grey
+              selfCutted = 
+                if selfPos >= 0 && selfPos < nSelf
+                  then isCut (selfWires !! selfPos)
+                  else True
+           in validate validIds selfPos selfCol (a, b) otherCol nSelf nOther selfCutted
+  where
+    validate validIds selfPosCandidate selfCol (aCandidate, bCandidate) otherCol nSelf nOther selfCutted
+      | otherId `notElem` validIds =
+          (False, "Invalid Id.")
+      | selfPosCandidate < 0 || selfPosCandidate >= nSelf =
+          (False, "Invalid position: own wire out of range.")
+      | selfCutted == True =
+          (False, "Chosen own wire already cut.")
+      | selfCol /= Blue =
+          (False, "Chosen own wire must be blue.")
+      | any (< 0) [aCandidate, bCandidate] || any (>= nOther) [aCandidate, bCandidate] =
+          (False, "One or more target wire positions out of range.")
+      | Grey `elem` map otherCol [aCandidate, bCandidate] =
+          (False, "One or more chosen wires already cut.")
+      | aCandidate == bCandidate =
+          (False, "Chosen wire positions must be distinct.")
+      | otherwise =
+          (True, "Valid Double Detector Input.")
 
 checkInputInitInfo :: PlayerView -> Int -> (Bool, String)
 checkInputInitInfo pv pos
@@ -710,10 +706,3 @@ checkInputRR pv a
     n = length playerWiresSelf
     colA = color (playerWiresSelf !! a)
     uncutWs = filter ((== False) . isCut) playerWiresSelf
-
-
-handleChooseBots :: GameState -> [PlayerId] -> IO [PlayerId]
-handleChooseBots gs pids = do
-  let h = h_players gs
-      h_ids = shortenList h pids
-  return $ filter (`notElem` h_ids) pids
