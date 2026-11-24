@@ -18,7 +18,7 @@ announceHumanTurn pv = do
   when (not (isBot self) && multiHuman) $ do
     modify (\gs -> gs { currentPlayer = playerId self })
     syncState
-    liftIO (bbDelay 3000000)
+    liftIO (bbDelay 500000)
 
 wireFace :: [(Int, (Int, WireColor))] -> Wire -> (String, String)
 wireFace infos w = 
@@ -38,7 +38,7 @@ displayTurnResult outcome = do
               CutSuccess -> "Successful cut!"
               _ -> "Oops! Wrong wire..."
   tellAllResult msg
-  liftIO (bbDelay 3000000)
+  liftIO (bbDelay 500000)
 
 displayDecision :: Maybe PublicAction -> [PublicEquipmentUse] -> GameM ()
 displayDecision act equip = do
@@ -49,7 +49,7 @@ displayDecision act equip = do
 
   unless (null parts) $ do
     tellAllAction (intercalate " | " parts)
-    liftIO (bbDelay 3000000)
+    liftIO (bbDelay 1500000)
 
 showBotAction :: PublicAction -> String
 showBotAction (PubSoloCut2 (a, b)) =

@@ -27,9 +27,9 @@
                 </div>
             </div>
         
-            <div style="font-size: large;">Possible yellow (2/3) and red (1/2) wires<br><span id="yr-wires">...</span></div>
+            <div style="font-size: large;">Possible yellow (2/3) and red (1/2) wires:<br><span id="yr-wires">...</span></div>
 
-            <div style="font-size: large;">Current turn<br><span id="currturn">...</span></div>
+            <div style="font-size: large;">Current turn:<br><span id="currturn">...</span></div>
 
             <div class="info-container">
                 <input type="checkbox" id="hint-click" class="info-toggle">
@@ -38,8 +38,15 @@
                 </label>
                 <div class="info-popup">
                     Each cable has a value ranging from 1 to 12.<br>
-                    Each value appears exactly four times.<br><br>
-                    There are two yellow cables and one red cable.<br>All yellow wires end in ".1" and all red wired end in ".5".<br>Their exact values are unknown.<br><br>
+                    Each blue value appears exactly four times.<br><br>
+
+                    There are two out of three known yellow cables (2/3) <br>
+                    and one out of two known red cables (1/2) in the game. <br>
+                    You can see the possible values that are in the game on <br>
+                    the top ("Possible yellow and red wires").<br>
+                    All yellow wires end in ".1" and all red wired end in ".5".
+                    <br>Their exact values are unknown.<br><br>
+                    
                     All cable holders are sorted in ascending order.<br><br>
 
                     💡 = Info<br>
@@ -51,15 +58,15 @@
 
         <div class="other-racks">
             <div class="rack">
-                Rack (Player <span id="player-id-oth-1"></span>):<br>
+                Rack of Player <span id="player-id-oth-1"></span>:<br>
                 <div id="rack-other-1"></div>
             </div>
             <div class="rack">
-                Rack (Player <span id="player-id-oth-2"></span>):<br>
+                Rack of Player <span id="player-id-oth-2"></span>:<br>
                 <div id="rack-other-2"></div>
             </div>
             <div class="rack">
-                Rack (Player <span id="player-id-oth-3"></span>):<br>
+                Rack of Player <span id="player-id-oth-3"></span>:<br>
                 <div id="rack-other-3"></div>
             </div>
         </div>
@@ -73,8 +80,6 @@
         <div id="result">...</div>
 
         <div class="action-container" hidden>
-            <div class="action-title">Actions</div>
-            
             <div class="action-list">
 
                 <div class="action-item">
@@ -131,34 +136,20 @@
         </div>
 
         <div class="choose-player-id-container" hidden>
-            <div class="choose-player-id-title">Choose the Player, you want to do the duo cut with.</div>
             <div class="player-ids">
                 <button type="button" class="id-btn" id="id-btn-1"></button>
                 <button type="button" class="id-btn" id="id-btn-2"></button>
                 <button type="button" class="id-btn" id="id-btn-3"></button>
             </div>
-            <button type="button" class="create-btn" data-input="back">Back</button>
+                    <div class="buttons">
+                        <button type="button" class="create-btn-small"
+                                data-input="back">
+                            Back
+                        </button>
+                    </div>
         </div>
 
         <div class="equipment-container" hidden>
-            <div class="equipment-title">
-                Equipment
-                
-                <input type="checkbox" id="equi-hint-click" class="equi-info-toggle">
-                <label for="equi-hint-click" class="equi-info-btn" title="Explain Equipment">
-                    ⓘ
-                </label>
-                <div class="equi-info-popup">
-                    To unlock the equipment, at least two wires of the value in brackets after the equipment name have to be cut.<br>
-                    Example:<br> 'TripleDetector (3)' means, after at least two wires with the value '3' are cut, you can use the TripleDetector <br><br>
-
-                    <span class="color-legend" style="background-color: #ffffd3"></span> = Locked<br>
-                    <span class="color-legend" style="background-color: #f4e2b6"></span> = Usable<br>
-                    <span class="color-legend" style="background-color: #e3e3e3"></span> = Used
-
-                </div>
-            </div>
-
 
             <div class="equipment-list">
                 <div class="equipment-item">
@@ -221,17 +212,33 @@
                     </div>
                 </div>
 
+                        <div class="equipment-item" style="font-size: large;">
+                            <input type="checkbox" id="equi-hint-click" class="equi-info-toggle">
+                            <label for="equi-hint-click" class="equi-info-btn" title="Explain Equipment">
+                                ⓘ
+                            </label>
+                            <div class="equi-info-popup">
+                                To unlock the equipment, at least two wires of the value in brackets after the equipment name have to be cut.<br>
+                                Example:<br> 'TripleDetector (3)' means, after at least two wires with the value '3' are cut, you can use the TripleDetector <br><br>
+
+                                <span class="color-legend" style="background-color: #ffffd3"></span> = Locked<br>
+                                <span class="color-legend" style="background-color: #f4e2b6"></span> = Usable<br>
+                                <span class="color-legend" style="background-color: #e3e3e3"></span> = Used
+                            </div>
+                        </div>
             </div>
 
-            <div class="buttons" style="margin-top: 10px; max-width: 180px; max-height: 50px;">
-                <button type="button" class="create-btn" style="max-height: 40px;" 
+                    <div class="buttons">
+                        <button type="button" class="create-btn-small"
+                                data-input="back">
+                            Back
+                        </button>
+                        <button type="button" class="create-btn-small"
                         data-input="0">
                     Done
                 </button>
-                <button type="button" class="create-btn" style="max-height: 40px;" 
-                        data-input="back">
-                    Back
-                </button>
+                    </div>
+                </div>
             </div>
         </div>
 

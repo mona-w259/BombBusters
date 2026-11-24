@@ -89,7 +89,7 @@ selectLoop pv remaining selected = do
     then pure selected
     else do
       setAwaiting pv "equipment"
-      input <- readPromptInput pv "Choose equipment (click \"Done\" when finished)."
+      input <- readPromptInput pv "Choose equipment and click \"Done\" when finished:"
       when (isBack input) (liftIO (throwIO GoBack))
       case [s | s <- allowed, showSelectable s == input] of
         (s : _) -> selectLoop pv (filter (/= s) remaining) (s : selected)
@@ -271,7 +271,7 @@ chooseActionOrEquipment pv = do
 
 handleSuperDetectorInput :: PlayerView -> GameM EquipmentUse
 handleSuperDetectorInput pv = do
-  otherId <- readPlayerId pv "SuperDetector - choose target player id:"
+  otherId <- readPlayerId pv "SuperDetector - Choose the player you want to do the cut with:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult (playerId (pvSelf pv)) "Invalid player id."
@@ -279,7 +279,7 @@ handleSuperDetectorInput pv = do
     Just target -> askWire otherId target
   where
     askWire otherId target = do
-      pos <- readWire pv "Your wire:"
+      pos <- readWire pv "Choose your wire:"
       let (valid, msg) = checkInputSD pv otherId pos
       tellResult (playerId (pvSelf pv)) msg
       if valid
@@ -288,7 +288,7 @@ handleSuperDetectorInput pv = do
 
 handleTripleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleTripleDetectorInput pv = do
-  otherId <- readPlayerId pv "Triple Detector - choose target player id:"
+  otherId <- readPlayerId pv "Triple Detector - Choose the player you want to do the cut with:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult (playerId (pvSelf pv)) "Invalid player id."
@@ -300,10 +300,10 @@ handleTripleDetectorInput pv = do
       | otherwise -> askWires otherId target
   where
     askWires otherId target = do
-      selfPos <- readWire pv "Your wire:"
-      a <- readWire pv "First target wire:"
-      b <- readWire pv "Second target wire:"
-      c <- readWire pv "Third target wire:"
+      selfPos <- readWire pv "Choose your wire:"
+      a <- readWire pv "Choose 1. target wire:"
+      b <- readWire pv "Choose 2. target wire:"
+      c <- readWire pv "Choose 3. target wire:"
       let (valid, msg) = checkInputTD pv otherId selfPos (a, b, c)
       tellResult (playerId (pvSelf pv)) msg
       if valid
@@ -312,7 +312,7 @@ handleTripleDetectorInput pv = do
 
 handleDoubleRadiatorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleRadiatorInput pv = do
-  otherId <- readPlayerId pv "Double Radiator - choose target player id:"
+  otherId <- readPlayerId pv "Double Radiator - Choose the player you want to do the cut with:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult (playerId (pvSelf pv)) "Invalid player id."
@@ -320,9 +320,9 @@ handleDoubleRadiatorInput pv = do
     Just target -> askWires otherId target
   where
     askWires otherId target = do
-      pos1 <- readWire pv "Your first wire:"
-      pos2 <- readWire pv "Your second wire:"
-      otherPos <- readWire pv "Target wire:"
+      pos1 <- readWire pv "Choose your 1. wire:"
+      pos2 <- readWire pv "Choose your 2. wire:"
+      otherPos <- readWire pv "Choose the target wire:"
       let (valid, msg) = checkInputDR pv otherId (pos1, pos2) otherPos
           self = pvSelf pv
           ws = playerWires self
@@ -334,7 +334,7 @@ handleDoubleRadiatorInput pv = do
 handleDoubleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleDoubleDetectorInput pv = do
   let pid = playerId (pvSelf pv)
-  otherId <- readPlayerId pv "Double Detector - choose target player id:"
+  otherId <- readPlayerId pv "Double Detector - Choose the player you want to do the cut with:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
       tellResult pid "Invalid player id."
@@ -346,9 +346,9 @@ handleDoubleDetectorInput pv = do
       | otherwise -> askWires otherId target
   where
     askWires otherId target = do
-      selfPos <- readWire pv "Your wire:"
-      a <- readWire pv "First target wire:"
-      b <- readWire pv "Second target wire:"
+      selfPos <- readWire pv "Choose your wire:"
+      a <- readWire pv "Choose 1. target wire:"
+      b <- readWire pv "Choose 2. target wire:"
       let (valid, msg) = checkInputDD pv otherId selfPos (a, b)
       tellResult (playerId (pvSelf pv)) msg
       if valid
@@ -359,8 +359,8 @@ handleSoloCut2Input :: PlayerView -> GameM Action
 handleSoloCut2Input pv = do
   let pid = playerId (pvSelf pv)
   tellResult pid "Solo Cut - cutting two (2) wires."
-  a <- readWire pv "First wire:"
-  b <- readWire pv "Second wire:"
+  a <- readWire pv "Choose your 1. wire:"
+  b <- readWire pv "Choose your 2. wire:"
   let (valid, msg) = checkInputSC2 pv (a, b)
   tellResult pid msg
   if valid
@@ -371,10 +371,10 @@ handleSoloCut4Input :: PlayerView -> GameM Action
 handleSoloCut4Input pv = do
   let pid = playerId (pvSelf pv)
   tellResult (playerId (pvSelf pv)) "Solo Cut - cutting four (4) wires."
-  a <- readWire pv "First wire:"
-  b <- readWire pv "Second wire:"
-  c <- readWire pv "Third wire:"
-  d <- readWire pv "Fourth wire:"
+  a <- readWire pv "Choose your 1. wire:"
+  b <- readWire pv "Choose your 2. wire:"
+  c <- readWire pv "Choose your 3. wire:"
+  d <- readWire pv "Choose your 4. wire:"
   let (valid, msg) = checkInputSC4 pv (a, b, c, d)
   tellResult pid msg
   if valid
@@ -404,8 +404,8 @@ handleDualCutInput pv = do
     Just target -> askWires otherId target
   where
     askWires otherId target = do
-      a <- readWire pv "Your wire:"
-      b <- readWire pv "Target wire:"
+      a <- readWire pv "Choose your wire:"
+      b <- readWire pv "Choose your target wire:"
       let (valid, msg) = checkInputDC pv otherId (a, b)
       tellResult (playerId (pvSelf pv)) msg
       if valid
@@ -590,7 +590,7 @@ checkInputInitInfo pv pos
   | cutted == True      = (False, "Wire already cut.")
   | col == Yellow       = (False, "Cannot place initial info marker for yellow wire.")
   | col == Red          = (False, "Cannot place initial info marker for red wire.")
-  | otherwise           = (True, "Placing wire at position " ++ show pos ++ ".")
+  | otherwise           = (True,  "Placing wire at position " ++ show pos ++ ".")
   where
     playerWiresSelf = playerWires (pvSelf pv)
     n = length playerWiresSelf

@@ -5,7 +5,7 @@ The core objective is to work together to diffuse a bomb by working as a team.
 
 This repository is based on the work of Joshua Rebay, who implemented the logic of `BombBusters - Mission 8` and SMT-backed based logic bots in Haskell. After his work, it was possible to play or watch the game in the terminal consisting of exactlly four players. Those players can be any connection of four of human players and/or logic based bots. 
 
-Now, with this repository, you can play mission 8 on the following webpage: [`localhost:3000`](https://localhost:3000). It's also possible to play with someone remote and to play not just with logic bots but also with machine learning bots. Those are based on a Deep Q-Learning Network.
+Now, with this repository, you can play mission 8 on the following webpage: [`localhost:3000`](http://localhost:3000). It's also possible to play with someone remote and to play not just with logic bots but also with machine learning bots. Those are based on a Deep Q-Learning Network.
 
 
 
@@ -74,7 +74,7 @@ Each player also starts with a personal **Double Detector**: name one of your va
 
 ### Gameplay
 
-Go to [`localhost:3000`](https://localhost:3000). Choose if you want to create a new game or if you want to join an already existing game. To create a game, you need to decide about the amount of human players / logic bots and machine learning bots. To join a game, you need to enter the code for the game. Afterwards, you are in the waitingroom until all human players of the game have registered. When all players are in the waitingroom, the actual game starts.
+Go to [`localhost:3000`](http://localhost:3000). Choose if you want to create a new game or if you want to join an already existing game. To create a game, you need to decide about the amount of human players / logic bots and machine learning bots. To join a game, you need to enter the code for the game. Afterwards, you are in the waitingroom until all human players of the game have registered. When all players are in the waitingroom, the actual game starts.
 
 At the start of the game, you see your rack with 12 or 13 wires on it and the back of the other racks. On the top of the page, you can see the detonator showing how many lives are left, the pool-values for the red and yellow wires, which turn it is at the moment and an info button where you can get more information about the rules of the game. While playing, you'll see all cutted wires with their value at their original position. 
 

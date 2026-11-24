@@ -79,7 +79,7 @@ rackFormatJson infos pl =
     , "color"   .= colorToString (color ws)
     , "value"   .= val
     , "isCut"   .= isCut ws
-    , "hasHint" .= (emoji == "💡")
+    , "hasHint" .= (emoji == "💡" || '💡' `elem` val)
     ]
     | ws <- playerWires pl, let (emoji, val) = wireFace infosForPlayer ws
   ]

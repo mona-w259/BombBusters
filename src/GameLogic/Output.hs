@@ -21,7 +21,7 @@ tellResult :: PlayerId -> String -> GameM ()
 tellResult pid msg = modify (\gs -> gs { resultMsg = Map.insert pid msg (resultMsg gs) }) >> syncState
 
 tellAllExceptOneAction :: PlayerId -> String -> GameM ()
-tellAllExceptOneAction pid msg = modify (\gs -> gs { actionMsg = Map.fromList [(p, msg) | p <- turnOrder gs, p /= pid] }) >> syncState
+tellAllExceptOneAction pid msg = modify (\gs -> gs { actionMsg = Map.fromList [(p, msg) | p <- turnOrder gs, p /= pid], resultMsg = Map.fromList [(p, "") | p <- turnOrder gs, p /= pid ] }) >> syncState
 
 tellAllAction :: String -> GameM ()
 tellAllAction msg = modify (\gs -> gs { actionMsg = Map.fromList [(p, msg) | p <- turnOrder gs] }) >> syncState
@@ -34,4 +34,9 @@ printYRWires gs =
     let colorMarks = colorMarkers gs
     in if null colorMarks 
         then "(none)" 
-        else unwords (map (\w -> colorEmoji (color w) ++ "(" ++ show (value w) ++ ")") colorMarks)
+        else unwords (map (\w -> colorEmoji (color w) ++ "(" ++ show (value w) ++ valueEnding w ++ ")") colorMarks)
+    where 
+      valueEnding w = 
+        if color w == Yellow    -- only yellow and red wires
+          then ".1"
+          else ".5" 

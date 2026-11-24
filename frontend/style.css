@@ -179,6 +179,19 @@ h1 {
     transform: translateY(-2px);
 }
 
+.create-btn-small {
+    background: rgba(226, 146, 35, 0.85);
+    color: white;
+    max-height: 40px;
+    max-width: 80px;
+    margin-top: 15px;
+}
+
+.create-btn-small:hover {
+    background: #fa9f01;
+    transform: translateY(-2px);
+}
+
 .exit-btn {
     background: #3b311e;
     color: #fa9f01;
@@ -232,19 +245,17 @@ h1 {
     text-align: left;
     font-size: medium;
     font-weight: normal;
+    right: 0;
+    top: 100%;
 }
 
 .info-popup {    
-    right: 0;
-    top: 100%;
     margin-top: 6px;
     background: #3b311e;
     border: 1px solid #3b311e;
 }
 
 .equi-info-popup {
-    left: 0;
-    bottom: 100%;
     margin-bottom: 6px;
     background: #96876b;
     border: 1px solid #796642;
@@ -286,56 +297,54 @@ body:not([data-awaiting="wire"]) .other-racks button {
     pointer-events: none;
 }
 
-.wire, .wire-hidden {
+.wire, .wire-blue, .wire-yellow, .wire-red, .wire-grey {
     background-color: #231f15;
     border-color: #3b311e;
     color: #f9e1a3;
     height: 100px;
     width: 35px;
+    margin-top: 10px;
+    margin-bottom: 25px;
 }
 
 .wire-blue {
     background-color: #3661cd;
     border-color: #3b311e;
     color: #f9e1a3;
-    height: 100px;
-    width: 35px;
 }
 .wire-yellow {
     background-color: #eccf46;
     border-color: #3b311e;
     color: #231f15;
-    height: 100px;
-    width: 35px;
 }
 .wire-red {
     background-color: #f93c27;
     border-color: #3b311e;
     color: #231f15;
-    height: 100px;
-    width: 35px;
 }
 
 .wire-grey {
     background-color: #8b6c40;
     border-color: #3b311e;
     color: #f9e1a3;
-    height: 100px;
-    width: 35px;
+}
+
+.wire-grey.cutted, .wire-yellow.cutted, .wire-red.cutted {
+    transform: translateY(50px);
+}
+
+.wire.hint {
+    transform: translateY(-44px);
+}
+
+.wire.hint-two-digits {
+    transform: translateY(-34px);
 }
 
 .equipment-container, .action-container, .choose-player-id-container {
-    background-color: #888;
-    padding: 10px 10px 10px 10px;
     border-radius: 8px;
-    border: 3px solid #3b311e;
     position: relative;
-    margin-top: 20px;
-}
-
-.equipment-title, .action-title, .choose-player-id-title {
-    margin-bottom: 10px;
-    position: relative;
+    margin-top: 15px;
 }
 
 .equipment-list, .action-list, .player-ids {
@@ -367,7 +376,7 @@ body:not([data-awaiting="wire"]) .other-racks button {
     cursor: pointer;
     background-color: #f4e2b2;
     color: #696047;
-    width: 180px;
+    width: 160px;
 }
 
 .equipment-btn:hover, .action-btn:hover, .id-btn:hover {
@@ -377,6 +386,12 @@ body:not([data-awaiting="wire"]) .other-racks button {
 .equipment-btn:disabled, .action-btn:disabled {
     cursor: not-allowed;
     pointer-events: none;
+}
+
+.equipment-btn[aria-pressed="true"] {
+  border-color: #4caf50;
+  background: #2e5d31;
+  color: white;
 }
 
 .equipment-popup, .action-popup {

@@ -89,6 +89,7 @@ function renderOwnRack(container, wires) {
             cable.className = "wire-" + w.color;
             cable.textContent = `${value}`;
             cable.disabled = true;
+            cable.classList.toggle("cutted", true);
         }
         cable.addEventListener("click", () => sendInput(w.label));
         return cable;
@@ -103,6 +104,7 @@ function renderOtherRack(container, wires) {
         if (! w.isCut) {
             cable.className = "wire";
             cable.textContent = (w.hasHint) ? `💡${value}` : " ";
+            cable.classList.toggle(w.value > 9 ? "hint-two-digits" : "hint", w.hasHint);
             cable.disabled = false;
         } else {
             cable.className = "wire-" + w.color;
@@ -222,7 +224,7 @@ async function loadCurrTurn() {
         const data = await (await fetch(url)).json();
 
         if (data.text != undefined) {
-            annTurn.textContent = "Player " + data.text + " - it's your turn!";
+            annTurn.textContent = "Player " + data.text + (Number(data.text) === Number(slot) ? " - it's your turn!" : "");
         }
     } catch (e) {
         annTurn.textContent = "(error): " + e;
@@ -352,8 +354,8 @@ async function loadChoosePlayerIds() {
 /* load state of shown action */
 const sections = {
     menu:      document.querySelector(".action-container"),
-    equipment: document.querySelector(".equipment-container"),
     player:    document.querySelector(".choose-player-id-container"),
+    equipment: document.querySelector(".equipment-container"),
 };
 
 async function loadAwaiting() {
@@ -364,7 +366,8 @@ async function loadAwaiting() {
 
         Object.entries(sections).forEach(([kind, el]) => { el.hidden = (kind !== data.text); });
         document.body.dataset.awaiting = data.text;
-    } catch (e) {
+    } 
+    catch (e) {
         console.error("loadAwaiting: ", e);
     }
 }
