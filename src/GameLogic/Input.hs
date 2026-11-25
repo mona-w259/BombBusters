@@ -34,8 +34,8 @@ import Text.Read (readMaybe)
 ------------------------------------------------------------------
 
 promptFor :: ChoiceKind -> String
-promptFor PickWireToCut = "Choose which matching wire to cut."
-promptFor PickInfoMarkerSlot = "Place an Info Marker on a wire."
+promptFor PickWireToCut = "Choose which of the highlighted wires to cut."
+promptFor PickInfoMarkerSlot = "Place an Info Marker on one of the highlighted wires."
 
 -- Number of uncut wires still on a player's rack.
 uncutOn :: Player -> Int
@@ -102,7 +102,9 @@ selectLoop pv remaining selected = do
 askPlayerToChooseWire :: PlayerView -> [Int] -> ChoiceKind -> GameM Int
 askPlayerToChooseWire pv opts kind = do
   let pid = playerId (pvSelf pv)
-  tellAction pid (promptFor kind ++ "\nOptions: " ++ unwords (map show $ map (+1) opts))
+  setRackToChooseFrom pid pid
+  setWireToChooseFrom opts pid
+  tellAction pid (promptFor kind)
   readChoice
   where
     readChoice = do
@@ -279,7 +281,10 @@ handleSuperDetectorInput pv = do
     Just target -> askWire otherId target
   where
     askWire otherId target = do
+      let pid = playerId $ pvSelf pv
+      setRackToChooseFrom pid pid
       pos <- readWire pv "Choose your wire:"
+      setRackToChooseFrom otherId pid
       let (valid, msg) = checkInputSD pv otherId pos
       tellResult (playerId (pvSelf pv)) msg
       if valid
@@ -300,7 +305,10 @@ handleTripleDetectorInput pv = do
       | otherwise -> askWires otherId target
   where
     askWires otherId target = do
+      let pid = playerId $ pvSelf pv
+      setRackToChooseFrom pid pid
       selfPos <- readWire pv "Choose your wire:"
+      setRackToChooseFrom otherId pid
       a <- readWire pv "Choose 1. target wire:"
       b <- readWire pv "Choose 2. target wire:"
       c <- readWire pv "Choose 3. target wire:"
@@ -320,8 +328,11 @@ handleDoubleRadiatorInput pv = do
     Just target -> askWires otherId target
   where
     askWires otherId target = do
+      let pid = playerId $ pvSelf pv
+      setRackToChooseFrom pid pid
       pos1 <- readWire pv "Choose your 1. wire:"
       pos2 <- readWire pv "Choose your 2. wire:"
+      setRackToChooseFrom otherId pid
       otherPos <- readWire pv "Choose the target wire:"
       let (valid, msg) = checkInputDR pv otherId (pos1, pos2) otherPos
           self = pvSelf pv
@@ -346,7 +357,10 @@ handleDoubleDetectorInput pv = do
       | otherwise -> askWires otherId target
   where
     askWires otherId target = do
+      let pid = playerId $ pvSelf pv
+      setRackToChooseFrom pid pid
       selfPos <- readWire pv "Choose your wire:"
+      setRackToChooseFrom otherId pid
       a <- readWire pv "Choose 1. target wire:"
       b <- readWire pv "Choose 2. target wire:"
       let (valid, msg) = checkInputDD pv otherId selfPos (a, b)
@@ -359,6 +373,7 @@ handleSoloCut2Input :: PlayerView -> GameM Action
 handleSoloCut2Input pv = do
   let pid = playerId (pvSelf pv)
   tellResult pid "Solo Cut - cutting two (2) wires."
+  setRackToChooseFrom pid pid
   a <- readWire pv "Choose your 1. wire:"
   b <- readWire pv "Choose your 2. wire:"
   let (valid, msg) = checkInputSC2 pv (a, b)
@@ -371,6 +386,7 @@ handleSoloCut4Input :: PlayerView -> GameM Action
 handleSoloCut4Input pv = do
   let pid = playerId (pvSelf pv)
   tellResult (playerId (pvSelf pv)) "Solo Cut - cutting four (4) wires."
+  setRackToChooseFrom pid pid
   a <- readWire pv "Choose your 1. wire:"
   b <- readWire pv "Choose your 2. wire:"
   c <- readWire pv "Choose your 3. wire:"
@@ -385,8 +401,10 @@ handlePlaceInfoMarker :: PlayerView -> GameM Action
 handlePlaceInfoMarker pv = do
   let   self  = pvSelf pv
         pid   = playerId self
+  setRackToChooseFrom pid pid
   pos <- readLabel pv $ "Pick a wire for your info marker:"
   let (valid, msg) = checkInputInitInfo pv pos
+      w   = (playerWires self) !! pos
   tellResult pid msg
   if valid
     then do
@@ -404,7 +422,10 @@ handleDualCutInput pv = do
     Just target -> askWires otherId target
   where
     askWires otherId target = do
+      let pid = playerId $ pvSelf pv
+      setRackToChooseFrom pid pid
       a <- readWire pv "Choose your wire:"
+      setRackToChooseFrom otherId pid
       b <- readWire pv "Choose your target wire:"
       let (valid, msg) = checkInputDC pv otherId (a, b)
       tellResult (playerId (pvSelf pv)) msg
@@ -414,6 +435,8 @@ handleDualCutInput pv = do
 
 handleRemoveRedInput :: PlayerView -> GameM Action
 handleRemoveRedInput pv = do
+  let pid = playerId $ pvSelf pv
+  setRackToChooseFrom pid pid
   pos <- readWire pv "Remove Red - choose the red wire:"
   let (valid, msg) = checkInputRR pv pos
   tellResult (playerId (pvSelf pv)) msg

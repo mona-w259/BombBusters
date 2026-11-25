@@ -57,4 +57,5 @@ handlePendingChoice (ChooseWire choosingPlayer opts resolve kind) = do
     then pure $ botPendingChoice pv kind opts
     else askPlayerToChooseWire pv opts kind
   modify $ \s -> resolve choice s
+  setWireToChooseFrom [] 0
   syncState

@@ -260,6 +260,23 @@ main = do
             let (pid, kind) = awaiting gs
             json (object ["text" .= (if pid == sl then kind else "")])
 
+      get "/api/game/:code/choosingrack" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let (rack, playerChoose) = rackToChooseFrom gs
+            json (object ["racktochoose" .= rack, "playerwhochoosesrack" .= playerChoose])
+      
+      get "/api/game/:code/choosingwire" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let (ws, playerChoose) = wireToChooseFrom gs
+            json (object ["wirestochoose" .= ws, "playerwhochooseswire" .= playerChoose])
 
       post "/api/game/:code/input" $ do
         cd  <- pathParam "code"      :: ActionM String

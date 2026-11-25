@@ -170,5 +170,7 @@ initGameState l ml codeI syncTv = do
         resultMsg = empty,
         syncVar = syncTv,
         inputBox = iB,
-        awaiting = (0, "")
+        awaiting = (0, ""),
+        rackToChooseFrom = (0, 0),
+        wireToChooseFrom = ([], 0)
       }

@@ -218,3 +218,9 @@ setAwaiting pv kind = modify (\gs -> gs { awaiting = (playerId (pvSelf pv), kind
 
 setAwaitingZero :: GameM ()
 setAwaitingZero = modify (\gs -> gs { awaiting = (0, "") }) >> syncState
+
+setRackToChooseFrom :: PlayerId -> PlayerId -> GameM ()
+setRackToChooseFrom id_choose id_player = modify (\gs -> gs { rackToChooseFrom = (id_choose, id_player) })
+
+setWireToChooseFrom :: [Int] -> PlayerId -> GameM ()
+setWireToChooseFrom ws id_player = modify (\gs -> gs { wireToChooseFrom = (ws, id_player) })

@@ -58,13 +58,16 @@ gameLoop = do
               tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
               handlePlaceInfoMarker pv
           _ <- handleAction pv act id
+          setRackToChooseFrom 0 0
           pure ()
         else do
           outcome <- playerTurn pv
           gs'' <- get
           case status gs'' of
             Detonated -> pure ()
-            _ -> displayTurnResult outcome
+            _ -> do
+              displayTurnResult outcome
+              setRackToChooseFrom 0 0
 
       modify advanceTurn
       syncState

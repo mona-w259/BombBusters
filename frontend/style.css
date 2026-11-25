@@ -290,11 +290,18 @@ h1 {
     min-width: 455px;
     min-height: 160px;
     margin: 20px 0px;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
-body:not([data-awaiting="wire"]) #rack button,
-body:not([data-awaiting="wire"]) .other-racks button {
-    pointer-events: none;
+.rack-inner {
+    height: 200px;
+}
+
+.rack-inner.highlighted {
+    box-shadow: -16px 0 10px -7px rgb(241, 225, 93);
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .wire, .wire-blue, .wire-yellow, .wire-red, .wire-grey {
@@ -334,11 +341,21 @@ body:not([data-awaiting="wire"]) .other-racks button {
 }
 
 .wire.hint {
-    transform: translateY(-44px);
+    transform: translateY(-46px);
 }
 
 .wire.hint-two-digits {
-    transform: translateY(-34px);
+    transform: translateY(-38px);
+}
+
+.wire.hint-yellow {
+    transform: translateY(-38px);
+}
+
+.wire-blue.highlighted, .wire-yellow.highlighted, .wire-red.highlighted {
+    box-shadow: 
+        0 -3px 3px 0 rgb(241, 225, 93),   /* top */
+        0  3px 3px 0 rgb(241, 225, 93);   /* bottom */
 }
 
 .equipment-container, .action-container, .choose-player-id-container {

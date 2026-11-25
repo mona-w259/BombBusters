@@ -15,7 +15,9 @@ async function poll() {
             loadCurrTurn();
             loadActionMsg();
             loadResultMsg();
+            loadRackToChooseFrom();
             pollRacks();
+            loadWireToChooseFrom();
             loadChoosePlayerIds();
             loadAwaiting();
             pollActions();
@@ -84,6 +86,7 @@ function renderOwnRack(container, wires) {
         if (! w.isCut) {
             cable.className = "wire-" + w.color;
             cable.textContent = (w.hasHint) ? `💡${value}` : `${value}`;
+            cable.classList.toggle(w.value >= 10 ? "hint-two-digits" : "hint", w.hasHint);
             cable.disabled = false;
         } else {
             cable.className = "wire-" + w.color;
@@ -96,7 +99,7 @@ function renderOwnRack(container, wires) {
     }));
 }
 
-function renderOtherRack(container, wires) {
+function renderOtherRack(container, wires, id) {
     container.replaceChildren(...wires.map(w => {
         const cable = document.createElement("button");
         const value = getValueWire(w);
@@ -104,7 +107,7 @@ function renderOtherRack(container, wires) {
         if (! w.isCut) {
             cable.className = "wire";
             cable.textContent = (w.hasHint) ? `💡${value}` : " ";
-            cable.classList.toggle(w.value > 9 ? "hint-two-digits" : "hint", w.hasHint);
+            cable.classList.toggle(w.value == "🟡" ? "hint-yellow" : (w.value > 9 ? "hint-two-digits" : "hint"), w.hasHint);
             cable.disabled = false;
         } else {
             cable.className = "wire-" + w.color;
@@ -129,7 +132,7 @@ async function pollRacks() {
     
                 rack.others.forEach((oth, i) => {
                     const el = document.getElementById("rack-other-" + (i + 1));
-                    if (el) renderOtherRack(el, oth.wires);
+                    if (el) renderOtherRack(el, oth.wires, i+1);
                 });
     
                 lastRacks = rawRacks;
@@ -231,6 +234,7 @@ async function loadCurrTurn() {
     }
 }
 
+
 /* print current action */
 const actionMsg = document.getElementById("action");
 
@@ -317,11 +321,12 @@ const idOwn = document.getElementById("player-id-own");
 const idOth1 = document.getElementById("player-id-oth-1");
 const idOth2 = document.getElementById("player-id-oth-2");
 const idOth3 = document.getElementById("player-id-oth-3");
+let othIDs = [];  
 
 function getPlayerId() {
     idOwn.textContent = slot;
     
-    const othIDs = [1, 2, 3, 4].filter(id => id !== Number(slot));  
+    othIDs = [1, 2, 3, 4].filter(id => id !== Number(slot));  
     idOth1.textContent = othIDs[0];
     idOth2.textContent = othIDs[1];
     idOth3.textContent = othIDs[2];
@@ -351,6 +356,99 @@ async function loadChoosePlayerIds() {
 }
 
 
+/* highlight rack where wire should be chosen from */
+
+let rackToChooseFrom = 0;
+let playerWhoChoosesR = 0;
+
+async function loadRackToChooseFrom() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/choosingrack";
+        const data = await (await fetch(url)).json();
+
+        if (data != undefined) {
+            rackToChooseFrom = Number(data.racktochoose);
+            playerWhoChoosesR = Number(data.playerwhochoosesrack);
+        }
+
+        if (rackToChooseFrom == 0) {
+            document.querySelectorAll(".rack-inner.highlighted")
+                .forEach(el => el.classList.remove("highlighted"));
+        }
+
+        if (Number(slot) == playerWhoChoosesR) {
+            if (rackToChooseFrom >= 1 && rackToChooseFrom <= 4) {
+
+                const isYourself = !othIDs.includes(rackToChooseFrom);
+
+                if (isYourself) {
+                    highlightRack("rack-own");
+                } 
+                else {
+                    const id = othIDs.indexOf(rackToChooseFrom);
+                    highlightRack("rack-other-" + (id + 1));
+                }
+            }
+        }
+    }
+    catch (e) {
+        console.error("(error): ", e);
+    }
+}
+
+function highlightRack(idName) {
+    const rack = document.getElementById(idName);
+    if (!rack) return console.warn("rack id not found:", idName);
+
+    rack.classList.add("highlighted");
+}
+
+
+/* highlight wires where one should be chosen of */
+
+let wiresToChooseFrom = [];
+let playerWhoChoosesW = 0;
+
+async function loadWireToChooseFrom() {
+    try {
+        const url = "/api/game/" + encodeURIComponent(code) + "/choosingwire";
+        const data = await (await fetch(url)).json();
+
+        if (data != undefined) {
+            wiresToChooseFrom = data.wirestochoose;
+            playerWhoChoosesW = Number(data.playerwhochooseswire);
+        }
+
+        if (wiresToChooseFrom.length == 0) {
+            document.querySelectorAll(".wire-blue.highlighted")
+                .forEach(el => el.classList.remove("highlighted"));
+
+            document.querySelectorAll(".wire-yellow.highlighted")
+                .forEach(el => el.classList.remove("highlighted"));
+
+            document.querySelectorAll(".wire-red.highlighted")
+                .forEach(el => el.classList.remove("highlighted"));
+        }
+
+        if (Number(slot) == playerWhoChoosesW) {
+            highlightWires(wiresToChooseFrom);
+        }
+    }
+    catch (e) {
+        console.error("(error): ", e);
+    }
+}
+
+function highlightWires(wires) {
+    const rack = document.getElementById("rack-own");
+
+    wires.forEach(i => {
+        const el = rack.children[i];
+        if (el) el.classList.add("highlighted");
+    });
+}
+
+
 /* load state of shown action */
 const sections = {
     menu:      document.querySelector(".action-container"),
@@ -371,6 +469,7 @@ async function loadAwaiting() {
         console.error("loadAwaiting: ", e);
     }
 }
+
 
 
 /* function calls */

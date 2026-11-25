@@ -137,7 +137,9 @@ data GameState = GameState
     resultMsg :: Map.Map PlayerId String,
     syncVar :: TVar (Map.Map Code GameState),
     inputBox :: InputBox,
-    awaiting :: (PlayerId, String)      -- String: "menu" | "equipment" | "player" | "wire"
+    awaiting :: (PlayerId, String),     -- String: "menu" | "equipment" | "player" | "wire"
+    rackToChooseFrom :: (PlayerId, PlayerId),
+    wireToChooseFrom :: ([Int], PlayerId)
   }
 
 data PlayerView = PlayerView
