@@ -38,7 +38,7 @@ botPlaceMarker pv =
              $ innerEdgePick blues takenVals
              <|> threeOfAKindPick blues
              <|> unlockingPick blues takenVals unlockVals
-    in PlaceInfoMarker (wireIndex pick)
+    in PlaceInfoMarker (pvSelf pv) (wireIndex pick)
   where
     handWires = playerWires (pvSelf pv)
     blueCount v = length [ w | w <- handWires, color w == Blue, value w == v ]

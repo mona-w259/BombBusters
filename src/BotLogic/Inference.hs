@@ -51,7 +51,7 @@ inferSoftFacts history allMarkers allCuts numPlayers =
         [ m
         | turn <- history
         , logRound turn < numPlayers
-        , Just (PubPlaceInfoMarker i) <- [logAction turn]
+        , Just (PubPlaceInfoMarker pl i) <- [logAction turn]
         , m <- lookupMarker allMarkers (logPlayer turn) i
         ]
 
@@ -88,7 +88,7 @@ preStatesByTurn allMarkers allCuts history =
 markersAddedBy :: [InfoMarker] -> TurnLog -> [InfoMarker]
 markersAddedBy allMarkers turn =
     case logAction turn of
-        Just (PubPlaceInfoMarker i) ->
+        Just (PubPlaceInfoMarker pl i) ->
             lookupMarker allMarkers actor i
         Just (PubDualCut tpid tIdx _) | logOutcome turn == CutMismatch ->
             lookupMarker allMarkers tpid tIdx
@@ -176,7 +176,7 @@ wasCertain markers (Just act) = case act of
     PubSoloCut2 _ -> True
     PubDualCut tpid tIdx _ ->
         any (\m -> markerOwner m == tpid && markerIndex m == tIdx) markers
-    PubPlaceInfoMarker _ -> True -- never reached 
+    PubPlaceInfoMarker _ _ -> True -- never reached 
 
 countMatching :: PlayerId -> (Int -> WireColor -> Bool) -> WorldAssignment -> Int
 countMatching pid p world = case Map.lookup pid world of

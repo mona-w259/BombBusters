@@ -20,6 +20,7 @@ import Data.List
 import GameLogic.Util
 import GameLogic.Output
 import GameLogic.InputReader
+import GameLogic.Display
 import Types
 import Control.Concurrent (threadDelay)
 import Control.Exception (throwIO, try)
@@ -402,14 +403,14 @@ handlePlaceInfoMarker pv = do
   let   self  = pvSelf pv
         pid   = playerId self
   setRackToChooseFrom pid pid
-  pos <- readLabel pv $ "Pick a wire for your info marker:"
+  pos <- readLabel pv $ "Click on one of your wires to place an info marker for the other players."
   let (valid, msg) = checkInputInitInfo pv pos
-      w   = (playerWires self) !! pos
   tellResult pid msg
   if valid
     then do
-      tellAllExceptOneAction pid ("Player " ++ show pid ++ " placed Info Marker on " ++ show (pos + 1) ++ ". wire") 
-      return $ PlaceInfoMarker pos
+      let msg = showAction (PubPlaceInfoMarker self pos)
+      tellAllExceptOneAction pid msg
+      return $ PlaceInfoMarker self pos
     else liftIO (threadDelay 1000000) >> handlePlaceInfoMarker pv
 
 handleDualCutInput :: PlayerView -> GameM Action

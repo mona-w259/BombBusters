@@ -21,7 +21,7 @@ handleAction pv action f = case action of
     modify (f (removeRedUpdate pv pos)) 
     syncState
     pure ActionDone
-  PlaceInfoMarker pos -> do 
+  PlaceInfoMarker pl pos -> do 
     modify (placeInfoMarkerUpdate pv pos) 
     syncState 
     pure ActionDone

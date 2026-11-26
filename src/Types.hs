@@ -64,7 +64,7 @@ data Action
   | SoloCut2 CutPosition
   | SoloCut4 (Int, Int, Int, Int)
   | RemoveRed Int
-  | PlaceInfoMarker Int
+  | PlaceInfoMarker Player Int
   deriving (Eq, Show)
 
 data PublicAction
@@ -72,7 +72,7 @@ data PublicAction
   | PubSoloCut2 (Int, Int)                
   | PubSoloCut4 (Int, Int, Int, Int)
   | PubRemoveRed Int
-  | PubPlaceInfoMarker Int               
+  | PubPlaceInfoMarker Player Int               
   deriving (Eq, Show)
 
 data PublicEquipmentUse

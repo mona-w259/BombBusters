@@ -192,7 +192,7 @@ toPublicAction (DualCut pid (_, tIdx) w) = PubDualCut pid tIdx (anonymise w)
 toPublicAction (SoloCut2 ab)             = PubSoloCut2 ab
 toPublicAction (SoloCut4 abcd)           = PubSoloCut4 abcd
 toPublicAction (RemoveRed i)             = PubRemoveRed i
-toPublicAction (PlaceInfoMarker i)       = PubPlaceInfoMarker i
+toPublicAction (PlaceInfoMarker pl i)       = PubPlaceInfoMarker pl i
 
 toPublicEquipmentUse :: EquipmentUse -> PublicEquipmentUse
 toPublicEquipmentUse UseStabilizer = PubUseStabilizer

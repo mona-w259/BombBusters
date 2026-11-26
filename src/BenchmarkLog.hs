@@ -105,7 +105,7 @@ instance A.ToJSON PublicAction where
         [ "tag" .= ("SoloCut4" :: String), "positions" .= [a, b, c, d] ]
     toJSON (PubRemoveRed i) = A.object
         [ "tag" .= ("RemoveRed" :: String), "position" .= i ]
-    toJSON (PubPlaceInfoMarker i) = A.object
+    toJSON (PubPlaceInfoMarker pl i) = A.object
         [ "tag" .= ("PlaceInfoMarker" :: String), "position" .= i ]
 
 instance A.ToJSON PublicEquipmentUse where

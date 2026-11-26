@@ -1,4 +1,4 @@
-module GameLogic.Display (displayTurnResult, displayDecision, announceHumanTurn, indexToLabel, wireFace) where
+module GameLogic.Display (displayTurnResult, displayDecision, announceHumanTurn, indexToLabel, wireFace, showAction) where
 
 import Control.Monad (unless, when)
 import Control.Monad.State
@@ -45,24 +45,25 @@ displayDecision act equip = do
   let equipText = case equip of
         [] -> Nothing
         _  -> Just ("Equipment: " ++ intercalate ", " (map showEquipUse equip))
-      parts = catMaybes [equipText, fmap showBotAction act]
+      parts = catMaybes [equipText, fmap showAction act]
 
   unless (null parts) $ do
     tellAllAction (intercalate " | " parts)
-    liftIO (bbDelay 1500000)
+    liftIO (bbDelay 3000000)
 
-showBotAction :: PublicAction -> String
-showBotAction (PubSoloCut2 (a, b)) =
+showAction :: PublicAction -> String
+showAction (PubSoloCut2 (a, b)) =
   "Solo Cut 2 - " ++ show (a + 1) ++ "., " ++ show (b + 1) ++ ". wire"
-showBotAction (PubSoloCut4 (a, b, c, d)) =
+showAction (PubSoloCut4 (a, b, c, d)) =
   "Solo Cut 4 - " ++ intercalate "., " (map show $ map (+1) [a, b, c, d]) ++ ". wire" 
-showBotAction (PubRemoveRed idx) =
+showAction (PubRemoveRed idx) =
   "Remove Red - " ++ show (idx + 1) ++ ". wire"
-showBotAction (PubDualCut pid targetIdx w) =
+showAction (PubDualCut pid targetIdx w) =
   "Dual Cut - called " ++ showCallOut w
     ++ " → Player " ++ show pid ++ "'s " ++ show (targetIdx + 1) ++ ". wire"
-showBotAction (PubPlaceInfoMarker idx) =
-  "Placed Info Marker on " ++ show (idx + 1) ++ ". wire"
+showAction (PubPlaceInfoMarker pl idx) = do
+  let w = (playerWires pl) !! idx
+  "Player " ++ show (playerId pl) ++ " placed an Info Marker on value " ++ show (value w) ++ " (" ++ show (idx + 1) ++ ". wire)"
 
 showEquipUse :: PublicEquipmentUse -> String
 showEquipUse PubUseStabilizer =
