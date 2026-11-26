@@ -2,7 +2,7 @@ module GameLogic.Display (displayTurnResult, displayDecision, announceHumanTurn,
 
 import Control.Monad (unless, when)
 import Control.Monad.State
-import Data.List (intercalate)
+import Data.List (intercalate, sort)
 import Data.Maybe (catMaybes)
 import GameLogic.Output
 import Types
@@ -18,7 +18,7 @@ announceHumanTurn pv = do
   when (not (isBot self) && multiHuman) $ do
     modify (\gs -> gs { currentPlayer = playerId self })
     syncState
-    liftIO (bbDelay 500000)
+    liftIO (bbDelay 200000)
 
 wireFace :: [(Int, (Int, WireColor))] -> Wire -> (String, String)
 wireFace infos w = 
@@ -35,7 +35,7 @@ displayTurnResult :: Outcome -> GameM ()
 displayTurnResult ActionDone = pure ()
 displayTurnResult outcome = do
   let msg = case outcome of
-              CutSuccess -> "Successful cut!"
+              CutSuccess w -> "Successful cut of " ++ showCallOut w ++ "!"
               _ -> "Oops! Wrong wire..."
   tellAllResult msg
   liftIO (bbDelay 500000)
@@ -49,21 +49,20 @@ displayDecision act equip = do
 
   unless (null parts) $ do
     tellAllAction (intercalate " | " parts)
-    liftIO (bbDelay 3000000)
 
 showAction :: PublicAction -> String
-showAction (PubSoloCut2 (a, b)) =
-  "Solo Cut 2 - " ++ show (a + 1) ++ "., " ++ show (b + 1) ++ ". wire"
-showAction (PubSoloCut4 (a, b, c, d)) =
-  "Solo Cut 4 - " ++ intercalate "., " (map show $ map (+1) [a, b, c, d]) ++ ". wire" 
-showAction (PubRemoveRed idx) =
-  "Remove Red - " ++ show (idx + 1) ++ ". wire"
+showAction (PubSoloCut2 w (a, b)) =
+  "Solo Cut 2 - " ++ showCallOut w ++ " (" ++ intercalate "., " (map show $ map (+1) (sort [a, b])) ++ ". wire)"
+showAction (PubSoloCut4 w (a, b, c, d)) =
+  "Solo Cut 4 - " ++ showCallOut w ++ " (" ++ intercalate "., " (map show $ map (+1) (sort [a, b, c, d])) ++ ". wire)" 
+showAction (PubRemoveRed w) =
+  "Remove Red - " ++ showCallOut w ++ " (" ++ show ((wireIndex w) + 1) ++ ". wire)"
 showAction (PubDualCut pid targetIdx w) =
   "Dual Cut - called " ++ showCallOut w
     ++ " → Player " ++ show pid ++ "'s " ++ show (targetIdx + 1) ++ ". wire"
 showAction (PubPlaceInfoMarker pl idx) = do
   let w = (playerWires pl) !! idx
-  "Player " ++ show (playerId pl) ++ " placed an Info Marker on value " ++ show (value w) ++ " (" ++ show (idx + 1) ++ ". wire)"
+  "Player " ++ show (playerId pl) ++ " placed an Info Marker on value " ++ showCallOut w ++ " (" ++ show (idx + 1) ++ ". wire)"
 
 showEquipUse :: PublicEquipmentUse -> String
 showEquipUse PubUseStabilizer =
@@ -73,15 +72,16 @@ showEquipUse (PubUseSuperDetector pid w) =
     ++ " → Player " ++ show pid
 showEquipUse (PubUseTripleDetector pid (a, b, c) w) =
   "TripleDetector called " ++ showCallOut w
-    ++ " → Player " ++ show pid ++ " [" ++ intercalate "., " (map show $ map (+1) [a, b, c]) ++ ". wire]"
+    ++ " → Player " ++ show pid ++ " (" ++ intercalate "., " (map show $ map (+1) (sort [a, b, c])) ++ ". wire)"
 showEquipUse (PubUseDoubleDetector pid (a, b) w) =
   "DoubleDetector called " ++ showCallOut w
-    ++ " → Player " ++ show pid ++ " [" ++ intercalate "., " (map show $ map (+1) [a, b]) ++ ". wire]"
+    ++ " → Player " ++ show pid ++ " (" ++ intercalate "., " (map show $ map (+1) (sort [a, b])) ++ ". wire)"
 showEquipUse (PubUseDoubleRadiator pid tgt (w1, w2)) =
   "DoubleRadiator called " ++ showCallOut w1 ++ ", " ++ showCallOut w2
-    ++ " → Player " ++ show pid ++ " [" ++ show (tgt + 1) ++ ". wire]"
+    ++ " → Player " ++ show pid ++ " (" ++ show (tgt + 1) ++ ". wire)"
 
 showCallOut :: Wire -> String
 showCallOut w = case color w of
   Yellow -> colorEmoji Yellow
+  Red    -> colorEmoji Red ++ "(" ++ show (value w) ++ ".5)"
   _      -> colorEmoji (color w) ++ "(" ++ show (value w) ++ ")"

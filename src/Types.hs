@@ -60,18 +60,18 @@ data InfoMarker = InfoMarker
   deriving (Eq, Show)
 
 data Action
-  = DualCut PlayerId CutPosition Wire
-  | SoloCut2 CutPosition
-  | SoloCut4 (Int, Int, Int, Int)
-  | RemoveRed Int
+  = SoloCut2 Wire CutPosition
+  | SoloCut4 Wire (Int, Int, Int, Int)
+  | RemoveRed Wire
+  | DualCut PlayerId CutPosition Wire
   | PlaceInfoMarker Player Int
   deriving (Eq, Show)
 
 data PublicAction
-  = PubDualCut PlayerId Int Wire           
-  | PubSoloCut2 (Int, Int)                
-  | PubSoloCut4 (Int, Int, Int, Int)
-  | PubRemoveRed Int
+  = PubSoloCut2 Wire (Int, Int)                
+  | PubSoloCut4 Wire (Int, Int, Int, Int)
+  | PubRemoveRed Wire
+  | PubDualCut PlayerId Int Wire           
   | PubPlaceInfoMarker Player Int               
   deriving (Eq, Show)
 
@@ -131,7 +131,6 @@ data GameState = GameState
     roundCount :: Int,
     turnHistory :: [TurnLog],
     unlockingValues :: [(Int, EquipmentName)],
-    -- neccessary for displaying
     rackLabled :: Map.Map PlayerId String,
     actionMsg :: Map.Map PlayerId String,
     resultMsg :: Map.Map PlayerId String,
@@ -169,7 +168,7 @@ data Selectable
   deriving (Eq, Show)
 
 data Outcome
-  = CutSuccess
+  = CutSuccess Wire
   | CutMismatch
   | ActionDone
   deriving (Eq, Show)

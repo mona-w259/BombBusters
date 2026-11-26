@@ -29,19 +29,19 @@ certainAction bk selfPid = (checkInfoMarkerCut Yellow) <|> checkSoloCut4 <|> che
                 ]
 
     -- group wire indices by (value, color)
-    byKey = Map.fromListWith (++) [((value w, color w), [i]) | (i, w) <- knownWires]
+    byKey = Map.fromListWith (++) [((value w, color w), [(w, i)]) | (i, w) <- knownWires]
 
-    checkSoloCut4 = listToMaybe [ SoloCut4 (a, b, c, d) | (_, (a:b:c:d:_)) <- Map.toList byKey ]
+    checkSoloCut4 = listToMaybe [ SoloCut4 w1 (a, b, c, d) | (_, ((w1, a):(_, b):(_, c):(_, d):_)) <- Map.toList byKey ]
 
     checkSoloCut2 = checkYellowPair <|> checkBluePair
       where
-        yellowIdxs = [i | (i, w) <- knownWires, color w == Yellow]
+        yellowIdxs = [([w], [i]) | (i, w) <- knownWires, color w == Yellow]
         checkYellowPair = case yellowIdxs of
-            a:b:_ -> Just (SoloCut2 (a, b))
+            ((w1:_), (a:b:_)):_ -> Just (SoloCut2 w1 (a, b))
             _ -> Nothing
         checkBluePair = listToMaybe
-            [ SoloCut2 (a, b)
-            | ((v, Blue), [a, b]) <- Map.toList byKey
+            [ SoloCut2 w1 (a, b)
+            | ((v, Blue), [(w1, a), (_, b)]) <- Map.toList byKey
             , Map.findWithDefault 0 v (cutBlueCounts bk) == 2
             ]
 
@@ -53,8 +53,8 @@ certainAction bk selfPid = (checkInfoMarkerCut Yellow) <|> checkSoloCut4 <|> che
             _ -> Nothing
 
     checkRemoveRed =
-        let reds = [i | (i, w) <- knownWires, color w == Red]
-            nonRed = [i | (i, w) <- knownWires, color w /= Red]
+        let reds = [w | (_, w) <- knownWires, color w == Red]
+            nonRed = [w | (_, w) <- knownWires, color w /= Red]
         in case reds of
             (r : _) | null nonRed -> Just (RemoveRed r)
             _ -> Nothing
@@ -221,10 +221,10 @@ cutsOwnInfoMarker bk (act, eqs, _) = actHits || any eqHits eqs
   where
     marked = selfMarkedSlots bk
     actHits = case act of
+        Just (SoloCut2 _ (a, b)) -> any (`elem` marked) [a, b]
+        Just (SoloCut4 _ (a, b, c, d)) -> any (`elem` marked) [a, b, c, d]
+        Just (RemoveRed w) -> (wireIndex w) `elem` marked
         Just (DualCut _ (myIdx, _) _) -> myIdx `elem` marked
-        Just (SoloCut2 (a, b)) -> any (`elem` marked) [a, b]
-        Just (SoloCut4 (a, b, c, d)) -> any (`elem` marked) [a, b, c, d]
-        Just (RemoveRed i) -> i `elem` marked
         _                                 -> False
     -- DoubleRadiator cuts the matching called wire; we can't predict which
     -- of i1/i2 that will be, so we treat either landing on a marker as a hit.

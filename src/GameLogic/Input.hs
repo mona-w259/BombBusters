@@ -238,7 +238,7 @@ chooseAction pv = do
   case lookup input [ (k, h) | (_, True, h, k) <- opts ] of
     Just h -> h pv
     Nothing -> do
-      tellResult (playerId (pvSelf pv)) "Invalid input, try again."
+      tellResult pid "Invalid input, try again."
       chooseAction pv
 
 chooseActionOrEquipment :: PlayerView -> GameM (Either Action [Selectable])
@@ -272,6 +272,94 @@ chooseActionOrEquipment pv = do
 --                 HANDLE INPUT FUNCTIONS                       --
 ------------------------------------------------------------------
 
+---- Action ----
+
+handleSoloCut2Input :: PlayerView -> GameM Action
+handleSoloCut2Input pv = do
+  let self  = pvSelf pv
+      pid   = playerId self
+      ws    = playerWires self
+  tellResult pid "Solo Cut - cutting 2 wires."
+  setRackToChooseFrom pid pid
+  a <- readWire pv "Choose your 1. wire:"
+  b <- readWire pv "Choose your 2. wire:"
+  let (valid, msg) = checkInputSC2 pv (a, b)
+      w = (ws !! a)
+  tellResult pid msg
+  if valid
+    then return $ SoloCut2 w (a, b)
+    else chooseAction pv
+
+handleSoloCut4Input :: PlayerView -> GameM Action
+handleSoloCut4Input pv = do
+  let self  = pvSelf pv
+      pid   = playerId self
+      ws    = playerWires self
+  tellResult pid "Solo Cut - cutting 4 wires."
+  setRackToChooseFrom pid pid
+  a <- readWire pv "Choose your 1. wire:"
+  b <- readWire pv "Choose your 2. wire:"
+  c <- readWire pv "Choose your 3. wire:"
+  d <- readWire pv "Choose your 4. wire:"
+  let (valid, msg) = checkInputSC4 pv (a, b, c, d)
+      w = (ws !! a)
+  tellResult pid msg
+  if valid
+    then return $ SoloCut4 w (a, b, c, d)
+    else chooseAction pv
+
+handleRemoveRedInput :: PlayerView -> GameM Action
+handleRemoveRedInput pv = do
+  let self  = pvSelf pv
+      pid   = playerId self
+      ws    = playerWires self
+  setRackToChooseFrom pid pid
+  pos <- readWire pv "Remove Red - choose the red wire:"
+  let (valid, msg) = checkInputRR pv pos
+      w = (ws !! pos)
+  tellResult pid msg
+  if valid
+    then return $ RemoveRed w
+    else liftIO (threadDelay 1000000) >> chooseAction pv
+
+handleDualCutInput :: PlayerView -> GameM Action
+handleDualCutInput pv = do
+  otherId <- readPlayerId pv "Duo Cut - target player id:"
+  case maybeFindPlayer otherId (pvOthers pv) of
+    Nothing -> do
+      tellResult (playerId (pvSelf pv)) "Invalid player id, try again."
+      handleDualCutInput pv
+    Just target -> askWires otherId target
+  where
+    askWires otherId target = do
+      let pid = playerId $ pvSelf pv
+      setRackToChooseFrom pid pid
+      a <- readWire pv "Choose your wire:"
+      setRackToChooseFrom otherId pid
+      b <- readWire pv "Choose your target wire:"
+      let (valid, msg) = checkInputDC pv otherId (a, b)
+      tellResult pid msg
+      if valid
+        then return $ DualCut otherId (a, b) (playerWires (pvSelf pv) !! a)
+        else liftIO (threadDelay 1000000) >> askWires otherId target
+
+handlePlaceInfoMarker :: PlayerView -> GameM Action
+handlePlaceInfoMarker pv = do
+  let   self  = pvSelf pv
+        pid   = playerId self
+  setRackToChooseFrom pid pid
+  pos <- readLabel pv $ "Click on one of your wires to place an info marker for the other players."
+  let (valid, msg) = checkInputInitInfo pv pos
+  tellResult pid msg
+  if valid
+    then do
+      let resMsg = showAction (PubPlaceInfoMarker self pos)
+      tellAllExceptOneAction pid resMsg
+      return $ PlaceInfoMarker self pos
+    else liftIO (threadDelay 1000000) >> handlePlaceInfoMarker pv
+
+---- Equipment ----
+
 handleSuperDetectorInput :: PlayerView -> GameM EquipmentUse
 handleSuperDetectorInput pv = do
   otherId <- readPlayerId pv "SuperDetector - Choose the player you want to do the cut with:"
@@ -294,14 +382,15 @@ handleSuperDetectorInput pv = do
 
 handleTripleDetectorInput :: PlayerView -> GameM EquipmentUse
 handleTripleDetectorInput pv = do
+  let pid = (playerId (pvSelf pv))
   otherId <- readPlayerId pv "Triple Detector - Choose the player you want to do the cut with:"
   case maybeFindPlayer otherId (pvOthers pv) of
     Nothing -> do
-      tellResult (playerId (pvSelf pv)) "Invalid player id."
+      tellResult pid "Invalid player id."
       handleTripleDetectorInput pv
     Just target
       | uncutOn target < 3 -> do
-          tellResult (playerId (pvSelf pv)) "Target must have at least 3 uncut wires."
+          tellResult pid "Target must have at least 3 uncut wires."
           liftIO (threadDelay 1000000) >> handleTripleDetectorInput pv
       | otherwise -> askWires otherId target
   where
@@ -314,9 +403,36 @@ handleTripleDetectorInput pv = do
       b <- readWire pv "Choose 2. target wire:"
       c <- readWire pv "Choose 3. target wire:"
       let (valid, msg) = checkInputTD pv otherId selfPos (a, b, c)
-      tellResult (playerId (pvSelf pv)) msg
+      tellResult pid msg
       if valid
         then pure $ UseTripleDetector otherId selfPos (a, b, c) (playerWires (pvSelf pv) !! selfPos)
+        else liftIO (threadDelay 1000000) >> askWires otherId target
+
+handleDoubleDetectorInput :: PlayerView -> GameM EquipmentUse
+handleDoubleDetectorInput pv = do
+  let pid = playerId (pvSelf pv)
+  otherId <- readPlayerId pv "Double Detector - Choose the player you want to do the cut with:"
+  case maybeFindPlayer otherId (pvOthers pv) of
+    Nothing -> do
+      tellResult pid "Invalid player id."
+      handleDoubleDetectorInput pv
+    Just target
+      | uncutOn target < 2 -> do
+          tellResult pid "Target must have at least 2 uncut wires."
+          liftIO (threadDelay 1000000) >> handleDoubleDetectorInput pv
+      | otherwise -> askWires otherId target
+  where
+    askWires otherId target = do
+      let pid = playerId $ pvSelf pv
+      setRackToChooseFrom pid pid
+      selfPos <- readWire pv "Choose your wire:"
+      setRackToChooseFrom otherId pid
+      a <- readWire pv "Choose 1. target wire:"
+      b <- readWire pv "Choose 2. target wire:"
+      let (valid, msg) = checkInputDD pv otherId selfPos (a, b)
+      tellResult pid msg
+      if valid
+        then pure $ UseDoubleDetector otherId selfPos (a, b) (playerWires (pvSelf pv) !! selfPos)
         else liftIO (threadDelay 1000000) >> askWires otherId target
 
 handleDoubleRadiatorInput :: PlayerView -> GameM EquipmentUse
@@ -343,108 +459,7 @@ handleDoubleRadiatorInput pv = do
         then pure $ UseDoubleRadiator otherId (pos1, pos2) otherPos (ws !! pos1, ws !! pos2)
         else liftIO (threadDelay 1000000) >> askWires otherId target
 
-handleDoubleDetectorInput :: PlayerView -> GameM EquipmentUse
-handleDoubleDetectorInput pv = do
-  let pid = playerId (pvSelf pv)
-  otherId <- readPlayerId pv "Double Detector - Choose the player you want to do the cut with:"
-  case maybeFindPlayer otherId (pvOthers pv) of
-    Nothing -> do
-      tellResult pid "Invalid player id."
-      handleDoubleDetectorInput pv
-    Just target
-      | uncutOn target < 2 -> do
-          tellResult pid "Target must have at least 2 uncut wires."
-          liftIO (threadDelay 1000000) >> handleDoubleDetectorInput pv
-      | otherwise -> askWires otherId target
-  where
-    askWires otherId target = do
-      let pid = playerId $ pvSelf pv
-      setRackToChooseFrom pid pid
-      selfPos <- readWire pv "Choose your wire:"
-      setRackToChooseFrom otherId pid
-      a <- readWire pv "Choose 1. target wire:"
-      b <- readWire pv "Choose 2. target wire:"
-      let (valid, msg) = checkInputDD pv otherId selfPos (a, b)
-      tellResult (playerId (pvSelf pv)) msg
-      if valid
-        then pure $ UseDoubleDetector otherId selfPos (a, b) (playerWires (pvSelf pv) !! selfPos)
-        else liftIO (threadDelay 1000000) >> askWires otherId target
-
-handleSoloCut2Input :: PlayerView -> GameM Action
-handleSoloCut2Input pv = do
-  let pid = playerId (pvSelf pv)
-  tellResult pid "Solo Cut - cutting two (2) wires."
-  setRackToChooseFrom pid pid
-  a <- readWire pv "Choose your 1. wire:"
-  b <- readWire pv "Choose your 2. wire:"
-  let (valid, msg) = checkInputSC2 pv (a, b)
-  tellResult pid msg
-  if valid
-    then return $ SoloCut2 (a, b)
-    else chooseAction pv
-
-handleSoloCut4Input :: PlayerView -> GameM Action
-handleSoloCut4Input pv = do
-  let pid = playerId (pvSelf pv)
-  tellResult (playerId (pvSelf pv)) "Solo Cut - cutting four (4) wires."
-  setRackToChooseFrom pid pid
-  a <- readWire pv "Choose your 1. wire:"
-  b <- readWire pv "Choose your 2. wire:"
-  c <- readWire pv "Choose your 3. wire:"
-  d <- readWire pv "Choose your 4. wire:"
-  let (valid, msg) = checkInputSC4 pv (a, b, c, d)
-  tellResult pid msg
-  if valid
-    then return $ SoloCut4 (a, b, c, d)
-    else chooseAction pv
-
-handlePlaceInfoMarker :: PlayerView -> GameM Action
-handlePlaceInfoMarker pv = do
-  let   self  = pvSelf pv
-        pid   = playerId self
-  setRackToChooseFrom pid pid
-  pos <- readLabel pv $ "Click on one of your wires to place an info marker for the other players."
-  let (valid, msg) = checkInputInitInfo pv pos
-  tellResult pid msg
-  if valid
-    then do
-      let msg = showAction (PubPlaceInfoMarker self pos)
-      tellAllExceptOneAction pid msg
-      return $ PlaceInfoMarker self pos
-    else liftIO (threadDelay 1000000) >> handlePlaceInfoMarker pv
-
-handleDualCutInput :: PlayerView -> GameM Action
-handleDualCutInput pv = do
-  otherId <- readPlayerId pv "Duo Cut - target player id:"
-  case maybeFindPlayer otherId (pvOthers pv) of
-    Nothing -> do
-      tellResult (playerId (pvSelf pv)) "Invalid player id, try again."
-      handleDualCutInput pv
-    Just target -> askWires otherId target
-  where
-    askWires otherId target = do
-      let pid = playerId $ pvSelf pv
-      setRackToChooseFrom pid pid
-      a <- readWire pv "Choose your wire:"
-      setRackToChooseFrom otherId pid
-      b <- readWire pv "Choose your target wire:"
-      let (valid, msg) = checkInputDC pv otherId (a, b)
-      tellResult (playerId (pvSelf pv)) msg
-      if valid
-        then return $ DualCut otherId (a, b) (playerWires (pvSelf pv) !! a)
-        else liftIO (threadDelay 1000000) >> askWires otherId target
-
-handleRemoveRedInput :: PlayerView -> GameM Action
-handleRemoveRedInput pv = do
-  let pid = playerId $ pvSelf pv
-  setRackToChooseFrom pid pid
-  pos <- readWire pv "Remove Red - choose the red wire:"
-  let (valid, msg) = checkInputRR pv pos
-  tellResult (playerId (pvSelf pv)) msg
-  if valid
-    then return $ RemoveRed pos
-    else liftIO (threadDelay 1000000) >> chooseAction pv
-
+---- Bot ----
 
 handleChooseBots :: GameState -> [PlayerId] -> IO [PlayerId]
 handleChooseBots gs pids = do

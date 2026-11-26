@@ -188,11 +188,11 @@ appendTurnLog tlog gs = gs {turnHistory = turnHistory gs ++ [tlog]}
 -- wires have their `wireIndex` field zeroed because that field is the
 -- caller's private slot position; only value/color is publicly spoken.
 toPublicAction :: Action -> PublicAction
+toPublicAction (SoloCut2 w ab)           = PubSoloCut2 w ab
+toPublicAction (SoloCut4 w abcd)         = PubSoloCut4 w abcd
+toPublicAction (RemoveRed w)             = PubRemoveRed w
 toPublicAction (DualCut pid (_, tIdx) w) = PubDualCut pid tIdx (anonymise w)
-toPublicAction (SoloCut2 ab)             = PubSoloCut2 ab
-toPublicAction (SoloCut4 abcd)           = PubSoloCut4 abcd
-toPublicAction (RemoveRed i)             = PubRemoveRed i
-toPublicAction (PlaceInfoMarker pl i)       = PubPlaceInfoMarker pl i
+toPublicAction (PlaceInfoMarker pl i)    = PubPlaceInfoMarker pl i
 
 toPublicEquipmentUse :: EquipmentUse -> PublicEquipmentUse
 toPublicEquipmentUse UseStabilizer = PubUseStabilizer

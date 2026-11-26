@@ -18,19 +18,19 @@ handleOneEquipment :: Modifier -> PlayerView -> EquipmentUse -> GameM Outcome
 handleOneEquipment _ _ UseStabilizer = pure ActionDone
 handleOneEquipment f pv (UseSuperDetector pid selfIdx _) = do
   gs <- get
-  let outcome = if null (superMatch pv pid selfIdx gs) then CutMismatch else CutSuccess
+  let outcome = if null (superMatch pv pid selfIdx gs) then CutMismatch else CutSuccess ((playerWires (pvSelf pv)) !! selfIdx)
   modify (f (superDetectorUpdate pv pid selfIdx))
   syncState
   pure outcome
 handleOneEquipment f pv (UseTripleDetector pid selfIdx (pos1, pos2, pos3) _) = do
   gs <- get
-  let outcome = if null (multiMatch [pos1, pos2, pos3] pv pid selfIdx gs) then CutMismatch else CutSuccess
+  let outcome = if null (multiMatch [pos1, pos2, pos3] pv pid selfIdx gs) then CutMismatch else CutSuccess ((playerWires (pvSelf pv)) !! selfIdx)
   modify (f (multiDetectorUpdate pv pid selfIdx [pos1, pos2, pos3]))
   syncState
   pure outcome
 handleOneEquipment f pv (UseDoubleDetector pid selfIdx (pos1, pos2) _) = do
   gs <- get
-  let outcome = if null (multiMatch [pos1, pos2] pv pid selfIdx gs) then CutMismatch else CutSuccess
+  let outcome = if null (multiMatch [pos1, pos2] pv pid selfIdx gs) then CutMismatch else CutSuccess ((playerWires (pvSelf pv)) !! selfIdx)
   modify (f (multiDetectorUpdate pv pid selfIdx [pos1, pos2]))
   syncState
   pure outcome
@@ -54,7 +54,7 @@ doubleRadiatorOutcome pv pid2 (i1, i2) pos2 gs =
             Yellow -> color wOther == Yellow
             Blue -> color wOther == Blue && value wSelf == value wOther
             _ -> False
-       in if matchesWire w1 wQ || matchesWire w2 wQ then CutSuccess else CutMismatch
+       in if matchesWire w1 wQ || matchesWire w2 wQ then CutSuccess wQ else CutMismatch
 
 -- stabilizer is special, as it is used in combination with another action,
 -- solved by making it a wrapping function that prevents game ending functionality like turning the dial or 

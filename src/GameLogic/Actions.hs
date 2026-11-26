@@ -9,18 +9,18 @@ import Types
 
 handleAction :: PlayerView -> Action -> Modifier -> GameM Outcome
 handleAction pv action f = case action of
-  SoloCut2 pos -> modify (f (soloCutUpdate pv pos)) >> pure CutSuccess
-  SoloCut4 (a, b, c, d) -> modify (f (soloCutUpdate4 pv (a, b, c, d))) >> pure CutSuccess
+  SoloCut2 w pos -> modify (f (soloCutUpdate pv pos)) >> pure (CutSuccess w)
+  SoloCut4 w (a, b, c, d) -> modify (f (soloCutUpdate4 pv (a, b, c, d))) >> pure (CutSuccess w)
+  RemoveRed w -> do
+    modify (f (removeRedUpdate pv (wireIndex w))) 
+    syncState
+    pure ActionDone
   DualCut pid2 pos _ -> do
     gs <- get
     let outcome = dualCutOutcome pv pid2 pos gs   -- CutSuccess or CutMismatch
     modify (f (dualCutUpdate pv pid2 pos))
     syncState
     pure outcome
-  RemoveRed pos -> do
-    modify (f (removeRedUpdate pv pos)) 
-    syncState
-    pure ActionDone
   PlaceInfoMarker pl pos -> do 
     modify (placeInfoMarkerUpdate pv pos) 
     syncState 
@@ -37,7 +37,7 @@ dualCutOutcome pv pid2 (pos1, pos2) gs =
             Yellow -> color w2 == Yellow
             Blue -> color w2 == Blue && value w1 == value w2
             _ -> False
-       in if matches then CutSuccess else CutMismatch
+       in if matches then CutSuccess w1 else CutMismatch
 
 soloCutUpdate4 :: PlayerView -> (Int, Int, Int, Int) -> GameState -> GameState
 soloCutUpdate4 pv (a, b, c, d) gs =

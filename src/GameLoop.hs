@@ -10,6 +10,7 @@ import GameLogic.Input (handlePlaceInfoMarker, handleChooseBots)
 import GameLogic.Util
 import GameLogic.Output
 import BotLogic.Interface
+import Config (bbDelay)
 import Types
 
 runGame :: GameState -> IO ()
@@ -58,17 +59,14 @@ gameLoop = do
               tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
               handlePlaceInfoMarker pv
           _ <- handleAction pv act id
-          setRackToChooseFrom 0 0
           pure ()
         else do
           outcome <- playerTurn pv
           gs'' <- get
           case status gs'' of
             Detonated -> pure ()
-            _ -> do
-              displayTurnResult outcome
-              setRackToChooseFrom 0 0
-
-      modify advanceTurn
-      syncState
+            _ -> displayTurnResult outcome
+      setRackToChooseFrom 0 0
+      liftIO (bbDelay 3000000)
+      modify advanceTurn >> syncState
       gameLoop
