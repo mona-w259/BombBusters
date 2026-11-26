@@ -49,6 +49,7 @@ gameLoop = do
           
       if isFirstRound
         then do
+          liftIO (bbDelay 1000000)
           act <- if isBot (pvSelf pv)
             then do
               let a = botPlaceMarker pv

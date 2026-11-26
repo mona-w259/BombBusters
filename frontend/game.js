@@ -32,7 +32,7 @@ async function poll() {
 }
 
 
-/* printYRWires */
+/* print yellow and red wires */
 const yrWires = document.getElementById("yr-wires");
 
 async function loadYRWires() {
@@ -50,7 +50,7 @@ async function loadYRWires() {
 }
 
 
-/* showDetonator */
+/* show detonator */
 const detonator = document.getElementById("lifeValue");
 const lifePointers = document.querySelectorAll("#lifeGauge [data-lpoint]");
 
@@ -94,7 +94,7 @@ function renderOwnRack(container, wires) {
             cable.disabled = true;
             cable.classList.toggle("cutted", true);
         }
-        cable.addEventListener("click", () => sendInput(w.label));
+        cable.addEventListener("click", () => sendInput(w.label)); // chooseWire(slot, w.label));
         return cable;
     }));
 }
@@ -114,7 +114,7 @@ function renderOtherRack(container, wires, id) {
             cable.textContent = `${value}`;
             cable.disabled = true;
         }
-        cable.addEventListener("click", () => sendInput(w.label));
+        cable.addEventListener("click", () => sendInput(w.label)); // chooseWire(id, w.label));
         return cable;
     }));
 }
@@ -197,9 +197,10 @@ function renderEquipment(eq) {
     const item = btn.closest(".equipment-item");
     const locked = !eq.unlocked;
 
-    btn.disabled = locked || eq.used;
     item.classList.toggle("used", eq.used);
     item.classList.toggle("locked", locked);
+    btn.disabled = locked || eq.used;
+    if (btn.disabled) selectedEquipment.delete(eq.name);
 }
 
 async function pollEquipment() {
@@ -211,6 +212,7 @@ async function pollEquipment() {
             renderEquipment(e);
         });
         renderEquipment(eq.personalEquipment);
+        renderEquipmentSelection();
     } 
     catch (e) {
         console.error("pollEquipment: ", e);
@@ -292,26 +294,6 @@ async function loadGameStatus() {
         }
     } catch (e) {
         statusG.textContent = "(error): " + e;
-    }
-}
-
-
-document.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-input]");
-    if (btn) sendInput(btn.dataset.input);
-});
-
-async function sendInput(text) {
-    try {
-        const res = await fetch("/api/game/" + encodeURIComponent(code) + "/input", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slot: Number(slot), text })
-        });
-        const d = await res.json();
-        if (!d.ok) console.warn("Input rejected: ", d.error);
-    } catch (e) {
-        console.warn("Server not reachable");
     }
 }
 
@@ -464,15 +446,102 @@ async function loadAwaiting() {
 
         Object.entries(sections).forEach(([kind, el]) => { el.hidden = (kind !== data.text); });
         document.body.dataset.awaiting = data.text;
+        
+        if (data.text !== "equipment" && selectedEquipment.size > 0) {
+            selectedEquipment.clear();
+            renderEquipmentSelection();
+        }
     } 
     catch (e) {
         console.error("loadAwaiting: ", e);
     }
 }
 
+/* show selected equipment with a check */
+const selectedEquipment = new Set();
+
+function renderEquipmentSelection() {
+    document.querySelectorAll(".equipment-btn").forEach(btn => {
+        const sel = selectedEquipment.has(btn.dataset.input);
+        btn.classList.toggle("selected", sel);
+    })
+}
+
+function toggleEquipment(name) {
+    if (selectedEquipment.has(name)) {
+        selectedEquipment.delete(name);
+    }
+    else {
+        selectedEquipment.add(name);
+    }
+    renderEquipmentSelection();
+}
+
+
+/* submit equipment */
+let submittingEquipment = false;
+
+async function submitEquipment() {
+    if (submittingEquipment) return;
+
+    const names = [...selectedEquipment];
+
+    submittingEquipment = true;
+    try {
+        for (const name of names) {
+            await sendInput(name);
+        }
+        if (names.contains("Stabilizer")) await sendInput("0");
+        
+        selectedEquipment.clear();
+        renderEquipmentSelection();
+    }
+    finally {
+        submittingEquipment = false;
+    }
+}
+
+
+/* input functions */
+
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-input]");
+    if (!btn) return;
+
+    if (btn.classList.contains("equipment-btn")) {
+        toggleEquipment(btn.dataset.input);
+    } 
+    else if (btn.id == "equipment-submit") {
+        submitEquipment();
+    } 
+    else if (btn.dataset.input === "back") {
+        selectedEquipment.clear();
+        renderEquipmentSelection();
+        sendInput(btn.dataset.input);
+    }
+    else {
+        sendInput(btn.dataset.input);
+    }
+});
+
+async function sendInput(text) {
+    try {
+        const res = await fetch("/api/game/" + encodeURIComponent(code) + "/input", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slot: Number(slot), text })
+        });
+        const d = await res.json();
+        if (!d.ok) console.warn("Input rejected: ", d.error);
+    } catch (e) {
+        console.warn("Server not reachable");
+        return { ok: false, error: "Server not reachable" };
+    }
+}
 
 
 /* function calls */
+
 getPlayerId();
 loadYRWires();
 poll();

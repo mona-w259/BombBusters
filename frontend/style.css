@@ -209,11 +209,11 @@ h1 {
     display: inline-block;
 }
 
-.info-toggle, .equi-info-toggle {
+.info-toggle, .equi-info-toggle, .act-info-toggle {
     display: none;
 }
 
-.info-btn, .equi-info-btn {
+.info-btn, .equi-info-btn, .act-info-btn {
     display: inline;
     align-items: center;
     justify-content: center;
@@ -230,11 +230,11 @@ h1 {
     color: #3b311e;
 }
 
-.equi-info-btn:hover {
+.equi-info-btn:hover, .act-info-btn:hover {
     color: #edf2d4;
 }
 
-.info-popup, .equi-info-popup {
+.info-popup, .equi-info-popup, .act-info-popup {
     display: none;
     position: absolute;
     z-index: 11;
@@ -255,17 +255,19 @@ h1 {
     border: 1px solid #3b311e;
 }
 
-.equi-info-popup {
+.equi-info-popup, .act-info-popup {
     margin-bottom: 6px;
     background: #96876b;
     border: 1px solid #796642;
 }
 
-.info-popup p, .equi-info-popup p {
+.info-popup p, .equi-info-popup p, .act-info-popup p {
     margin: 5px 0;
 }
 
-.info-toggle:checked ~ .info-popup, .equi-info-toggle:checked ~ .equi-info-popup {
+.info-toggle:checked ~ .info-popup, 
+.equi-info-toggle:checked ~ .equi-info-popup, 
+.act-info-toggle:checked ~ .act-info-popup {
     display: block;
 }
 
@@ -358,6 +360,23 @@ h1 {
         0  3px 3px 0 rgb(241, 225, 93);   /* bottom */
 }
 
+.your-view {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.your-turn-container {
+    background-color: #888;
+    margin: 20px 10px;
+    padding: 15px 15px 15px 15px;
+    border: 3px solid #3b311e;
+    border-radius: 8px;
+    flex: 1 1 280px;
+    min-width: 455px;
+    min-height: 230px;
+}
+
 .equipment-container, .action-container, .choose-player-id-container {
     border-radius: 8px;
     position: relative;
@@ -393,7 +412,8 @@ h1 {
     cursor: pointer;
     background-color: #f4e2b2;
     color: #696047;
-    width: 160px;
+    width: 165px;
+    height: 35px;
 }
 
 .equipment-btn:hover, .action-btn:hover, .id-btn:hover {
@@ -405,10 +425,14 @@ h1 {
     pointer-events: none;
 }
 
-.equipment-btn[aria-pressed="true"] {
-  border-color: #4caf50;
-  background: #2e5d31;
-  color: white;
+.equipment-btn.selected {
+    border-color: #4caf50;
+}
+
+.equipment-btn.selected::after { 
+    content: " ✔"; 
+    color: #4caf50; 
+    font-weight: bold; 
 }
 
 .equipment-popup, .action-popup {
