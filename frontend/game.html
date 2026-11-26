@@ -23,7 +23,7 @@
 
                 <div class="life-center">
                     <div id="lifeValue">...</div>
-                    <small>lives left</small>
+                    <small>lifes left</small>
                 </div>
             </div>
         
@@ -37,17 +37,27 @@
                     ⓘ
                 </label>
                 <div class="info-popup">
-                    Each cable has a value ranging from 1 to 12.<br>
+                    The goal of the game is to collaborate with the other<br> 
+                    players to defuse a bomb. <br><br>
+
+                    You can see a denotator on the top on the left side,<br>
+                    it shows the remaining lifes. For every wrong cut you<br> 
+                    loose a life and when you do not have lifes anymore or<br> 
+                    if you cut the red wire, the bomb explodes.<br><br>
+                    
+                    Every player has 12 or 13 wires on their rack.<br><br>
+                    
+                    Each wire has a value ranging from 1 to 12.<br>
                     Each blue value appears exactly four times.<br><br>
 
-                    There are two out of three known yellow cables (2/3) <br>
-                    and one out of two known red cables (1/2) in the game. <br>
+                    There are two out of three known yellow wires (2/3) <br>
+                    and one out of two known red wires (1/2) in the game. <br>
                     You can see the possible values that are in the game on <br>
                     the top ("Possible yellow and red wires").<br>
                     All yellow wires end in ".1" and all red wired end in ".5".
                     <br>Their exact values are unknown.<br><br>
                     
-                    All cable holders are sorted in ascending order.<br><br>
+                    All wire holders are sorted in ascending order.<br><br>
 
                     💡 = Info<br>
                     <span class="color-legend" style="background-color: #231f15"></span> = Hidden<br>
@@ -87,7 +97,7 @@
     
                     <div class="action-popup">
                         <p>
-                            You have to click on two of your wires (same value) to make a cut.
+                                    You have to click on two of your wires (same value or both yellow) to make a cut.
                         </p>
                         <p class="subeqi">Only possible if the other two wires with the value you choose are cut already or if you have both yellow wires.</p>
                     </div>
@@ -100,6 +110,7 @@
                         <p>
                             You have to click on four of your wires (same value) to make a cut.
                         </p>
+                                <p class="subeqi">Only possible you have all four wires of a value.</p>
                     </div>
                 </div>
 
@@ -109,6 +120,7 @@
                     <div class="action-popup">
                         <p>
                             You have to choose a player and click on one of your wires and one of theirs to make a cut with their wire.
+                                    The cut is successful, if your target wire has the same value as your wire or when they are both yellow.
                         </p>
                     </div>
                 </div>
@@ -120,6 +132,7 @@
                         <p>
                             You can cut the red wire if its the last wire on your rack.
                         </p>
+                                <p class="subeqi">Only possible if the red wire is the last wire, that's not cutted, on your rack.</p>
                     </div>
                 </div>
 
@@ -128,8 +141,22 @@
     
                     <div class="action-popup">
                         <p>
-                            You can use an equipment if you do not know what to cut.
-                        </p>
+                                    You can use an equipment at any time for your cut.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="action-item" style="font-size: large;">
+                            <input type="checkbox" id="act-hint-click" class="act-info-toggle">
+                            <label for="act-hint-click" class="act-info-btn" title="Explain Actions">
+                                ⓘ
+                            </label>
+                            <div class="act-info-popup">
+                                For a successful cut, you need at least two blue wires with the same value or two yellow wires.<br>
+                                If your unsure, which wire to cut, you can choose equipment to make the cut more save. <br><br>
+
+                                <span class="color-legend" style="background-color: #f4e2b6"></span> = Possible<br>
+                                <span class="color-legend" style="background-color: #e3e3e3"></span> = Not possible
                     </div>
                 </div>
             </div>
@@ -157,8 +184,8 @@
     
                     <div class="equipment-popup">
                         <p>
-                            If you perform a duo cut, you may name 1 value (except yellow) and point to 2 cables 
-                            belonging to 1 team member, instead of just one cable.
+                                    If you perform a duo cut, you may name 1 value (except yellow) and point to 2 wires 
+                                    belonging to 1 team member, instead of just one wire.
                         </p>
                         <p class="subeqi">This is your personal equipment, only you can use it.</p>
                     </div>
@@ -169,10 +196,10 @@
     
                     <div class="equipment-popup">
                         <p>
-                            If you perform a duo cut, you may name 1 value (except yellow) and point to 3 cables 
-                            belonging to 1 team member, instead of just one cable.
+                                    If you perform a duo cut, you may name 1 value (except yellow) and point to 3 wires 
+                                    belonging to 1 team member, instead of just one wire.
                         </p>
-                        <p class="subeqi">This equipment works like the double detector, but with 3 cables.</p>
+                                <p class="subeqi">This equipment works like the double detector, but with 3 wires.</p>
                     </div>
                 </div>
 
@@ -181,10 +208,10 @@
     
                     <div class="equipment-popup">
                         <p>
-                            If you perform a duo cut, you may name 1 value (except yellow) and point to 1 entire cable rack 
-                            belonging to 1 team member, instead of just one cable.
+                                    If you perform a duo cut, you may name 1 value (except yellow) and point to 1 entire wire rack 
+                                    belonging to 1 team member, instead of just one wire.
                         </p>
-                        <p class="subeqi">This equipment works like the double detector, except with an entire cable rack.</p>
+                                <p class="subeqi">This equipment works like the double detector, except with an entire wire rack.</p>
                     </div>
                 </div>
 
@@ -205,10 +232,10 @@
         
                     <div class="equipment-popup">
                         <p>
-                            If you perform a duo cut, you may name 2 of your values (including yellow) when you point to 1 cable  
+                                    If you perform a duo cut, you may name 2 of your values (including yellow) when you point to 1 wire  
                             belonging to 1 team member, instead of just one value.
                         </p>
-                        <p class="subeqi">You must have both values ob your cable rack.</p>
+                                <p class="subeqi">You must have both values ob your wire rack.</p>
                     </div>
                 </div>
 
