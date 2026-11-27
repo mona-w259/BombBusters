@@ -1,6 +1,9 @@
 module Types where
 
 import Control.Monad.State
+import Control.Concurrent.STM (TVar)
+import Data.Map as Map
+import GameLogic.InputBox
 
 data WireColor = Blue | Yellow | Red | Grey | Hidden
   deriving (Show, Eq, Ord)
@@ -8,7 +11,8 @@ data WireColor = Blue | Yellow | Red | Grey | Hidden
 data Wire = Wire
   { value :: Int,
     color :: WireColor,
-    wireIndex :: Int
+    wireIndex :: Int,
+    isCut :: Bool
   }
   deriving (Eq, Show)
 
@@ -56,19 +60,19 @@ data InfoMarker = InfoMarker
   deriving (Eq, Show)
 
 data Action
-  = DualCut PlayerId CutPosition Wire
-  | SoloCut2 CutPosition
-  | SoloCut4 (Int, Int, Int, Int)
-  | RemoveRed Int
-  | PlaceInfoMarker Int
+  = SoloCut2 Wire CutPosition
+  | SoloCut4 Wire (Int, Int, Int, Int)
+  | RemoveRed Wire
+  | DualCut PlayerId CutPosition Wire
+  | PlaceInfoMarker Player Int
   deriving (Eq, Show)
 
 data PublicAction
-  = PubDualCut PlayerId Int Wire           
-  | PubSoloCut2 (Int, Int)                
-  | PubSoloCut4 (Int, Int, Int, Int)
-  | PubRemoveRed Int
-  | PubPlaceInfoMarker Int               
+  = PubSoloCut2 Wire (Int, Int)                
+  | PubSoloCut4 Wire (Int, Int, Int, Int)
+  | PubRemoveRed Wire
+  | PubDualCut PlayerId Int Wire           
+  | PubPlaceInfoMarker Player Int               
   deriving (Eq, Show)
 
 data PublicEquipmentUse
@@ -106,12 +110,19 @@ data GameStatus
   | Detonated
   | Defused
 
+type Code = String
+
 data GameState = GameState
   { wires :: [Wire],
     players :: [Player],
+    h_players :: Int,
+    reg_players :: Int,
+    l_players :: Int,
+    ml_players :: Int,
+    code :: Code,
     colorMarkers :: [Wire],
     detonator :: Int,
-    status :: GameStatus,
+    status :: GameStatus,   -- InProgress, WaitingForChoice, Detonated, Defused
     turnOrder :: [PlayerId],
     currentPlayer :: PlayerId,
     equipment :: [Equipment],
@@ -119,7 +130,15 @@ data GameState = GameState
     infoMarkers :: [InfoMarker],
     roundCount :: Int,
     turnHistory :: [TurnLog],
-    unlockingValues :: [(Int, EquipmentName)]
+    unlockingValues :: [(Int, EquipmentName)],
+    rackLabled :: Map.Map PlayerId String,
+    actionMsg :: Map.Map PlayerId String,
+    resultMsg :: Map.Map PlayerId String,
+    syncVar :: TVar (Map.Map Code GameState),
+    inputBox :: InputBox,
+    awaiting :: (PlayerId, String),     -- String: "menu" | "equipment" | "player" | "wire"
+    rackToChooseFrom :: (PlayerId, PlayerId),
+    wireToChooseFrom :: ([Int], PlayerId)
   }
 
 data PlayerView = PlayerView
@@ -149,7 +168,7 @@ data Selectable
   deriving (Eq, Show)
 
 data Outcome
-  = CutSuccess
+  = CutSuccess Wire
   | CutMismatch
   | ActionDone
   deriving (Eq, Show)
@@ -162,3 +181,11 @@ data TurnLog = TurnLog
     logOutcome :: Outcome
   }
   deriving (Eq, Show)
+
+
+colorEmoji :: WireColor -> String
+colorEmoji Blue = "🔵"
+colorEmoji Yellow = "🟡"
+colorEmoji Red = "🔴"
+colorEmoji Grey = "⚫"
+colorEmoji Hidden = "⬜"

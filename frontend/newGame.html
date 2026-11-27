@@ -1,0 +1,61 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomb Busters - Create Your Game</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="/favicon.ico" type="image/png">
+</head>
+
+<body>
+    <main class="card">
+        <header class="header" style="margin-bottom: 20px;">
+            <h1>Create Your Game</h1>
+            <p class="subtitle">
+                Choose the amount of players, logic bots and machine learning (ML) bots. <br>
+                Summed up, the amount of players must be 4!
+            </p>
+        </header>
+
+        <div id="error" role="alert" hidden></div>
+
+        <form method="post" action="/newGame">
+            <div class="settings">
+                <div class="field">
+                    <label for="humans">Human Players</label>
+                    <input name="humans" id="humans" type="number"
+                           min="0" max="4" value="0" required>
+                </div>
+
+                <div class="field">
+                    <label for="logic_bots">Logic Bots</label>
+                    <input name="logic_bots" id="logic_bots" type="number"
+                           min="0" max="4" value="0" required>
+                </div>
+
+                <div class="field">
+                    <label for="ml_bots">ML Bots</label>
+                    <input name="ml_bots" id="ml_bots" type="number"
+                           min="0" max="4" value="0" required>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button type="submit" class="create-btn">
+                    Create Game
+                </button>
+
+                <button type="submit" class="exit-btn"
+                        formaction="/" formmethod="get" formnovalidate>
+                    Exit
+                </button>
+            </div>
+        </form>
+    </main>
+    
+    <script src="./error.js"></script>
+</body> 
+    
+</html>

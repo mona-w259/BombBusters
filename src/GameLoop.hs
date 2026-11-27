@@ -5,10 +5,12 @@ import Data.Time.Clock (getCurrentTime)
 import BenchmarkLog (writeGameLog)
 import GameLogic.Actions (handleAction)
 import GameLogic.Core
-import GameLogic.Display (displayPlayerView, displayTurnResult, displayBotDecision, announceHumanTurn)
+import GameLogic.Display (displayTurnResult, displayDecision, announceHumanTurn)
 import GameLogic.Input (handlePlaceInfoMarker, handleChooseBots)
 import GameLogic.Util
+import GameLogic.Output
 import BotLogic.Interface
+import Config (bbDelay)
 import Types
 
 runGame :: GameState -> IO ()
@@ -21,22 +23,24 @@ runGame gs = do
 startGame :: GameM ()
 startGame = do
   gs <- get
-  botIds <- liftIO $ handleChooseBots (turnOrder gs)
+  botIds <- liftIO $ (handleChooseBots gs [1..4])
   modify $ selectBots botIds
+  syncState
   gameLoop
 
 gameLoop :: GameM ()
 gameLoop = do
   modify evaluateGameEnd
+  syncState
   gs <- get
   let currStatus = status gs
   case currStatus of
-    Detonated -> liftIO $ putStrLn "Bomb detonated, game lost."
-    Defused -> liftIO $ putStrLn "Bomb defused, game won."
-    WaitingForChoice pc -> handlePendingChoice pc >> gameLoop
-    InProgress -> do
+    Detonated -> pure ()
+    Defused   -> pure ()
+    _ -> do
       modify checkActivePlayers
       modify unlockEquipment
+      syncState
       gs' <- get
       let pid = currentPlayer gs'
           pv = getPlayerView pid gs'
@@ -44,13 +48,16 @@ gameLoop = do
           
       if isFirstRound
         then do
+          liftIO (bbDelay 1000000)
           act <- if isBot (pvSelf pv)
             then do
-              liftIO $ displayPlayerView pv
               let a = botPlaceMarker pv
-              liftIO $ displayBotDecision (Just (toPublicAction a)) []
+              displayDecision (Just (toPublicAction a)) []
               pure a
-            else liftIO $ announceHumanTurn pv >> handlePlaceInfoMarker pv
+            else do
+              announceHumanTurn pv 
+              tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
+              handlePlaceInfoMarker pv
           _ <- handleAction pv act id
           pure ()
         else do
@@ -58,7 +65,9 @@ gameLoop = do
           gs'' <- get
           case status gs'' of
             Detonated -> pure ()
-            _ -> liftIO $ displayTurnResult outcome
-
-      modify advanceTurn
+            WaitingForChoice pc -> handlePendingChoice pc >> displayTurnResult outcome
+            _ -> displayTurnResult outcome
+      setRackToChooseFrom 0 0
+      liftIO (bbDelay 3000000)
+      modify advanceTurn >> syncState
       gameLoop

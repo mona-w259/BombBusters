@@ -2,10 +2,14 @@ module InitGame (initGameState) where
 
 import Data.List (sortBy)
 import Data.Ord (comparing)
+import Data.Map as Map (Map, empty)
 import System.Random
 import System.Random.Shuffle (shuffle')
 import qualified Config
 import Types
+import Control.Concurrent.STM (TVar)
+import GameLogic.Output
+import GameLogic.InputBox
 
 initWires :: IO ([Wire], Wire, [Wire])
 initWires = do
@@ -17,11 +21,11 @@ initWires = do
 
       (redVal, yellowVals) = case shuffledVals of
         (r : y1 : y2 : _) -> (r, [y1, y2])
-        _ -> error "initWires: shuffle' returned fewer than 3 values"
+        _ -> errorMessage "initWires: shuffle' returned fewer than 3 values"
 
-      blueWires = [Wire val Blue 0 | val <- concatMap (replicate 4) blueVals]
-      yellowWires = [Wire val Yellow 0 | val <- yellowVals]
-      redWire = Wire redVal Red 0
+      blueWires = [Wire val Blue 0 False | val <- concatMap (replicate 4) blueVals]
+      yellowWires = [Wire val Yellow 0 False | val <- yellowVals]
+      redWire = Wire redVal Red 0 False
       allWires = blueWires ++ yellowWires ++ [redWire]
 
       shuffledWires = shuffle' allWires (length allWires) genWires
@@ -64,15 +68,15 @@ initColorMarkers redWire yellowWires = do
       shuffled1 = shuffle' nonBlueVals (length nonBlueVals) gen1
       randomRedVal = case filter (/= redVal) shuffled1 of
         (v : _) -> v
-        [] -> error "initColorMarkers: no candidate red value"
+        [] -> errorMessage "initColorMarkers: no candidate red value"
 
       shuffled2 = shuffle' nonBlueVals (length nonBlueVals) gen2
       randomYellowVal = case filter (`notElem` yellowVals) shuffled2 of
         (v : _) -> v
-        [] -> error "initColorMarkers: no candidate yellow value"
+        [] -> errorMessage "initColorMarkers: no candidate yellow value"
 
-      randomRedWire = Wire randomRedVal Red 0
-      randomYellowWire = Wire randomYellowVal Yellow 0
+      randomRedWire = Wire randomRedVal Red 0 False
+      randomYellowWire = Wire randomYellowVal Yellow 0 False
 
       markers = [redWire, randomRedWire] ++ yellowWires ++ [randomYellowWire]
   return $ sortBy (\m -> comparing value m <> comparing color m) markers
@@ -84,7 +88,7 @@ initTurnOrder = do
       tO = shuffle' allPlayers 4 gen
       startingPlayer = case tO of
         (p : _) -> p
-        [] -> error "initTurnOrder: turn order unexpectedly empty"
+        [] -> errorMessage "initTurnOrder: turn order unexpectedly empty"
   return (tO, startingPlayer)
 
 initEquipment :: [Equipment]
@@ -126,8 +130,8 @@ initEquipment =
           }
    in [superDetector, stabilizer, tripleDetector, doubleRadiator]
 
-initGameState :: IO GameState
-initGameState = do
+initGameState :: Int -> Int -> String -> TVar (Map.Map Code GameState) -> IO GameState
+initGameState l ml codeI syncTv = do
   -- CRN support: when BB_SEED is set, seed the global StdGen so every
   -- subsequent newStdGen call (inside initWires / initColorMarkers /
   -- initTurnOrder) is derived deterministically. Unset -> stock randomness.
@@ -140,10 +144,16 @@ initGameState = do
       eq = initEquipment
   cMs <- initColorMarkers redWire yellowWires
   (tO, startingPlayer) <- initTurnOrder
+  iB <- newInputBox (map playerId ps)
   return
     GameState
       { wires = allWires,
         players = ps,
+        h_players = 4 - l - ml,
+        reg_players = l + ml,
+        l_players = l,
+        ml_players = ml,
+        code = codeI,
         colorMarkers = cMs,
         detonator = 4,
         status = InProgress,
@@ -154,5 +164,13 @@ initGameState = do
         infoMarkers = [],
         roundCount = 0,
         turnHistory = [],
-        unlockingValues = [(unlockingVal e, name e) | e <- eq]
+        unlockingValues = [(unlockingVal e, name e) | e <- eq],
+        rackLabled = empty,
+        actionMsg = empty,
+        resultMsg = empty,
+        syncVar = syncTv,
+        inputBox = iB,
+        awaiting = (0, ""),
+        rackToChooseFrom = (0, 0),
+        wireToChooseFrom = ([], 0)
       }

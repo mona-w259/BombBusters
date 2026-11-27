@@ -3,43 +3,48 @@ module GameLogic.Core where
 import Control.Monad.State
 import Config (bbDelay)
 import GameLogic.Actions
-import GameLogic.Display (displayPlayerView, displayBotDecision, announceHumanTurn)
+import GameLogic.Display (displayDecision, announceHumanTurn)
 import GameLogic.Equipment
 import GameLogic.Input
 import GameLogic.Util
+import GameLogic.Output
 import BotLogic.Interface
 import Types
 
 playerTurn :: PlayerView -> GameM Outcome
 playerTurn pv = do
   let pubOf act eq = (fmap toPublicAction act, map toPublicEquipmentUse eq)
-  (act, equip) <- liftIO $ if isBot (pvSelf pv)
+      pid = playerId (pvSelf pv)
+  (act, equip) <- if isBot (pvSelf pv)
     then do
-      displayPlayerView pv
-      bbDelay 2000000
-      putStrLn $ "Bot " ++ show (playerId (pvSelf pv)) ++ " is thinking..."
-      result@(a, eq) <- botAction pv
+      tellAllExceptOneAction pid ("Player " ++ show pid ++ " is thinking...")
+      liftIO (bbDelay 2000000)
+      result@(a, eq) <- liftIO (botAction pv)
       let (pubA, pubEq) = pubOf a eq
-      displayBotDecision pubA pubEq
+      displayDecision pubA pubEq
       return result
-    else announceHumanTurn pv >> humanAction pv
+    else do
+      announceHumanTurn pv 
+      humanAction pv
   let f = handleStabilizer equip
   eqOutcome <- handleEquipment f pv equip
   actOutcome <- case act of
     Just a -> handleAction pv a f
     Nothing -> pure ActionDone
   let outcome = mergeOutcome eqOutcome actOutcome
-  modify $ markDoubleDetectorUsed (playerId (pvSelf pv)) equip . markEquipmentUsed equip
-  gs <- get
+  modify $ markDoubleDetectorUsed pid equip . markEquipmentUsed equip
+  gs' <- get
   let (pubAct, pubEquip) = pubOf act equip
       tlog = TurnLog
-        { logRound = roundCount gs,
+        { logRound = roundCount gs',
           logPlayer = playerId (pvSelf pv),
           logAction = pubAct,
           logEquipment = pubEquip,
           logOutcome = outcome
         }
   modify (appendTurnLog tlog)
+  displayDecision pubAct pubEquip
+  syncState
   pure outcome
 
 -- pending choice is envoked whenever a player whose turn it is not has to choose a wire;
@@ -50,5 +55,7 @@ handlePendingChoice (ChooseWire choosingPlayer opts resolve kind) = do
   let pv = getPlayerView choosingPlayer gs
   choice <- if isBot (pvSelf pv)
     then pure $ botPendingChoice pv kind opts
-    else liftIO $ askPlayerToChooseWire pv opts kind
+    else askPlayerToChooseWire pv opts kind
   modify $ \s -> resolve choice s
+  setWireToChooseFrom [] 0
+  syncState

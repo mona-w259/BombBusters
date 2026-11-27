@@ -38,6 +38,9 @@ library
         GameLogic.Input
         GameLogic.Util
         GameLogic.Equipment
+        GameLogic.InputBox
+        GameLogic.InputReader
+        GameLogic.Output
         BotLogic.Interface
         BotLogic.BotTypes
         BotLogic.Strategies
@@ -45,6 +48,7 @@ library
         BotLogic.ConstraintSolver
         BotLogic.Inference
         BenchmarkLog
+        WaitingRoom
     build-depends:
         base ^>=4.20.0.0,
         mtl,
@@ -58,7 +62,8 @@ library
         bytestring,
         time,
         directory,
-        filepath
+        filepath,
+        stm
     default-language: Haskell2010
 
 executable bombbusters
@@ -73,6 +78,16 @@ executable bombbusters
         random-shuffle,
         containers,
         pretty-simple,
-        mtl
+        mtl,
+        scotty,
+        text,
+        wai,
+        http-types,
+        wai-middleware-static,
+        warp,
+        stm,
+        aeson,
+        time
+    ghc-options:      -threaded
     default-language: Haskell2010
 
