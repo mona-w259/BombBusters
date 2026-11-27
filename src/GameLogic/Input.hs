@@ -217,13 +217,8 @@ chooseEquipment :: PlayerView -> GameM [Selectable]
 chooseEquipment pv = do
   let available = availableEquipment pv
       pid = (playerId (pvSelf pv))
-  if null available
-    then do
-      tellAction pid "No equipment available."
-      pure []
-    else do
-      tellAction pid "Choose equipment:"
-      selectLoop pv available []
+  tellAction pid "Choose equipment:"
+  selectLoop pv available []
 
 chooseAction :: PlayerView -> GameM Action
 chooseAction pv = do
