@@ -466,7 +466,13 @@ function renderEquipmentSelection() {
     document.querySelectorAll(".equipment-btn").forEach(btn => {
         const sel = selectedEquipment.has(btn.dataset.input);
         btn.classList.toggle("selected", sel);
-    })
+    });
+
+    const err = checkEquipmentSelection([...selectedEquipment, name]);
+    if (err) { 
+        showEquipmentError(err); 
+        return; 
+    }
 }
 
 function toggleEquipment(name) {
@@ -480,11 +486,42 @@ function toggleEquipment(name) {
 }
 
 
+/* check selected equipment for errors (f.e. DoubleDetecor and SuperDetector) */
+const equipmentError = document.getElementById("error");
+const submitBtn = document.getElementById("equipment-submit");
+
+function showEquipmentError(msg) {
+    equipmentError.textContent = msg;
+    equipmentError.hidden = false;
+    submitBtn.disabled = true;
+}
+
+function clearEquipmentError() {
+    equipmentError.textContent = "";
+    equipmentError.hidden = true;
+    submitBtn.disabled = false;
+}
+
+function checkEquipmentSelection(names) {
+    if (names.length > 3) {
+        return "You can combine at most two equipments and only when the stabilizer is included.";
+    } 
+    else if (names.length == 3 && !names.includes("Stabilizer")) {
+        return "Only the Stabilizer can be combined with another equipment.";
+    }
+    else {
+        clearEquipmentError();
+        return null;
+    }
+}
+
+
 /* submit equipment */
 let submittingEquipment = false;
 
 async function submitEquipment() {
     if (submittingEquipment) return;
+    clearEquipmentError();
 
     const names = [...selectedEquipment];
 
@@ -493,12 +530,12 @@ async function submitEquipment() {
         for (const name of names) {
             await sendInput(name);
         }
-        if (names.contains("Stabilizer")) await sendInput("0");
+        await sendInput("0");
         
-        selectedEquipment.clear();
-        renderEquipmentSelection();
     }
     finally {
+        selectedEquipment.clear();
+        renderEquipmentSelection();
         submittingEquipment = false;
     }
 }
@@ -518,6 +555,7 @@ document.addEventListener("click", (e) => {
     } 
     else if (btn.dataset.input === "back") {
         selectedEquipment.clear();
+        clearEquipmentError();
         renderEquipmentSelection();
         sendInput(btn.dataset.input);
     }

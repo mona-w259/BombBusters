@@ -192,6 +192,12 @@ h1 {
     transform: translateY(-2px);
 }
 
+.create-btn-small:disabled {
+    filter: grayscale(1);
+    background: rgba(226, 146, 35, 0.85);
+    transform: translateY(0px);
+}
+
 .exit-btn {
     background: #3b311e;
     color: #fa9f01;
