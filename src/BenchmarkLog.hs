@@ -90,22 +90,22 @@ instance A.ToJSON EquipmentName where
     toJSON DoubleRadiator = A.String "DoubleRadiator"
 
 instance A.ToJSON Outcome where
-    toJSON CutSuccess  = A.String "CutSuccess"
-    toJSON CutMismatch = A.String "CutMismatch"
-    toJSON ActionDone  = A.String "ActionDone"
+    toJSON (CutSuccess _) = A.String "CutSuccess"
+    toJSON CutMismatch    = A.String "CutMismatch"
+    toJSON ActionDone     = A.String "ActionDone"
 
 instance A.ToJSON PublicAction where
+    toJSON (PubSoloCut2 _ (a, b)) = A.object
+        [ "tag" .= ("SoloCut2" :: String), "positions" .= [a, b] ]
+    toJSON (PubSoloCut4 _ (a, b, c, d)) = A.object
+        [ "tag" .= ("SoloCut4" :: String), "positions" .= [a, b, c, d] ]
+    toJSON (PubRemoveRed w) = A.object
+        [ "tag" .= ("RemoveRed" :: String), "position" .= wireIndex w ]
     toJSON (PubDualCut pid tIdx w) = A.object
         [ "tag" .= ("DualCut" :: String)
         , "target" .= pid, "targetIdx" .= tIdx, "wire" .= w
         ]
-    toJSON (PubSoloCut2 (a, b)) = A.object
-        [ "tag" .= ("SoloCut2" :: String), "positions" .= [a, b] ]
-    toJSON (PubSoloCut4 (a, b, c, d)) = A.object
-        [ "tag" .= ("SoloCut4" :: String), "positions" .= [a, b, c, d] ]
-    toJSON (PubRemoveRed i) = A.object
-        [ "tag" .= ("RemoveRed" :: String), "position" .= i ]
-    toJSON (PubPlaceInfoMarker i) = A.object
+    toJSON (PubPlaceInfoMarker _ i) = A.object
         [ "tag" .= ("PlaceInfoMarker" :: String), "position" .= i ]
 
 instance A.ToJSON PublicEquipmentUse where

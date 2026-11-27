@@ -1,12 +1,291 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import System.IO (hSetBuffering, stdout, BufferMode(NoBuffering))
+import Web.Scotty
+import Control.Concurrent.STM
+import Control.Concurrent (forkIO)
+import Control.Monad 
+import qualified Data.Text.Lazy as TL
+import qualified Data.Map as Map
+import Network.Wai.Middleware.Static (staticPolicy, addBase)
+import Data.Aeson (object, (.=), Value, FromJSON(..), withObject, (.:))
+import Data.Time.Clock (diffUTCTime, getCurrentTime)
 
 import GameLoop
 import InitGame
+import WaitingRoom
+import Types
+import GameLogic.Output
+import GameLogic.Display
+import GameLogic.Util
+import GameLogic.InputBox
+import GameLogic.Input
 
+-------------- data types, instances --------------
+data InputReq = InputReq {
+  slotIR :: Int, 
+  textIR :: String
+}
+
+instance FromJSON InputReq where
+  parseJSON = withObject "InputReq" $ \obj -> InputReq <$> obj .: "slot" <*> obj .: "text"
+
+----------------- small functions -----------------
+page :: FilePath -> ActionM ()
+page pName = do
+    setHeader "Content-Type" "text/html; charset=utf-8"
+    file ("./frontend/" <> pName)
+
+waitingURL :: Code -> Int -> TL.Text
+waitingURL cd slot = TL.pack("/waiting?code=" ++ cd ++ "&slot=" ++ show slot)
+
+validatePL :: Int -> Int -> Int -> Maybe TL.Text
+validatePL h l ml
+  | total < 4   = Just "TooFewPlayers"
+  | total > 4   = Just "TooManyPlayers"
+  | otherwise   = Nothing
+  where total = h + l + ml
+
+prepareGame :: WaitingRooms -> WaitingRoom -> IO ()
+prepareGame wrs wr = do
+  let l   = l_playersWR wr
+      ml  = ml_playersWR wr
+      cd  = codeWR wr
+  gs <- initGameState l ml cd (gamesGS wrs)
+  registerGame wrs cd gs
+  void . forkIO $ runGame gs
+
+errorCode :: JoinGameError -> TL.Text
+errorCode NoSuchGame = "NoSuchGame"
+errorCode GameFull   = "GameFull"
+errorCode GameClosed = "GameClosed"
+
+gsStatusText :: GameStatus -> String
+gsStatusText InProgress           = "in progress"
+gsStatusText (WaitingForChoice _) = "waiting for choice"
+gsStatusText Detonated            = "detonated"
+gsStatusText Defused              = "defused"
+
+wrStatusText :: WaitingRoomStatus -> String
+wrStatusText Waiting = "waiting"
+wrStatusText Started = "started"
+wrStatusText Expired = "expired"
+
+rackFormatJson :: [InfoMarker] -> Player -> [Value]
+rackFormatJson infos pl = 
+  [ object
+    [ "index"   .= wireIndex ws
+    , "label"   .= indexToLabel (wireIndex ws)
+    , "color"   .= colorToString (color ws)
+    , "value"   .= val
+    , "isCut"   .= isCut ws
+    , "hasHint" .= (emoji == "💡" || '💡' `elem` val)
+    ]
+    | ws <- playerWires pl, let (emoji, val) = wireFace infosForPlayer ws
+  ]
+  where
+    infosForPlayer = 
+      [ (idx, (val, col)) | InfoMarker {markerOwner = owner, markerIndex = idx, markerValue = val, markerColor = col} <- infos, owner == playerId pl ]
+    colorToString :: WireColor -> String
+    colorToString Blue   = "blue"
+    colorToString Yellow = "yellow"
+    colorToString Red    = "red"
+    colorToString Grey   = "grey"
+    colorToString Hidden = "hidden"
+
+
+
+------------------ main function ------------------
 main :: IO ()
 main = do
-  hSetBuffering stdout NoBuffering
-  gameState <- initGameState
-  runGame gameState
+    wrs     <- newWaitingRooms
+    putStrLn $ "http://localhost:3000/"
+
+    scotty 3000 $ do
+      middleware (staticPolicy (addBase "frontend"))
+
+
+
+      -------------- GET REQUESTS --------------
+      get "/"         $ page "homepage.html"
+      get "/newGame"  $ page "newGame.html"
+      get "/joinGame" $ page "joinGame.html"
+      get "/waiting"  $ page "waiting.html"
+      
+      get "/game"     $ do
+        cd <- queryParam "code" :: ActionM String
+        slot <- queryParam "slot" :: ActionM Int
+        started <- liftIO (atomically (isStarted wrs cd))
+        if started 
+          then page "game.html"
+          else redirect (waitingURL cd slot)
+
+
+
+      -------------- POST REQUESTS -------------
+      post "/"        $ page "homepage.html"
+
+      post "/newGame" $ do
+        humans    <- formParam "humans"     :: ActionM Int
+        logic     <- formParam "logic_bots" :: ActionM Int
+        ml        <- formParam "ml_bots"    :: ActionM Int
+        case (validatePL humans logic ml) of 
+          Just err -> redirect ("/newGame?error=" <> err)
+          Nothing -> do
+            cd <- liftIO (createWaitingRoom wrs humans logic ml)
+            _  <- liftIO . forkIO . void $ watchWR wrs cd (prepareGame wrs)
+            redirect (waitingURL cd 1)
+      
+      post "/joinGame" $ do
+        cd     <- formParam "game_code"  :: ActionM String
+        result <- liftIO (atomically (joinWaitingRoom wrs cd))
+        case result of
+          Left err            -> redirect ("/joinGame?error=" <> errorCode err)
+          Right (cdR, slot)  -> redirect (waitingURL cdR slot)
+
+
+
+      ---------------- API PAGE ----------------
+      get "/api/waitingRoom/:code" $ do
+        cd    <- pathParam "code"    :: ActionM String
+        now   <- liftIO getCurrentTime
+        room  <- liftIO (atomically (lookupWaitingRoom wrs cd))
+        case room of
+          Nothing   -> json (object ["status" .= ("missing" :: String)])
+          Just wr   -> json $ object
+            [
+              "status"        .= wrStatusText (WaitingRoom.status wr),
+              "registered"    .= reg_playersWR wr,
+              "humans"        .= h_playersWR wr,
+              "secondsLeft"   .= max 0 (floor (diffUTCTime (deadline wr) now) :: Int)
+            ]
+      
+      get "/api/game/:code/yrwires" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do 
+            json (object ["text" .= printYRWires gs])
+      
+      get "/api/game/:code/detonator" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do 
+            json (object ["text" .= detonator gs])
+
+      get "/api/game/:code/racks" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of 
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let pv    = getPlayerView sl gs
+                infos = pvInfoMarkers pv
+            json $ object
+              [ "own"     .= object [ "playerId" .= sl, "wires" .= rackFormatJson infos (pvSelf pv) ]
+              , "others"  .= [ object [ "playerId" .= playerId p, "wires" .= rackFormatJson infos p ]     | p <- pvOthers pv ]
+              ]
+
+      get "/api/game/:code/actions" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of 
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let pv = getPlayerView sl gs
+                opts = actionOptions pv
+            json $ object
+              [ "actions" .= [ object [ "key" .= k, "usable" .= u ] | (_, u, _, k) <- opts ] ]
+
+      get "/api/game/:code/equipment" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of 
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let pv = getPlayerView sl gs
+                pl = pvSelf pv
+            json $ object
+              [  "personalEquipment" .= object [ "name" .= ("DoubleDetector" :: String), "unlocked" .= True, "used" .= not (doubleDetector pl) ]
+              ,  "otherEquipment" .= [ object [ "name" .= name e, "unlocked" .= unlocked e, "used" .= used e ] | e <- equipment gs]
+              ]
+
+      get "/api/game/:code/turn" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= currentPlayer gs])
+
+      get "/api/game/:code/actionmessage" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= Map.findWithDefault "" sl (actionMsg gs)])
+
+      get "/api/game/:code/resultmessage" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= Map.findWithDefault "" sl (resultMsg gs)])
+      
+      get "/api/game/:code/statusgame" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            json (object ["text" .= gsStatusText (Types.status gs)])
+
+      get "/api/game/:code/awaiting" $ do
+        cd <- pathParam "code"      :: ActionM String
+        sl <- queryParam "slot"     :: ActionM Int
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let (pid, kind) = awaiting gs
+            json (object ["text" .= (if pid == sl then kind else "")])
+
+      get "/api/game/:code/choosingrack" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let (rack, playerChoose) = rackToChooseFrom gs
+            json (object ["racktochoose" .= rack, "playerwhochoosesrack" .= playerChoose])
+      
+      get "/api/game/:code/choosingwire" $ do
+        cd <- pathParam "code"      :: ActionM String
+        wr <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["error" .= ("no such game" :: String)])
+          Just gs -> do
+            let (ws, playerChoose) = wireToChooseFrom gs
+            json (object ["wirestochoose" .= ws, "playerwhochooseswire" .= playerChoose])
+
+      post "/api/game/:code/input" $ do
+        cd  <- pathParam "code"      :: ActionM String
+        req <- jsonData
+        wr  <- liftIO (atomically (Map.lookup cd <$> readTVar (gamesGS wrs)))
+        case wr of
+          Nothing -> json (object ["ok" .= False, "error" .= ("no such game" :: String)])
+          Just gs -> do
+            ok <- liftIO (pushInput (inputBox gs) (slotIR req) (textIR req))
+            json $ if ok
+              then object ["ok" .= True]
+              else object ["ok" .= False, "error" .= ("unknown player" :: String)]

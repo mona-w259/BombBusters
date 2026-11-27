@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomb Busters - Join A Game</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="/favicon.ico" type="image/png">
+</head>
+
+<body>
+    <main class="card">
+        <form method="post" action="/joinGame">
+            <header class="header">
+                <h1>Enter your Gaming Code</h1>
+            </header>
+
+            <div id="error" role="alert" hidden></div>
+
+            <div class="field code-field">
+                <input
+                    name="game_code"
+                    id="game_code"
+                    type="text"
+                    placeholder="0000"
+                    maxlength="4"
+                    minlength="4"
+                    pattern="[0-9]{4}"                        
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    required
+                >
+            </div>
+
+        
+            <div class="buttons">
+                <button type="submit" class="create-btn">
+                    Submit Code
+                </button>
+            
+                <button type="submit" class="exit-btn"
+                        formaction="/" formmethod="get" formnovalidate>
+                    Exit
+                </button>
+            </div>
+        </form>
+    </main>
+    
+    <script src="./error.js"></script>
+</body> 
+
+</html>

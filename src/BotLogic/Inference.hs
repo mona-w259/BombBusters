@@ -51,7 +51,7 @@ inferSoftFacts history allMarkers allCuts numPlayers =
         [ m
         | turn <- history
         , logRound turn < numPlayers
-        , Just (PubPlaceInfoMarker i) <- [logAction turn]
+        , Just (PubPlaceInfoMarker _ i) <- [logAction turn]
         , m <- lookupMarker allMarkers (logPlayer turn) i
         ]
 
@@ -88,7 +88,7 @@ preStatesByTurn allMarkers allCuts history =
 markersAddedBy :: [InfoMarker] -> TurnLog -> [InfoMarker]
 markersAddedBy allMarkers turn =
     case logAction turn of
-        Just (PubPlaceInfoMarker i) ->
+        Just (PubPlaceInfoMarker _ i) ->
             lookupMarker allMarkers actor i
         Just (PubDualCut tpid tIdx _) | logOutcome turn == CutMismatch ->
             lookupMarker allMarkers tpid tIdx
@@ -111,11 +111,11 @@ cutsAddedBy allCuts turn =
         [c | c <- allCuts, player c == pid, originalIndex c `elem` idxs]
 
     actionCuts = case logAction turn of
-        Just (PubSoloCut2 (a, b)) -> matchCuts actor [a, b]
-        Just (PubSoloCut4 (a, b, c, d)) -> matchCuts actor [a, b, c, d]
-        Just (PubDualCut tpid tIdx _) | outcome == CutSuccess ->
+        Just (PubSoloCut2 _ (a, b)) -> matchCuts actor [a, b]
+        Just (PubSoloCut4 _ (a, b, c, d)) -> matchCuts actor [a, b, c, d]
+        Just (PubRemoveRed w) -> matchCuts actor [wireIndex w]
+        Just (PubDualCut tpid tIdx w) | outcome == (CutSuccess w) ->
             matchCuts tpid [tIdx]
-        Just (PubRemoveRed i) -> matchCuts actor [i]
         _ -> []
 
     equipmentCuts = concatMap eqCuts (logEquipment turn)
@@ -126,8 +126,8 @@ cutsAddedBy allCuts turn =
     eqCuts (PubUseSuperDetector _ _) = []
     eqCuts (PubUseTripleDetector _ _ _) = []
     eqCuts (PubUseDoubleDetector _ _ _) = []
-    eqCuts (PubUseDoubleRadiator tpid tIdx _)
-        | outcome == CutSuccess = matchCuts tpid [tIdx]
+    eqCuts (PubUseDoubleRadiator tpid tIdx (w1, _))
+        | outcome == (CutSuccess w1) = matchCuts tpid [tIdx]
         | otherwise = []
 
 -- we assume that if player didnt choose certain action, its because they couldnt (with epistemicConfidence)
@@ -171,12 +171,12 @@ turnFacts markers cuts turn
 wasCertain :: [InfoMarker] -> Maybe PublicAction -> Bool
 wasCertain _ Nothing = False
 wasCertain markers (Just act) = case act of
+    PubSoloCut2 _ _ -> True
+    PubSoloCut4 _ _ -> True
     PubRemoveRed _ -> True
-    PubSoloCut4 _ -> True
-    PubSoloCut2 _ -> True
     PubDualCut tpid tIdx _ ->
         any (\m -> markerOwner m == tpid && markerIndex m == tIdx) markers
-    PubPlaceInfoMarker _ -> True -- never reached 
+    PubPlaceInfoMarker _ _ -> True -- never reached 
 
 countMatching :: PlayerId -> (Int -> WireColor -> Bool) -> WorldAssignment -> Int
 countMatching pid p world = case Map.lookup pid world of

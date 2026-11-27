@@ -1,14 +1,15 @@
 module GameLogic.Util where
 
+import Control.Monad.State
 import Data.List
 import Data.Maybe
-import Text.Read
 import Types
+import GameLogic.Output
 
 getPlayerView :: PlayerId -> GameState -> PlayerView
 getPlayerView pid gs =
     let self = maybeFindPlayer pid (players gs)
-        censoredWires = map (\w -> if (color w == Grey) then w else w {
+        censoredWires = map (\w -> if (isCut w == True && color w == Blue) then w {color = Grey} else if (isCut w == True) then w else w {
             color = Hidden, 
             value = -1
             })
@@ -28,7 +29,7 @@ getPlayerView pid gs =
               pvTurnHistory = turnHistory gs,
               pvUnlockingValues = unlockingValues gs
             }
-        Nothing -> error $ "player not found pid: " ++ show pid
+        Nothing -> errorMessage $ "Player not found pid: " ++ show pid
 
 updateGameStateFromView :: PlayerView -> GameState -> GameState
 updateGameStateFromView pv gs =
@@ -60,32 +61,10 @@ findPlayer pidTarget pList =
   let maybePlayer = find ((== pidTarget) . playerId) pList
    in case maybePlayer of
         Just p -> p
-        Nothing -> error $ "Player with id " ++ show pidTarget ++ " not found."
-
-readInt :: String -> IO Int
-readInt prompt = do
-  putStrLn prompt
-  putStr "> "
-  input <- getLine
-  case readMaybe input :: Maybe Int of
-    Just n -> return n
-    Nothing -> do
-      putStrLn "Invalid number. Please enter a valid integer."
-      readInt prompt
-
-readLabel :: String -> IO Int
-readLabel prompt = do
-  putStrLn prompt
-  putStr "> "
-  line <- getLine
-  case line of
-    [c] | c >= 'a' && c <= 'z' -> return (fromEnum c - fromEnum 'a')
-    _ -> do
-      putStrLn "Invalid input. Please enter a single lowercase letter (e.g. a, b, c)."
-      readLabel prompt
+        Nothing -> errorMessage $ "Player with id " ++ show pidTarget ++ " not found."
 
 cutAtPosition :: Int -> [Wire] -> [Wire]
-cutAtPosition pos = map (\w -> if wireIndex w == pos then w {color = Grey} else w)
+cutAtPosition pos = map (\w -> if wireIndex w == pos then (if color w == Blue then w {color = Grey, isCut = True} else w {isCut = True}) else w)
 
 extractCutWires :: PlayerId -> Int -> [Wire] -> [MarkedWire]
 extractCutWires pid pos ws = [MarkedWire pid (wireIndex w) w | w <- ws, wireIndex w == pos]
@@ -166,8 +145,8 @@ advanceTurn gs =
 
 evaluateGameEnd :: GameState -> GameState
 evaluateGameEnd gs
-  | detonated = gs {status = Detonated}
-  | all ((== Grey) . color) (wires gs) = gs {status = Defused}
+  | detonated = gs {status = Detonated} 
+  | all ((== True) . isCut) (wires gs) = gs {status = Defused} 
   | otherwise = gs
   where
     detonated = detonator gs <= 0
@@ -175,7 +154,7 @@ evaluateGameEnd gs
 checkActivePlayers :: GameState -> GameState
 checkActivePlayers gs =
   let activePlayers =
-        filter (any ((/= Grey) . color) . playerWires) (players gs)
+        filter (any ((== False) . isCut) . playerWires) (players gs)
       activeIds = map playerId activePlayers
       curr = currentPlayer gs
       newTurnOrder = filter (`elem` activeIds) (turnOrder gs)
@@ -185,8 +164,7 @@ checkActivePlayers gs =
           | curr `elem` activeIds -> curr
           | otherwise             -> a
    in gs
-        { players = activePlayers,
-          turnOrder = newTurnOrder,
+        { turnOrder = newTurnOrder,
           currentPlayer = newCurrent
         }
 
@@ -210,11 +188,11 @@ appendTurnLog tlog gs = gs {turnHistory = turnHistory gs ++ [tlog]}
 -- wires have their `wireIndex` field zeroed because that field is the
 -- caller's private slot position; only value/color is publicly spoken.
 toPublicAction :: Action -> PublicAction
+toPublicAction (SoloCut2 w ab)           = PubSoloCut2 w ab
+toPublicAction (SoloCut4 w abcd)         = PubSoloCut4 w abcd
+toPublicAction (RemoveRed w)             = PubRemoveRed w
 toPublicAction (DualCut pid (_, tIdx) w) = PubDualCut pid tIdx (anonymise w)
-toPublicAction (SoloCut2 ab)             = PubSoloCut2 ab
-toPublicAction (SoloCut4 abcd)           = PubSoloCut4 abcd
-toPublicAction (RemoveRed i)             = PubRemoveRed i
-toPublicAction (PlaceInfoMarker i)       = PubPlaceInfoMarker i
+toPublicAction (PlaceInfoMarker pl i)    = PubPlaceInfoMarker pl i
 
 toPublicEquipmentUse :: EquipmentUse -> PublicEquipmentUse
 toPublicEquipmentUse UseStabilizer = PubUseStabilizer
@@ -234,3 +212,15 @@ anonymise :: Wire -> Wire
 anonymise w = case color w of
     Yellow -> w { wireIndex = -1, value = -1 }
     _ -> w { wireIndex = -1 }
+
+setAwaiting :: PlayerView -> String -> GameM ()
+setAwaiting pv kind = modify (\gs -> gs { awaiting = (playerId (pvSelf pv), kind) }) >> syncState
+
+setAwaitingZero :: GameM ()
+setAwaitingZero = modify (\gs -> gs { awaiting = (0, "") }) >> syncState
+
+setRackToChooseFrom :: PlayerId -> PlayerId -> GameM ()
+setRackToChooseFrom id_choose id_player = modify (\gs -> gs { rackToChooseFrom = (id_choose, id_player) })
+
+setWireToChooseFrom :: [Int] -> PlayerId -> GameM ()
+setWireToChooseFrom ws id_player = modify (\gs -> gs { wireToChooseFrom = (ws, id_player) })

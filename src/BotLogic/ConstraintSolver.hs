@@ -83,7 +83,7 @@ buildWorldQ bk slotVals = Map.fromList
     symLookup = Map.fromList [(slotId, (v, c)) | (slotId, v, c) <- slotVals]
 
     wireAt _ wireIdx (KnownValue w)
-        | color w == Grey = Nothing
+        | isCut w == True = Nothing
         | otherwise = Just (wireIdx, (value w, color w))
     wireAt _ _ (KnownCut _) = Nothing
     wireAt pid wireIdx (PossibleValue cs)
@@ -124,8 +124,8 @@ applyCardinality bk symSlots = do
               (1 :: SInteger) 0
         | (sv, sc) <- symSlots
         ]
-    colorSum code = sum
-        [ ite (sc .== literal (code :: Integer)) (1 :: SInteger) 0
+    colorSum cd = sum
+        [ ite (sc .== literal (cd :: Integer)) (1 :: SInteger) 0
         | (_, sc) <- symSlots
         ]
     yellowValueSum v = sum

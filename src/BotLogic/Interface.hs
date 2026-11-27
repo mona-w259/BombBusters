@@ -38,7 +38,7 @@ botPlaceMarker pv =
              $ innerEdgePick blues takenVals
              <|> threeOfAKindPick blues
              <|> unlockingPick blues takenVals unlockVals
-    in PlaceInfoMarker (wireIndex pick)
+    in PlaceInfoMarker (pvSelf pv) (wireIndex pick)
   where
     handWires = playerWires (pvSelf pv)
     blueCount v = length [ w | w <- handWires, color w == Blue, value w == v ]
@@ -181,7 +181,7 @@ botPendingChoice pv PickInfoMarkerSlot opts@(first:_) =
         listToMaybe [ i | i <- cleanOpts, color (ws !! i) == Yellow ]
     isBoundary pos =
         validIdx pos &&
-        (color (ws !! pos) == Grey || pos `elem` selfMarkers)
+        (isCut (ws !! pos) == True || pos `elem` selfMarkers)
     leftBoundOf i = case [ j | j <- [i-1, i-2 .. 0], isBoundary j ] of
         (j:_) -> j
         [] -> -1
