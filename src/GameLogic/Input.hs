@@ -85,17 +85,16 @@ isExclusive SelectDoubleDetector = True
 selectLoop :: PlayerView -> [Selectable] -> [Selectable] -> GameM [Selectable]
 selectLoop pv remaining selected = do
   let   allowed = allowedRemaining remaining selected
-        canFinish = not (null selected)
-  if null allowed
+  setAwaiting pv "equipment"
+  input <- readPromptInput pv "Choose equipment and click \"Done\" when finished:"
+  if isDone input
     then pure selected
     else do
-      setAwaiting pv "equipment"
-      input <- readPromptInput pv "Choose equipment and click \"Done\" when finished:"
       when (isBack input) (liftIO (throwIO GoBack))
       case [s | s <- allowed, showSelectable s == input] of
         (s : _) -> selectLoop pv (filter (/= s) remaining) (s : selected)
         []
-          | input == "0", canFinish -> pure selected
+          | isDone input -> pure selected
           | otherwise -> do
             tellResult (playerId (pvSelf pv)) "Invalid input, try again."
             liftIO (threadDelay 1000000) >> selectLoop pv remaining selected

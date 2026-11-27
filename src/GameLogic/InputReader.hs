@@ -18,6 +18,9 @@ instance Exception GoBack
 isBack :: String -> Bool
 isBack s = s == "\ESC" || s == "back"
 
+isDone :: String -> Bool
+isDone s = s == "0"
+
 clearInput :: InputBox -> Int -> IO ()
 clearInput (InputBox m) pid = case Map.lookup pid m of
   Nothing -> pure ()

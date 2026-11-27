@@ -346,8 +346,16 @@ h1 {
     transform: translateY(-46px);
 }
 
+.wire-blue.hint, .wire-yellow.hint {
+    transform: translateY(-3px);
+}
+
 .wire.hint-two-digits {
     transform: translateY(-38px);
+}
+
+.wire-blue.hint-two-digits, .wire-yellow.hint-two-digits {
+    transform: translateY(5px);
 }
 
 .wire.hint-yellow {

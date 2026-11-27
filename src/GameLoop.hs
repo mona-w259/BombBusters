@@ -37,8 +37,7 @@ gameLoop = do
   case currStatus of
     Detonated -> pure ()
     Defused   -> pure ()
-    WaitingForChoice pc -> handlePendingChoice pc >> gameLoop
-    InProgress -> do
+    _ -> do
       modify checkActivePlayers
       modify unlockEquipment
       syncState
@@ -66,6 +65,7 @@ gameLoop = do
           gs'' <- get
           case status gs'' of
             Detonated -> pure ()
+            WaitingForChoice pc -> handlePendingChoice pc >> displayTurnResult outcome
             _ -> displayTurnResult outcome
       setRackToChooseFrom 0 0
       liftIO (bbDelay 3000000)

@@ -86,7 +86,9 @@ function renderOwnRack(container, wires) {
         if (! w.isCut) {
             cable.className = "wire-" + w.color;
             cable.textContent = (w.hasHint) ? `💡${value}` : `${value}`;
-            cable.classList.toggle(w.value >= 10 ? "hint-two-digits" : "hint", w.hasHint);
+
+            const rawVal = String(w.value).replace("💡", "");
+            cable.classList.toggle(rawVal > 9 ? "hint-two-digits" : "hint", w.hasHint);
             cable.disabled = false;
         } else {
             cable.className = "wire-" + w.color;
@@ -94,7 +96,7 @@ function renderOwnRack(container, wires) {
             cable.disabled = true;
             cable.classList.toggle("cutted", true);
         }
-        cable.addEventListener("click", () => sendInput(w.label)); // chooseWire(slot, w.label));
+        cable.addEventListener("click", () => sendInput(w.label));
         return cable;
     }));
 }
@@ -114,7 +116,7 @@ function renderOtherRack(container, wires, id) {
             cable.textContent = `${value}`;
             cable.disabled = true;
         }
-        cable.addEventListener("click", () => sendInput(w.label)); // chooseWire(id, w.label));
+        cable.addEventListener("click", () => sendInput(w.label));
         return cable;
     }));
 }
